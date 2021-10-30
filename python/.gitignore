@@ -3,4 +3,5 @@
 .theia/
 .vscode/
 build/
-compile_commands.json
+dist/
+gauss2d/__pycache__/
