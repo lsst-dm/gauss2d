@@ -21,8 +21,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __GAUSS2D_IMAGE_H_
-#define __GAUSS2D_IMAGE_H_
+#ifndef GAUSS2D_IMAGE_H
+#define GAUSS2D_IMAGE_H
 
 #include <cstddef>
 #include <iterator>

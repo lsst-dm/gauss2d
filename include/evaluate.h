@@ -21,17 +21,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __GAUSS2D_EVALUATE_H_
-#define __GAUSS2D_EVALUATE_H_
+#ifndef GAUSS2D_EVALUATE_H
+#define GAUSS2D_EVALUATE_H
 
 //#include <functional>
 #include <iostream>
 
-#ifndef __GAUSS2D_GAUSSIAN_H_
+#ifndef GAUSS2D_GAUSSIAN_H
 #include "gaussian.h"
 #endif
 
-#ifndef __GAUSS2D_IMAGE_H_
+#ifndef GAUSS2D_IMAGE_H
 #include "image.h"
 #endif
 
@@ -751,10 +751,11 @@ private:
 
         for(size_t g = 0; g < n_gaussians; ++g)
         {
-            const double cen_x = _gaussians[g].source_const().cen->x;
-            const double cen_y = _gaussians[g].source_const().cen->y;
-            const Covariance cov_psf = Covariance(*_gaussians[g].kernel_const().ell);
-            const Covariance cov_src = Covariance(*_gaussians[g].source_const().ell);;
+            const auto & src = _gaussians[g].get_source_const();
+            const double cen_x = src.get_centroid_const().get_x();
+            const double cen_y = src.get_centroid_const().get_y();
+            const Covariance cov_psf = Covariance(_gaussians[g].get_kernel_const().get_ellipse_const());
+            const Covariance cov_src = Covariance(src.get_ellipse_const());
             const auto cov = cov_src.make_convolution(cov_psf);
 
             // Deliberately omit luminosity for now
@@ -804,7 +805,7 @@ private:
                 for(size_t g = 0; g < n_gaussians; ++g)
                 {
                     model += gaussian_pixel_add_all<t, Data, Indices, gradient_type, do_extra>(
-                        g, j, i, _gaussians[g].source_const().get_integral(),
+                        g, j, i, _gaussians[g].get_source_const().get_integral(),
                         sigma_inv_pix, terms_pixel, output_jac_ref, grad_param_map_ref,
                         grad_param_factor_ref, weights_grad, terms_grad, gradients, *_grad_extra);
                 }

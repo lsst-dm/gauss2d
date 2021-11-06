@@ -21,16 +21,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#ifndef GAUSS2D_CENTROID_H
+#include "gauss2d/centroid.h"
+#endif
+
+#ifndef GAUSS2D_ELLIPSE_H
+#include "gauss2d/ellipse.h"
+#endif
+
+#ifndef GAUSS2D_EVALUATE_H
+#include "gauss2d/evaluate.h"
+#endif
+
+#ifndef GAUSS2D_GAUSSIAN_H
 #include "gauss2d/gaussian.h"
-#ifndef __GAUSS2D_EVALUATE_H_
-#include <gauss2d/evaluate.h>
 #endif
 
-#ifndef __GAUSS2D_GAUSSIAN_H_
-#include <gauss2d/gaussian.h>
-#endif
-
-#ifndef __GAUSS2D_IMAGE_H_
+#ifndef GAUSS2D_IMAGE_H
 #include "gauss2d/image.h"
 #endif
 
@@ -189,8 +196,26 @@ PYBIND11_MODULE(_gauss2d, m)
     m.attr("M_HWHM_SIGMA") = py::float_(gauss2d::M_HWHM_SIGMA);
     m.attr("M_SIGMA_HWHM") = py::float_(gauss2d::M_SIGMA_HWHM);
 
+    py::class_<gauss2d::CentroidData, std::shared_ptr<gauss2d::CentroidData>>(m, "CentroidData");
+    py::class_<gauss2d::CentroidValues,
+        std::shared_ptr<gauss2d::CentroidValues>,
+        gauss2d::CentroidData
+    >(m, "CentroidValues")
+        // Can't make shared_ptrs of primitives
+        //.def(py::init<std::shared_ptr<double>, std::shared_ptr<double>>(), "x"_a, "y"_a)
+        .def(py::init<double, double>(), "x"_a=0, "y"_a=0)
+        .def_property("x", &gauss2d::CentroidValues::get_x, &gauss2d::CentroidValues::set_x)
+        .def_property("y", &gauss2d::CentroidValues::get_y, &gauss2d::CentroidValues::set_y)
+        .def("__repr__", &gauss2d::CentroidValues::str)
+    ;
     py::class_<gauss2d::Centroid, std::shared_ptr<gauss2d::Centroid>>(m, "Centroid")
-        .def(py::init<double, double>(), "x"_a=0, "y"_a=0);
+        .def(py::init<std::shared_ptr<gauss2d::CentroidData>>(), "data"_a)
+        .def(py::init<double, double>(), "x"_a=0, "y"_a=0)
+        .def_property("x", &gauss2d::Centroid::get_x, &gauss2d::Centroid::set_x)
+        .def_property("y", &gauss2d::Centroid::get_y, &gauss2d::Centroid::set_y)
+        .def("__repr__", &gauss2d::Centroid::str)
+    ;
+
     py::class_<gauss2d::Covariance, std::shared_ptr<gauss2d::Covariance>>(m, "Covariance")
         .def(py::init<double, double, double>(), "sigma_x_sq"_a=0, "sigma_y_sq"_a=0, "cov_xy"_a=0)
         .def(py::init<gauss2d::Ellipse&>())
@@ -208,20 +233,31 @@ PYBIND11_MODULE(_gauss2d, m)
         .def_property("cov_xy", &gauss2d::Covariance::get_cov_xy, &gauss2d::Covariance::set_cov_xy)
         .def("__repr__", &gauss2d::Covariance::str)
     ;
-    py::class_<gauss2d::Ellipse, std::shared_ptr<gauss2d::Ellipse> >(m, "Ellipse")
+    py::class_<gauss2d::EllipseData, std::shared_ptr<gauss2d::EllipseData>>(m, "EllipseData");
+    py::class_<gauss2d::EllipseValues,
+        std::shared_ptr<gauss2d::EllipseValues>,
+        gauss2d::EllipseData
+    >(m, "EllipseValues")
+        .def(py::init<double, double, double>(), "sigma_x"_a=0, "sigma_y"_a=0, "rho"_a=0)
+        .def("set", &gauss2d::EllipseValues::set)
+        .def_property("rho", &gauss2d::EllipseValues::get_rho, &gauss2d::EllipseValues::set_rho)
+        .def_property("sigma_x", &gauss2d::EllipseValues::get_sigma_x, &gauss2d::EllipseValues::set_sigma_x)
+        .def_property("sigma_y", &gauss2d::EllipseValues::get_sigma_y, &gauss2d::EllipseValues::set_sigma_y)
+        .def("__repr__", &gauss2d::EllipseValues::str)
+    ;
+    py::class_<gauss2d::Ellipse, std::shared_ptr<gauss2d::Ellipse>>(m, "Ellipse")
+        .def(py::init<std::shared_ptr<gauss2d::EllipseData>>(), "data"_a)
         .def(py::init<gauss2d::Covariance&>())
         .def(py::init<gauss2d::EllipseMajor&>())
         .def(py::init<double, double, double>(), "sigma_x"_a=0, "sigma_y"_a=0, "rho"_a=0)
-        .def("_set", &gauss2d::Ellipse::_set)
-        .def("_set_rho", &gauss2d::Ellipse::_set_rho)
-        .def("_set_sigma_x", &gauss2d::Ellipse::_set_sigma_x)
-        .def("_set_sigma_y", &gauss2d::Ellipse::_set_sigma_y)
         .def_static("check", &gauss2d::Ellipse::check)
         .def("convolve", &gauss2d::Ellipse::convolve)
         .def("get_cov_xy", &gauss2d::Ellipse::get_cov_xy)
         .def("get_radius_trace", &gauss2d::Ellipse::get_radius_trace)
         .def("make_convolution", &gauss2d::Ellipse::make_convolution)
-
+        .def("set", static_cast<void (gauss2d::Ellipse::*)(double, double, double)>(&gauss2d::Ellipse::set))
+        .def("set", static_cast<void (gauss2d::Ellipse::*)(const gauss2d::Covariance&)>(&gauss2d::Ellipse::set))
+        .def("set", static_cast<void (gauss2d::Ellipse::*)(const gauss2d::EllipseMajor&)>(&gauss2d::Ellipse::set))
         .def_property("rho", &gauss2d::Ellipse::get_rho, &gauss2d::Ellipse::set_rho)
         .def_property("sigma_x", &gauss2d::Ellipse::get_sigma_x, &gauss2d::Ellipse::set_sigma_x)
         .def_property("sigma_y", &gauss2d::Ellipse::get_sigma_y, &gauss2d::Ellipse::set_sigma_y)
@@ -241,10 +277,18 @@ PYBIND11_MODULE(_gauss2d, m)
         .def_property("degrees", &gauss2d::EllipseMajor::is_degrees, &gauss2d::EllipseMajor::set_degrees)
         .def("__repr__", &gauss2d::EllipseMajor::str)
     ;
+    py::class_<gauss2d::GaussianIntegral, std::shared_ptr<gauss2d::GaussianIntegral>>(m, "GaussianIntegral");
+    py::class_<gauss2d::GaussianIntegralValue, gauss2d::GaussianIntegral,
+            std::shared_ptr<gauss2d::GaussianIntegralValue>>(m, "GaussianIntegralValue")
+        .def(py::init<double>(), "value"_a=1)
+        .def_property("value", &gauss2d::GaussianIntegralValue::get_value, &gauss2d::GaussianIntegralValue::set_value)
+        .def("__repr__", &gauss2d::GaussianIntegralValue::str)
+    ;
 
     py::class_<gauss2d::Gaussian, std::shared_ptr<gauss2d::Gaussian>>(m, "Gaussian")
-        .def(py::init<std::shared_ptr<gauss2d::Centroid>, std::shared_ptr<gauss2d::Ellipse>, double>(),
-            "centroid"_a, "ellipse"_a, "integral"_a=1.)
+        .def(py::init<std::shared_ptr<gauss2d::Centroid>, std::shared_ptr<gauss2d::Ellipse>,
+            std::shared_ptr<gauss2d::GaussianIntegral>>(),
+            "centroid"_a=nullptr, "ellipse"_a=nullptr, "integral"_a=nullptr)
         .def_property("const_normal", &gauss2d::Gaussian::get_const_normal, &gauss2d::Gaussian::set_const_normal)
         .def_property("integral", &gauss2d::Gaussian::get_integral, &gauss2d::Gaussian::set_integral)
         .def("__repr__", &gauss2d::Gaussian::str)

@@ -21,7 +21,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __GAUSS2D_EVALUATE_H_
+#ifndef GAUSS2D_EVALUATE_H
 #include "evaluate.h"
 
 namespace gauss2d {

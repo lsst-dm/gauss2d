@@ -1,8 +1,6 @@
 project('libgauss2d', 'cpp',
   version : '0.1.0',
   license : 'GPL-3.0-or-later')
-#add_global_arguments('-DSOME_TOKEN=value', language : 'cpp')
-pybind11_dep = dependency('pybind11')
 
 inc = include_directories('include')
 
