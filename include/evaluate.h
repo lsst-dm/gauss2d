@@ -332,7 +332,7 @@ public:
                 - covar_psf_dsig_xy*sig_y_src_div_conv/sig_y;
         }
         this->drho_c_dsig_y_src = drho;
-        this->drho_c_drho_s = sig_x_src*sig_y/sig_xy;
+        this->drho_c_drho_s = sig_x_src*sig_y_src/sig_xy;
     }
 };
 
@@ -349,13 +349,29 @@ private:
 
 public:
     GradientsExtra(const Image<idx_type, Indices> & param_map_in, const Image<t, Data> & param_factor_in,
-                   ImageArray<t, Data> & output) :
+                   ImageArray<t, Data> & output, size_t n_gauss) :
         _param_map(param_map_in), _param_factor(param_factor_in), _output(output)
     {
-        if(!images_compatible<idx_type, Indices, t, Data>(param_map_in, param_factor_in))
-        {
-            throw std::runtime_error("Extra param_map/factor rows/cols and coordsys must match.");
+        const auto n_extra_map_rows = param_map_in.get_n_rows();
+        const auto n_extra_fac_rows = param_factor_in.get_n_rows();
+        const auto n_extra_map_cols = param_map_in.get_n_cols();
+        const auto n_extra_fac_cols = param_factor_in.get_n_cols();
+        std::string errmsg = "";
+        if(n_extra_map_rows != n_gauss) {
+            errmsg += "extra_param_map n_rows=" + std::to_string(n_extra_map_rows)
+                + " != n_gauss=" + std::to_string(n_gauss) + ". ";
         }
+        if(n_extra_fac_rows != n_gauss) {
+            errmsg += "extra_param_factor n_rows=" + std::to_string(n_extra_fac_rows)
+                + " != n_gauss=" + std::to_string(n_gauss) + ". ";
+        }
+        if(n_extra_map_cols != 2) {
+            errmsg += "extra_param_map n_cols=" + std::to_string(n_extra_map_cols) + " != 2. ";
+        }
+        if(n_extra_fac_cols != 3) {
+            errmsg += "extra_param_factor n_cols=" + std::to_string(n_extra_fac_cols) + " != 3. ";
+        }
+        if(errmsg.size() > 0) throw std::runtime_error(errmsg);
     }
 
     GradientsExtra() = delete;
@@ -756,18 +772,22 @@ private:
             const double cen_y = src.get_centroid_const().get_y();
             const Covariance cov_psf = Covariance(_gaussians[g].get_kernel_const().get_ellipse_const());
             const Covariance cov_src = Covariance(src.get_ellipse_const());
-            const auto cov = cov_src.make_convolution(cov_psf);
+            try {
+                const auto cov = cov_src.make_convolution(cov_psf);
 
-            // Deliberately omit luminosity for now
-            const Terms terms = terms_from_covar(bin_x*bin_y, Ellipse(*cov));
+                // Deliberately omit luminosity for now
+                const Terms terms = terms_from_covar(bin_x*bin_y, Ellipse(*cov));
+                auto yvals = gaussian_pixel_x_xx(cen_y, y_min, bin_y, _n_rows, terms.yy, terms.xy);
 
-            auto yvals = gaussian_pixel_x_xx(cen_y, y_min, bin_y, _n_rows, terms.yy, terms.xy);
-
-            terms_pixel[g].set(terms.weight, x_min - cen_x + bin_x_half, terms.xx,
-                std::move(yvals.x_norm), std::move(yvals.xx));
-            if(do_gradient)
-            {
-                terms_grad[g].set(terms, cov_src, cov_psf, *cov, std::move(yvals.x));
+                terms_pixel[g].set(terms.weight, x_min - cen_x + bin_x_half, terms.xx,
+                    std::move(yvals.x_norm), std::move(yvals.xx));
+                if(do_gradient)
+                {
+                    terms_grad[g].set(terms, cov_src, cov_psf, *cov, std::move(yvals.x));
+                }
+            } catch (const std::invalid_argument & err) {
+                throw std::runtime_error("Failed to convolve cov_src=" + cov_src.str() + " with "
+                    + cov_psf.str() + " due to: " + err.what());
             }
         }
         const DataT & data_ref = getlikelihood ? *_data : IMAGE_NULL_CONST();
@@ -958,11 +978,9 @@ public:
         )),
         _extra_param_map(extra_param_map),
         _extra_param_factor(extra_param_factor),
-        _grad_extra(std::make_unique<GradientsExtra<t, Data, Indices>>(
-            _do_extra ? *extra_param_map : INDICES_NULL(),
-            _do_extra ? *extra_param_factor : IMAGE_NULL(),
-            _do_extra ? *grads : IMAGEARRAY_NULL()
-        )),
+        _grad_extra(_do_extra ? std::make_unique<GradientsExtra<t, Data, Indices>>(
+            *extra_param_map, *extra_param_factor, grads != nullptr ? *grads : IMAGEARRAY_NULL(), _n_gaussians) : nullptr
+        ),
         _grad_param_idx(_grad_param_map == nullptr ? std::vector<size_t>{} : _get_grad_param_idx()),
         _n_cols(_data == nullptr ? (
             _output == nullptr ? (
@@ -979,10 +997,7 @@ public:
         if(gaussians == nullptr) throw std::runtime_error("Gaussians can't be null");
         if(_has_background && background->size() > 1) throw std::runtime_error("Background model size can't be > 1");
         if(!(_n_cols > 0 && _n_rows > 0)) throw std::runtime_error("Data can't have n_rows/cols == 0; " + std::to_string(output == nullptr));
-        if(_do_extra)
-        {
-            // validate sizes?
-        } else if((extra_param_map != nullptr) || (extra_param_factor != nullptr)) {
+        if(!_do_extra && ((extra_param_map != nullptr) || (extra_param_factor != nullptr))) {
             throw std::runtime_error("Must pass all of extra_param_map, extra_param_factor and grads to compute extra gradients");
         }
         if(_get_likelihood)

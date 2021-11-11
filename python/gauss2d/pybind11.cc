@@ -183,7 +183,7 @@ void declare_evaluator(py::module &m, std::string typestr) {
 template<typename t, class Data, class Indices>
 void declare_maker(py::module &m, std::string typestr) {
     m.def(
-        ("make_gaussian_pixel_py_" + typestr).c_str(), gauss2d::make_gaussians_pixel<t, Data, Indices>,
+        ("make_gaussians_pixel_py_" + typestr).c_str(), gauss2d::make_gaussians_pixel<t, Data, Indices>,
         "Evaluate a 2D Gaussian at the centers of pixels on a rectangular grid using the standard bivariate"
         "Gaussian PDF.",
         "gaussians"_a, "output"_a=nullptr, "n_rows"_a=0, "n_cols"_a=0, "coordsys"_a=nullptr
@@ -206,6 +206,7 @@ PYBIND11_MODULE(_gauss2d, m)
         .def(py::init<double, double>(), "x"_a=0, "y"_a=0)
         .def_property("x", &gauss2d::CentroidValues::get_x, &gauss2d::CentroidValues::set_x)
         .def_property("y", &gauss2d::CentroidValues::get_y, &gauss2d::CentroidValues::set_y)
+        .def_property("xy", &gauss2d::CentroidValues::get_xy, &gauss2d::CentroidValues::set_xy)
         .def("__repr__", &gauss2d::CentroidValues::str)
     ;
     py::class_<gauss2d::Centroid, std::shared_ptr<gauss2d::Centroid>>(m, "Centroid")
@@ -213,6 +214,7 @@ PYBIND11_MODULE(_gauss2d, m)
         .def(py::init<double, double>(), "x"_a=0, "y"_a=0)
         .def_property("x", &gauss2d::Centroid::get_x, &gauss2d::Centroid::set_x)
         .def_property("y", &gauss2d::Centroid::get_y, &gauss2d::Centroid::set_y)
+        .def_property("xy", &gauss2d::Centroid::get_xy, &gauss2d::Centroid::set_xy)
         .def("__repr__", &gauss2d::Centroid::str)
     ;
 
@@ -231,6 +233,7 @@ PYBIND11_MODULE(_gauss2d, m)
         .def_property("sigma_y_sq", &gauss2d::Covariance::get_sigma_y_sq,
             &gauss2d::Covariance::set_sigma_y_sq)
         .def_property("cov_xy", &gauss2d::Covariance::get_cov_xy, &gauss2d::Covariance::set_cov_xy)
+        .def_property("xyc", &gauss2d::Covariance::get_xyc, &gauss2d::Covariance::set_xyc)
         .def("__repr__", &gauss2d::Covariance::str)
     ;
     py::class_<gauss2d::EllipseData, std::shared_ptr<gauss2d::EllipseData>>(m, "EllipseData");
@@ -243,6 +246,7 @@ PYBIND11_MODULE(_gauss2d, m)
         .def_property("rho", &gauss2d::EllipseValues::get_rho, &gauss2d::EllipseValues::set_rho)
         .def_property("sigma_x", &gauss2d::EllipseValues::get_sigma_x, &gauss2d::EllipseValues::set_sigma_x)
         .def_property("sigma_y", &gauss2d::EllipseValues::get_sigma_y, &gauss2d::EllipseValues::set_sigma_y)
+        .def_property("xyr", &gauss2d::EllipseValues::get_xyr, &gauss2d::EllipseValues::set_xyr)
         .def("__repr__", &gauss2d::EllipseValues::str)
     ;
     py::class_<gauss2d::Ellipse, std::shared_ptr<gauss2d::Ellipse>>(m, "Ellipse")
@@ -261,6 +265,7 @@ PYBIND11_MODULE(_gauss2d, m)
         .def_property("rho", &gauss2d::Ellipse::get_rho, &gauss2d::Ellipse::set_rho)
         .def_property("sigma_x", &gauss2d::Ellipse::get_sigma_x, &gauss2d::Ellipse::set_sigma_x)
         .def_property("sigma_y", &gauss2d::Ellipse::get_sigma_y, &gauss2d::Ellipse::set_sigma_y)
+        .def_property("xyr", &gauss2d::Ellipse::get_xyr, &gauss2d::Ellipse::set_xyr)
         .def("__repr__", &gauss2d::Ellipse::str)
     ;
     py::class_<gauss2d::EllipseMajor, std::shared_ptr<gauss2d::EllipseMajor> >(m, "EllipseMajor")
@@ -275,6 +280,7 @@ PYBIND11_MODULE(_gauss2d, m)
         .def_property("axrat", &gauss2d::EllipseMajor::get_axrat, &gauss2d::EllipseMajor::set_axrat)
         .def_property("angle", &gauss2d::EllipseMajor::get_angle, &gauss2d::EllipseMajor::set_angle)
         .def_property("degrees", &gauss2d::EllipseMajor::is_degrees, &gauss2d::EllipseMajor::set_degrees)
+        .def_property("rqa", &gauss2d::EllipseMajor::get_rqa, &gauss2d::EllipseMajor::set_rqa)
         .def("__repr__", &gauss2d::EllipseMajor::str)
     ;
     py::class_<gauss2d::GaussianIntegral, std::shared_ptr<gauss2d::GaussianIntegral>>(m, "GaussianIntegral");
@@ -289,6 +295,8 @@ PYBIND11_MODULE(_gauss2d, m)
         .def(py::init<std::shared_ptr<gauss2d::Centroid>, std::shared_ptr<gauss2d::Ellipse>,
             std::shared_ptr<gauss2d::GaussianIntegral>>(),
             "centroid"_a=nullptr, "ellipse"_a=nullptr, "integral"_a=nullptr)
+        .def_property_readonly("centroid", &gauss2d::Gaussian::get_centroid_const)
+        .def_property_readonly("ellipse", &gauss2d::Gaussian::get_ellipse_const)
         .def_property("const_normal", &gauss2d::Gaussian::get_const_normal, &gauss2d::Gaussian::set_const_normal)
         .def_property("integral", &gauss2d::Gaussian::get_integral, &gauss2d::Gaussian::set_integral)
         .def("__repr__", &gauss2d::Gaussian::str)
@@ -296,10 +304,14 @@ PYBIND11_MODULE(_gauss2d, m)
     py::class_<gauss2d::ConvolvedGaussian, std::shared_ptr<gauss2d::ConvolvedGaussian>>(m, "ConvolvedGaussian")
         .def(py::init<std::shared_ptr<gauss2d::Gaussian>, std::shared_ptr<gauss2d::Gaussian>>(),
             "source"_a = nullptr, "kernel"_a = nullptr)
+        .def_property_readonly("kernel", &gauss2d::ConvolvedGaussian::get_kernel_const)
+        .def_property_readonly("source", &gauss2d::ConvolvedGaussian::get_source_const)
         .def("__repr__", &gauss2d::ConvolvedGaussian::str)
     ;
     py::class_<gauss2d::Gaussians, std::shared_ptr<gauss2d::Gaussians>>(m, "Gaussians")
         .def(py::init<const gauss2d::Gaussians::Data *>(), "gaussians"_a)
+        .def("at", &gauss2d::Gaussians::at)
+        .def_property_readonly("size", &gauss2d::Gaussians::size)
         .def("__repr__", &gauss2d::Gaussians::str)
     ;
     py::class_<gauss2d::CoordinateSystem, std::shared_ptr<gauss2d::CoordinateSystem>>(m, "CoordinateSystem")

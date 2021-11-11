@@ -66,7 +66,8 @@ namespace gauss2d
         double rho = ellipse.get_rho();
         this->_sigma_x_sq = sigma_x*sigma_x;
         this->_sigma_y_sq = sigma_y*sigma_y;
-        this->_cov_xy = sigma_x * sigma_y * rho;
+        // Must be done like so in case sigma_x/y^2 round to zero, and check after
+        this->set_cov_xy(sigma_x * sigma_y * (_sigma_x_sq > 0) * (_sigma_y_sq > 0) * rho);
     }
 
     void Covariance::set(double sigma_x_sq, double sigma_y_sq, double cov_xy)
@@ -79,8 +80,9 @@ namespace gauss2d
     void Covariance::set_sigma_x_sq(double sigma_x_sq) {
         if(!(sigma_x_sq >= 0))
         {
-            throw std::invalid_argument("Invalid sigma_x_sq=" + std::to_string(sigma_x_sq) +
-                                        "; sigma_x_sq >= 0 required.");
+            throw std::invalid_argument(
+                this->str() + " can't set invalid sigma_x_sq=" + std::to_string(sigma_x_sq)
+                 + "; sigma_x_sq >= 0 required.");
         }
         _sigma_x_sq = sigma_x_sq;
     }
@@ -88,8 +90,9 @@ namespace gauss2d
     void Covariance::set_sigma_y_sq(double sigma_y_sq) {
         if(!(sigma_y_sq >= 0))
         {
-            throw std::invalid_argument("Invalid sigma_y_sq=" + std::to_string(sigma_y_sq) +
-                                        "; sigma_y_sq >= 0 required.");
+            throw std::invalid_argument(
+                this->str() + " can't set invalid sigma_y_sq=" + std::to_string(sigma_y_sq)
+                 + "; sigma_y_sq >= 0 required.");
         }
         _sigma_y_sq = sigma_y_sq;
     }
@@ -97,13 +100,22 @@ namespace gauss2d
     void Covariance::set_cov_xy(double cov_xy) {
         // Take individual sqrt just to be safe and avoid potential overflow
         double offdiag_max = sqrt(_sigma_x_sq) * sqrt(_sigma_y_sq);
-        double rho = offdiag_max > 0 ? cov_xy / offdiag_max : (cov_xy > 0) - (cov_xy < 0);
+        // If offdiag_max is zero, we can only accept cov_xy exactly zero
+        double rho = offdiag_max > 0 ? cov_xy / offdiag_max : -!(cov_xy >= 0) + !(cov_xy <= 0);
         if(!(rho > -1 && rho < 1))
         {
-            throw std::invalid_argument("Invalid cov_xy=" + std::to_string(cov_xy) + " with implied rho="
-                                        + std::to_string(rho) + "; -1 < rho < 1 required.");
+            throw std::invalid_argument(
+                this->str() + "can't set invalid cov_xy=" + std::to_string(cov_xy)
+                + " (>0=" + std::to_string(cov_xy > 0)
+                + ", <0=" + std::to_string(cov_xy < 0)
+                + ", offdiag_max=" + std::to_string(offdiag_max)
+                + " with implied rho=" + std::to_string(rho) + "; -1 < rho < 1 required.");
         }
         _cov_xy = cov_xy;
+    }
+
+    void Covariance::set_xyc(const std::array<double, 3> & xyc) {
+        this->set(xyc[0], xyc[1], xyc[2]);
     }
 
     void EllipseValues::set_sigma_x(double sigma_x) {
@@ -137,6 +149,10 @@ namespace gauss2d
         *_sigma_x = sigma_x;
         *_sigma_y = sigma_y;
         *_rho = rho;
+    }
+
+    void EllipseValues::set_xyr(const std::array<double, 3> & xyr) {
+        this->set(xyr[0], xyr[1], xyr[2]);
     }
 
     std::string EllipseValues::str() const {
@@ -201,7 +217,7 @@ namespace gauss2d
         if(sigma_x == 0 && sigma_y == 0) return;
         sigma_x = sqrt(sigma_x);
         sigma_y = sqrt(sigma_y);
-        double rho = covar.get_cov_xy()/(sigma_x*sigma_y);
+        double rho = (sigma_x == 0 || sigma_y == 0) ? 0 : covar.get_cov_xy()/(sigma_x*sigma_y);
         this->set(sigma_x, sigma_y, rho);
     }
 
@@ -240,6 +256,10 @@ namespace gauss2d
         _data->set_sigma_y(sigma_y);
     }
 
+    void Ellipse::set_xyr(const std::array<double, 3> & xyr) {
+        this->set(xyr[0], xyr[1], xyr[2]);
+    }
+
     Ellipse::Ellipse(std::shared_ptr<EllipseData> data) :
         _data(data == nullptr ? std::make_shared<EllipseValues>() : std::move(data)) {};
 
@@ -265,7 +285,15 @@ namespace gauss2d
     {
         double apc = sigma_x_sq + sigma_y_sq;
         double x = apc/2;
-        double pm = sqrt(apc*apc - 4*(sigma_x_sq*sigma_y_sq - cov_xy*cov_xy))/2;
+        // TODO: Write tests for this with inputs returning close to zero
+        // Probably most efficient but unstable, e.g.:
+        // sigma_x, sigma_y, rho = 1.58113883008419, 1.5811388300841895, 0
+        // ... yields -3.552713678800501e-15 inside the sqrt
+        // double pm = sqrt(apc*apc - 4*(sigma_x_sq*sigma_y_sq - cov_xy*cov_xy))/2;
+        // Two more multiplications, but seemingly more stable
+        // Cancels out cross term from apc (2*sigma_x_sq*sigma_y_sq)
+        double pm = sqrt(sigma_x_sq*sigma_x_sq + sigma_y_sq*sigma_y_sq
+            - 2*(sigma_x_sq*sigma_y_sq - 2*cov_xy*cov_xy))/2;
         return {x, pm};
     }
 
@@ -343,6 +371,11 @@ namespace gauss2d
             _angle *= M_PI_180;
         }
     }
+
+    void EllipseMajor::set_rqa(const std::array<double, 3> & rqa) {
+        this->set(rqa[0], rqa[1], rqa[2]);
+    }
+
 }
 
 #endif

@@ -33,9 +33,11 @@ class CentroidData
 {
 public:
     virtual double get_x() const = 0;
+    virtual std::array<double, 2> get_xy() const = 0;
     virtual double get_y() const = 0;
 
     virtual void set_x(double x) = 0;
+    virtual void set_xy(const std::array<double, 2> & xy) = 0;
     virtual void set_y(double y) = 0;
 
     virtual std::string str() const = 0;
@@ -50,9 +52,11 @@ private:
 
 public:
     double get_x() const { return *_x; }
-    virtual double get_y() const { return *_y; }
+    std::array<double, 2> get_xy() const { return {*_x, *_y}; }
+    double get_y() const { return *_y; }
 
     void set_x(double x) { *_x = x; }
+    void set_xy(const std::array<double, 2> & xy) { *_x = xy[0]; *_y = xy[1]; };
     void set_y(double y) { *_y = y; }
 
     std::string str() const {
@@ -75,10 +79,12 @@ private:
 
 public:
     double get_x() const { return _data->get_x(); }
+    std::array<double, 2> get_xy() const { return _data->get_xy(); }
     double get_y() const { return _data->get_y(); }
 
-    void set_x(double value) { _data->set_x(value); }
-    void set_y(double value) { _data->set_y(value); }
+    void set_x(double x) { _data->set_x(x); }
+    void set_xy(const std::array<double, 2> & xy) { _data->set_xy(xy); }
+    void set_y(double y) { _data->set_y(y); }
 
     std::string str() const {
         return "Centroid(" + _data->str() + ")";

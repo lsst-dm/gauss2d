@@ -64,6 +64,7 @@ public:
     double get_sigma_x_sq() const { return _sigma_x_sq;};
     double get_sigma_y_sq() const { return _sigma_y_sq;};
     double get_cov_xy() const { return _cov_xy;};
+    std::array<double, 3> get_xyc() const { return {_sigma_x_sq, _sigma_y_sq, _cov_xy}; }
 
     std::shared_ptr<Covariance> make_convolution(const Covariance& cov) const;
 
@@ -72,6 +73,8 @@ public:
     void set_sigma_x_sq(double sigma_x_sq);
     void set_sigma_y_sq(double sigma_y_sq);
     void set_cov_xy(double cov_xy);
+    void set_xyc(const std::array<double, 3> & xyc);
+
     std::string str() const {
         return "Covariance(sigma_x_sq=" + std::to_string(_sigma_x_sq) + ", sigma_y_sq="
             + std::to_string(_sigma_y_sq) + ", cov_xy=" + std::to_string(_cov_xy) + ")";
@@ -87,11 +90,13 @@ public:
     virtual double get_sigma_x() const = 0;
     virtual double get_sigma_y() const = 0;
     virtual double get_rho() const = 0;
+    virtual std::array<double, 3> get_xyr() const = 0;
 
     virtual void set_sigma_x(double sigma_x) = 0;
     virtual void set_sigma_y(double sigma_y) = 0;
     virtual void set_rho(double rho) = 0;
     virtual void set(double sigma_x, double sigma_y, double rho) = 0;
+    virtual void set_xyr(const std::array<double, 3> & xyr) = 0;
 
     virtual std::string str() const = 0;
     virtual ~EllipseData() = default;
@@ -108,11 +113,13 @@ public:
     double get_sigma_x() const { return *_sigma_x; }
     double get_sigma_y() const { return *_sigma_y; }
     double get_rho() const { return *_rho; }
+    std::array<double, 3> get_xyr() const { return {*_sigma_x, *_sigma_y, *_rho}; }
 
     void set_sigma_x(double sigma_x);
     void set_sigma_y(double sigma_y);
     void set_rho(double rho);
     void set(double sigma_x, double sigma_y, double rho);
+    void set_xyr(const std::array<double, 3> & xyr);
 
     std::string str() const;
 
@@ -153,6 +160,7 @@ public:
     double get_sigma_x() const { return _data->get_sigma_x(); }
     double get_sigma_y() const { return _data->get_sigma_y(); }
     double get_sigma_xy() const { return _data->get_sigma_x()*_data->get_sigma_y(); }
+    std::array<double, 3> get_xyr() const { return  _data->get_xyr(); }
 
     std::shared_ptr<Ellipse> make_convolution(const Ellipse& ell) const;
 
@@ -162,6 +170,7 @@ public:
     void set_rho(double rho);
     void set_sigma_x(double sigma_x);
     void set_sigma_y(double sigma_y);
+    void set_xyr(const std::array<double, 3> & xyr);
 
     std::string str() const {
         return "Ellipse(" + _data->str() + ")";
@@ -198,6 +207,7 @@ public:
     double get_angle() const {return _angle;}
     double get_angle_degrees() const {return _degrees ? _angle : _angle*M_180_PI;}
     double get_angle_radians() const {return _degrees ? _angle*M_PI_180 : _angle;}
+    std::array<double, 3> get_rqa() const { return  {_r_major, _axrat, _angle}; }
     bool is_degrees() const {return _degrees;}
 
     void set(double r_major, double axrat, double angle);
@@ -205,6 +215,7 @@ public:
     void set_axrat(double axrat);
     void set_angle(double angle);
     void set_degrees(bool degrees);
+    void set_rqa(const std::array<double, 3> & rqa);
     std::string str() const {
         return "EllipseMajor(r_major=" + std::to_string(_r_major) + ", axrat=" + std::to_string(_axrat)
             + ", angle=" + std::to_string(_angle) + ", degrees=" + std::to_string(_degrees) + ")";

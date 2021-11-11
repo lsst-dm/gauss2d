@@ -31,6 +31,10 @@
 #include <string>
 #include <vector>
 
+#ifndef GAUSS2D_TYPE_NAME_H
+#include "type_name.h"
+#endif
+
 namespace gauss2d {
 
 class CoordinateSystem
@@ -56,6 +60,11 @@ public:
 
     bool operator==(const CoordinateSystem & other) const {
         return (_dx1 == other.get_dx1()) && (_dy2 == other.get_dy2()) && (_x_min == other.get_x_min()) && (_y_min == other.get_y_min());
+    }
+
+    std::string str() const {
+        return "CoordinateSystem(d1=" + std::to_string(_dx1)
+            + "d1=" + std::to_string(_dx1) + ")";
     }
 
     CoordinateSystem(double d1=1., double d2=1) : _dx1(d1), _dy2(d2) {};
@@ -84,7 +93,7 @@ public:
     void _check_row_col(size_t row, size_t col) const {
         if(!(row < this->get_n_rows()) && !(row < this->get_n_rows())) {
             throw std::out_of_range("row,col = " + std::to_string(row) + ","  + std::to_string(col)
-                + "n_rows,n_cols = " + std::to_string(this->get_n_rows()) + ","
+                + " n_rows,n_cols = " + std::to_string(this->get_n_rows()) + ","
                 + std::to_string(this->get_n_rows())
             );
         }
@@ -108,6 +117,13 @@ public:
     inline void set_value_unchecked(size_t row, size_t col, t value) { static_cast<C&>(*this)._get_value_unchecked(row, col) = value;};
 
     size_t size() const { return this->get_n_rows() * this->get_n_cols();};
+
+    std::string str() const {
+        return std::string(type_name<C>()) + "(coordsys=" + _coordsys.str()
+            + ", n_rows=" + std::to_string(this->get_n_rows())
+            + ", n_cols=" + std::to_string(this->get_n_cols())
+            + ")";
+    }
 
     Image(const std::shared_ptr<const CoordinateSystem> coordsys = nullptr) : 
         _coordsys_ptr(coordsys == nullptr ? nullptr : std::move(coordsys)),
