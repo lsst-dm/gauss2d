@@ -950,7 +950,6 @@ public:
         const std::shared_ptr<const Image<t, Data>> extra_param_factor = nullptr,
         const std::shared_ptr<const Image<t, Data>> background = nullptr
     ) :
-        //_junk(garbage()),
         _gaussians(gaussians == nullptr ? GAUSSIANS_NULL : *gaussians),
         _gaussians_ptr(gaussians == nullptr ? nullptr : std::move(gaussians)),
         _n_gaussians(_gaussians.size()),
