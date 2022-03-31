@@ -173,7 +173,7 @@ public:
     void set_xyr(const std::array<double, 3> & xyr);
 
     std::string str() const {
-        return "Ellipse(" + _data->str() + ")";
+        return _data->str();
     }
 
     Ellipse(std::shared_ptr<EllipseData> data);
