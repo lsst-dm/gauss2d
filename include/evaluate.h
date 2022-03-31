@@ -967,7 +967,7 @@ public:
         _backgroundtype(background != nullptr ? (
                 _background->size() == 1 ? BackgroundType::constant : BackgroundType::none
             ) : BackgroundType::none),
-        _get_likelihood(data != nullptr),
+        _get_likelihood((data != nullptr) && (sigma_inv != nullptr)),
         _data(data), _sigma_inv(sigma_inv), _output(output), _residual(residual), _grads(grads),
         _grad_param_map((_gradienttype == GradientType::none) ? nullptr : (
             (grad_param_map == nullptr) ? _grad_param_map_default<Indices>(_gaussians.size(), N_PARAMS) : grad_param_map
@@ -1008,6 +1008,8 @@ public:
                     std::to_string(_n_rows) + "] don't match inverse variance dimensions [" +
                     std::to_string(_sigma_inv->get_n_cols()) + ',' + std::to_string(_sigma_inv->get_n_rows()) + ']');
             }
+        } else if((data != nullptr) || (sigma_inv != nullptr)) {
+            throw std::runtime_error("Passed only one non-null data/sigma_inv");
         }
         if(_gradienttype == GradientType::loglike)
         {
