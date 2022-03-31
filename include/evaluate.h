@@ -1109,7 +1109,9 @@ std::shared_ptr<Data> make_gaussians_pixel(
         const std::shared_ptr<const CoordinateSystem> coordsys = nullptr)
 {
     if(output == nullptr) output = std::make_shared<Data>(n_rows, n_cols, coordsys);
-    auto evaluator = std::make_shared<GaussianEvaluator<t, Data, Indices>>(gaussians, coordsys, nullptr, nullptr, output);
+    auto evaluator = std::make_shared<GaussianEvaluator<t, Data, Indices>>(
+        gaussians, coordsys, nullptr, nullptr, output
+    );
     evaluator->loglike_pixel();
     return output;
 }
@@ -1121,7 +1123,7 @@ void add_gaussians_pixel(
     const std::shared_ptr<const CoordinateSystem> coordsys = nullptr
 ) {
     auto evaluator = std::make_shared<GaussianEvaluator<t, Data, Indices>>(
-        gaussians, coordsys, output
+        gaussians, coordsys, nullptr, nullptr, output
     );
     evaluator->loglike_pixel(true);
 }
