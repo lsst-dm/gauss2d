@@ -1013,22 +1013,6 @@ public:
         }
         if(_gradienttype == GradientType::loglike)
         {
-            //const size_t n_params_grad = _n_gaussians*(N_PARAMS) + (_backgroundtype == BackgroundType::constant);
-
-            if(false)
-            {
-                /*
-                Data grad_param_factor_ref = (*grad_param_factor).unchecked<2>();
-                for(size_t g = 0; g < n_gaussians; ++g)
-                {
-                    for(size_t p = 0; p < N_PARAMS; ++p)
-                    {
-                        std::cout << grad_param_factor_ref(g, p) << ",";
-                    }
-                    std::cout << std::endl;
-                }
-                */
-            }
             if(!_get_likelihood) throw std::runtime_error("Can't compute likelihood gradient without computing likelihood;"
                                                           " did you pass data and sigma_inv arrays?");
             const auto & grad_like = (*grads)[0];
