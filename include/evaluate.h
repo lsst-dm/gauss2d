@@ -1043,6 +1043,10 @@ public:
     }
     ~GaussianEvaluator() {};
 
+    size_t get_n_cols() const { return(_n_cols); }
+    size_t get_n_rows() const { return(_n_rows); }
+    size_t get_size() const { return(_size); }
+
     /**
     * Compute the model and/or log-likelihood and/or gradient (d(log-likelihood)/dx)
     * and/or Jacobian (dmodel/dx) for a Gaussian mixture model.
