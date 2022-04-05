@@ -177,6 +177,9 @@ void declare_evaluator(py::module &m, std::string typestr) {
         "background"_a = nullptr
     )
     .def("loglike_pixel", &Class::loglike_pixel, "to_add"_a = false)
+    .def_property_readonly("n_cols", &Class::get_n_cols)
+    .def_property_readonly("n_rows", &Class::get_n_rows)
+    .def_property_readonly("n_size", &Class::get_size)
     ;
 }
 

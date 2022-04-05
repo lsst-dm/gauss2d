@@ -967,7 +967,7 @@ public:
         _backgroundtype(background != nullptr ? (
                 _background->size() == 1 ? BackgroundType::constant : BackgroundType::none
             ) : BackgroundType::none),
-        _get_likelihood(data != nullptr),
+        _get_likelihood((data != nullptr) && (sigma_inv != nullptr)),
         _data(data), _sigma_inv(sigma_inv), _output(output), _residual(residual), _grads(grads),
         _grad_param_map((_gradienttype == GradientType::none) ? nullptr : (
             (grad_param_map == nullptr) ? _grad_param_map_default<Indices>(_gaussians.size(), N_PARAMS) : grad_param_map
@@ -1008,25 +1008,11 @@ public:
                     std::to_string(_n_rows) + "] don't match inverse variance dimensions [" +
                     std::to_string(_sigma_inv->get_n_cols()) + ',' + std::to_string(_sigma_inv->get_n_rows()) + ']');
             }
+        } else if((data != nullptr) || (sigma_inv != nullptr)) {
+            throw std::runtime_error("Passed only one non-null data/sigma_inv");
         }
         if(_gradienttype == GradientType::loglike)
         {
-            //const size_t n_params_grad = _n_gaussians*(N_PARAMS) + (_backgroundtype == BackgroundType::constant);
-
-            if(false)
-            {
-                /*
-                Data grad_param_factor_ref = (*grad_param_factor).unchecked<2>();
-                for(size_t g = 0; g < n_gaussians; ++g)
-                {
-                    for(size_t p = 0; p < N_PARAMS; ++p)
-                    {
-                        std::cout << grad_param_factor_ref(g, p) << ",";
-                    }
-                    std::cout << std::endl;
-                }
-                */
-            }
             if(!_get_likelihood) throw std::runtime_error("Can't compute likelihood gradient without computing likelihood;"
                                                           " did you pass data and sigma_inv arrays?");
             const auto & grad_like = (*grads)[0];
@@ -1056,6 +1042,10 @@ public:
         }
     }
     ~GaussianEvaluator() {};
+
+    size_t get_n_cols() const { return(_n_cols); }
+    size_t get_n_rows() const { return(_n_rows); }
+    size_t get_size() const { return(_size); }
 
     /**
     * Compute the model and/or log-likelihood and/or gradient (d(log-likelihood)/dx)
@@ -1119,7 +1109,9 @@ std::shared_ptr<Data> make_gaussians_pixel(
         const std::shared_ptr<const CoordinateSystem> coordsys = nullptr)
 {
     if(output == nullptr) output = std::make_shared<Data>(n_rows, n_cols, coordsys);
-    auto evaluator = std::make_shared<GaussianEvaluator<t, Data, Indices>>(gaussians, coordsys, nullptr, nullptr, output);
+    auto evaluator = std::make_shared<GaussianEvaluator<t, Data, Indices>>(
+        gaussians, coordsys, nullptr, nullptr, output
+    );
     evaluator->loglike_pixel();
     return output;
 }
@@ -1131,7 +1123,7 @@ void add_gaussians_pixel(
     const std::shared_ptr<const CoordinateSystem> coordsys = nullptr
 ) {
     auto evaluator = std::make_shared<GaussianEvaluator<t, Data, Indices>>(
-        gaussians, coordsys, output
+        gaussians, coordsys, nullptr, nullptr, output
     );
     evaluator->loglike_pixel(true);
 }

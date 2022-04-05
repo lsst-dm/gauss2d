@@ -69,33 +69,33 @@ public:
 class Gaussian
 {
 private:
-    std::shared_ptr<Centroid> _cen;
-    std::shared_ptr<Ellipse> _ell;
+    std::shared_ptr<Centroid> _centroid;
+    std::shared_ptr<Ellipse> _ellipse;
     std::shared_ptr<GaussianIntegral> _integral;
 
 public:
-    double get_const_normal() const { return _integral->get_value()/(2*_ell->get_area()); }
+    double get_const_normal() const { return _integral->get_value()/(2*_ellipse->get_area()); }
     double get_integral() const {return _integral->get_value();};
 
-    Centroid & get_centroid() { return *_cen;}
-    Ellipse & get_ellipse() { return *_ell;}
+    Centroid & get_centroid() { return *_centroid;}
+    Ellipse & get_ellipse() { return *_ellipse;}
 
-    const Centroid & get_centroid_const() const { return *_cen;}
-    const Ellipse & get_ellipse_const() const { return *_ell;}
+    const Centroid & get_centroid_const() const { return *_centroid;}
+    const Ellipse & get_ellipse_const() const { return *_ellipse;}
 
-    void set_const_normal(double const_normal) { _integral->set_value(get_const_normal()*2*_ell->get_area()); }
+    void set_const_normal(double const_normal) { _integral->set_value(get_const_normal()*2*_ellipse->get_area()); }
     void set_integral(double integral) {
         _integral->set_value(integral);
     }
 
     std::string str() const {
-        return "Gaussian(cen=" + _cen->str() + ", ell=" + _ell->str() + ", integral=" + _integral->str() + ")";
+        return "Gaussian(centroid=" + _centroid->str() + ", ellipse=" + _ellipse->str() + ", integral=" + _integral->str() + ")";
     }
 
-    Gaussian(std::shared_ptr<Centroid> cen = nullptr, std::shared_ptr<Ellipse> ell = nullptr,
+    Gaussian(std::shared_ptr<Centroid> centroid = nullptr, std::shared_ptr<Ellipse> ellipse = nullptr,
              std::shared_ptr<GaussianIntegral> integral = nullptr) :
-        _cen(cen != nullptr ? std::move(cen): std::make_shared<Centroid>()),
-        _ell(ell != nullptr ? std::move(ell): std::make_shared<Ellipse>()),
+        _centroid(centroid != nullptr ? std::move(centroid): std::make_shared<Centroid>()),
+        _ellipse(ellipse != nullptr ? std::move(ellipse): std::make_shared<Ellipse>()),
         _integral(integral != nullptr ? std::move(integral): std::make_shared<GaussianIntegralValue>()
     ) {}
     ~Gaussian() {};

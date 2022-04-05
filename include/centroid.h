@@ -87,7 +87,7 @@ public:
     void set_y(double y) { _data->set_y(y); }
 
     std::string str() const {
-        return "Centroid(" + _data->str() + ")";
+        return  _data->str();
     }
 
     Centroid(std::shared_ptr<CentroidData> data) : _data(data == nullptr ? std::make_shared<CentroidValues>() : std::move(data)) {}
