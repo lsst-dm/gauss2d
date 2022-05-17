@@ -6,7 +6,7 @@ inc = include_directories('include')
 
 subdir('include')
 subdir('src')
-#subdir('test')
+subdir('tests')
 
 pkg_mod = import('pkgconfig')
 pkg_mod.generate(libraries : gauss2dlib,
