@@ -46,7 +46,7 @@
 
 namespace gauss2d {
 
-static const Gaussians GAUSSIANS_NULL{nullptr};
+static const ConvolvedGaussians GAUSSIANS_NULL{nullptr};
 
 typedef size_t idx_type;
 
@@ -666,8 +666,8 @@ private:
     Indices & INDICES_NULL() const;
     //const ImageArray<Indices> INDICESARRAY_NULL{};
 
-    const Gaussians & _gaussians;
-    const std::shared_ptr<const Gaussians> _gaussians_ptr;
+    const ConvolvedGaussians & _gaussians;
+    const std::shared_ptr<const ConvolvedGaussians> _gaussians_ptr;
     const size_t _n_gaussians;
     const CoordinateSystem & _coordsys;
     const std::shared_ptr<const CoordinateSystem> _coordsys_ptr;
@@ -825,7 +825,7 @@ private:
                 for(size_t g = 0; g < n_gaussians; ++g)
                 {
                     model += gaussian_pixel_add_all<t, Data, Indices, gradient_type, do_extra>(
-                        g, j, i, _gaussians[g].get_source_const().get_integral(),
+                        g, j, i, _gaussians[g].get_source_const().get_integral_value(),
                         sigma_inv_pix, terms_pixel, output_jac_ref, grad_param_map_ref,
                         grad_param_factor_ref, weights_grad, terms_grad, gradients, *_grad_extra);
                 }
@@ -917,7 +917,7 @@ public:
     const Indices & INDICES_NULL_CONST() const {return this->INDICES_NULL();};
     const ImageArray<t, Data> & IMAGEARRAY_NULL_CONST() const {return this->IMAGEARRAY_NULL();};
 
-    GaussianEvaluator(int x = 0, const std::shared_ptr<const Gaussians> gaussians = nullptr) {};
+    GaussianEvaluator(int x = 0, const std::shared_ptr<const ConvolvedGaussians> gaussians = nullptr) {};
 
     /**
     * Construct a Gaussian Evaluator with resuable settings.
@@ -937,7 +937,7 @@ public:
     * @param output 2D output matrix of the same size as ImageD.
     */
     GaussianEvaluator(
-        const std::shared_ptr<const Gaussians> gaussians,
+        const std::shared_ptr<const ConvolvedGaussians> gaussians,
         const std::shared_ptr<const CoordinateSystem> coordsys = nullptr,
         const std::shared_ptr<const Image<t, Data>> data = nullptr,
         const std::shared_ptr<const Image<t, Data>> sigma_inv = nullptr,
@@ -1103,7 +1103,7 @@ Indices & GaussianEvaluator<t, Data, Indices>::INDICES_NULL() const
 */
 template<typename t, class Data, class Indices>
 std::shared_ptr<Data> make_gaussians_pixel(
-        const std::shared_ptr<const Gaussians> gaussians,
+        const std::shared_ptr<const ConvolvedGaussians> gaussians,
         std::shared_ptr<Data> output = nullptr,
         const unsigned int n_rows = 0, const unsigned int n_cols = 0,
         const std::shared_ptr<const CoordinateSystem> coordsys = nullptr)
@@ -1118,7 +1118,7 @@ std::shared_ptr<Data> make_gaussians_pixel(
 
 template<typename t, class Data, class Indices>
 void add_gaussians_pixel(
-    const Gaussians& gaussians,
+    const ConvolvedGaussians& gaussians,
     Data & output,
     const std::shared_ptr<const CoordinateSystem> coordsys = nullptr
 ) {

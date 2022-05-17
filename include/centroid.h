@@ -40,6 +40,10 @@ public:
     virtual void set_xy(const std::array<double, 2> & xy) = 0;
     virtual void set_y(double y) = 0;
 
+    bool operator==(const CentroidData& other) const {
+        return (get_x() == other.get_x()) && (get_y() == other.get_y());
+    };
+
     virtual std::string str() const = 0;
     virtual ~CentroidData() = default;
 };
@@ -78,6 +82,7 @@ private:
     std::shared_ptr<CentroidData> _data;
 
 public:
+    const CentroidData & get_data() const { return *_data;}
     double get_x() const { return _data->get_x(); }
     std::array<double, 2> get_xy() const { return _data->get_xy(); }
     double get_y() const { return _data->get_y(); }
@@ -89,6 +94,10 @@ public:
     std::string str() const {
         return  _data->str();
     }
+
+    bool operator==(const Centroid& other) const {
+        return get_data() == other.get_data();
+    };
 
     Centroid(std::shared_ptr<CentroidData> data) : _data(data == nullptr ? std::make_shared<CentroidValues>() : std::move(data)) {}
     Centroid(double x=0, double y=0) : _data(std::make_shared<CentroidValues>()) {

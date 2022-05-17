@@ -80,7 +80,11 @@ public:
             + std::to_string(_sigma_y_sq) + ", cov_xy=" + std::to_string(_cov_xy) + ")";
     }
 
-    Covariance(double sigma_x_sq, double sigma_y_sq, double cov_xy);
+    bool operator==(const Covariance& other) const {
+        return get_xyc() == other.get_xyc();
+    };
+
+    Covariance(double sigma_x_sq=0, double sigma_y_sq=0, double cov_xy=0);
     Covariance(const Ellipse & ell);
 };
 
@@ -99,6 +103,11 @@ public:
     virtual void set_xyr(const std::array<double, 3> & xyr) = 0;
 
     virtual std::string str() const = 0;
+
+    bool operator==(const EllipseData& other) const {
+        return get_xyr() == other.get_xyr();
+    };
+
     virtual ~EllipseData() = default;
 };
 
@@ -153,6 +162,7 @@ public:
 
     double get_area() const;
     double get_cov_xy() const;
+    const EllipseData & get_data() const { return *_data; }
     double get_radius_trace() const;
     double get_sigma_x_sq() const;
     double get_sigma_y_sq() const;
@@ -175,6 +185,11 @@ public:
     std::string str() const {
         return _data->str();
     }
+
+    bool operator==(const Ellipse& other) const {
+        return get_data() == other.get_data();
+    };
+
 
     Ellipse(std::shared_ptr<EllipseData> data);
     Ellipse(double sigma_x=0, double sigma_y=0, double rho=0);
