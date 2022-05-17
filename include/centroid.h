@@ -27,9 +27,15 @@
 #include <memory>
 #include <string>
 
+#include "object.h"
+
 namespace gauss2d {
 
-class CentroidData
+/**
+ * Interface for an object storing Centroid data.
+ *
+**/
+class CentroidData : public Object
 {
 public:
     virtual double get_x() const = 0;
@@ -44,10 +50,16 @@ public:
         return (get_x() == other.get_x()) && (get_y() == other.get_y());
     };
 
-    virtual std::string str() const = 0;
+    virtual std::string str() const override = 0;
     virtual ~CentroidData() = default;
 };
 
+/**
+ * A CentroidData storing centroid values as shared_ptrs.
+ * 
+ * shared_ptr usage allows CentroidData to share parameters if desired. 
+ *
+**/
 class CentroidValues : public virtual CentroidData
 {
 private:
@@ -55,55 +67,57 @@ private:
     std::shared_ptr<double> _y;
 
 public:
-    double get_x() const { return *_x; }
-    std::array<double, 2> get_xy() const { return {*_x, *_y}; }
-    double get_y() const { return *_y; }
+    double get_x() const;
+    std::array<double, 2> get_xy() const;
+    double get_y() const;
 
-    void set_x(double x) { *_x = x; }
-    void set_xy(const std::array<double, 2> & xy) { *_x = xy[0]; *_y = xy[1]; };
-    void set_y(double y) { *_y = y; }
+    void set_x(double x);
+    void set_xy(const std::array<double, 2> & xy);
+    void set_y(double y);
 
-    std::string str() const {
-        return "Centroid(x=" + std::to_string(*_x) + ", y=" + std::to_string(*_y) + ")";
-    }
+    std::string str() const override;
 
-    CentroidValues(std::shared_ptr<double> x, std::shared_ptr<double> y) :
-        _x(x == nullptr ? std::make_shared<double>(0) : std::move(x)),
-        _y(y == nullptr ? std::make_shared<double>(0) : std::move(y)) {};
-    CentroidValues(double x=0, double y=0) :
-        _x(std::make_shared<double>(x)), _y(std::make_shared<double>(y)) {};
+    CentroidValues(std::shared_ptr<double> x, std::shared_ptr<double> y);
+    CentroidValues(double x=0, double y=0);
 
     virtual ~CentroidValues() {};
 };
 
-class Centroid
+/**
+ * A Centroid is a 2D coordinate representing the center of a plane figure
+ * (specifically an ellipse in this package).
+ *
+ * The storage of the parameters is implemented in CentroidData;
+ * this class serves as a storage-independent interface for usage in
+ * Ellipse classes.
+ *
+**/
+class Centroid : public Object
 {
 private:
     std::shared_ptr<CentroidData> _data;
 
 public:
-    const CentroidData & get_data() const { return *_data;}
-    double get_x() const { return _data->get_x(); }
-    std::array<double, 2> get_xy() const { return _data->get_xy(); }
-    double get_y() const { return _data->get_y(); }
+    void convolve(const Centroid & cen);
 
-    void set_x(double x) { _data->set_x(x); }
-    void set_xy(const std::array<double, 2> & xy) { _data->set_xy(xy); }
-    void set_y(double y) { _data->set_y(y); }
+    const CentroidData & get_data() const;
+    double get_x() const;
+    std::array<double, 2> get_xy() const;
+    double get_y() const;
 
-    std::string str() const {
-        return  _data->str();
-    }
+    std::shared_ptr<Centroid> make_convolution(const Centroid& ell) const;
+    std::unique_ptr<Centroid> make_convolution_uniq(const Centroid & ell) const;
 
-    bool operator==(const Centroid& other) const {
-        return get_data() == other.get_data();
-    };
+    void set_x(double x);
+    void set_xy(const std::array<double, 2> & xy);
+    void set_y(double y);
 
-    Centroid(std::shared_ptr<CentroidData> data) : _data(data == nullptr ? std::make_shared<CentroidValues>() : std::move(data)) {}
-    Centroid(double x=0, double y=0) : _data(std::make_shared<CentroidValues>()) {
-        set_x(x);
-        set_y(y);
-    }
+    std::string str() const override;
+
+    bool operator==(const Centroid& other) const;
+
+    Centroid(std::shared_ptr<CentroidData> data);
+    Centroid(double x=0, double y=0);
 };
 
 } // namespace gauss2d

@@ -25,49 +25,65 @@
 #define GAUSS2D_GAUSSIAN_H
 
 #include <algorithm>
-#ifndef GAUSS2D_CENTROID_H
-#include "centroid.h"
-#endif
-
-#ifndef GAUSS2D_ELLIPSE_H
-#include "ellipse.h"
-#endif
-
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "centroid.h"
+#include "ellipse.h"
+#include "object.h"
+
 namespace gauss2d {
 
-class GaussianIntegral
+/**
+ * Interface for the normalization (total integrated value) of a 2D Gaussian.
+ * 
+**/
+class GaussianIntegral : public Object
 {
 public:
     virtual double get_value() const = 0;
     virtual void set_value(double value) = 0;
 
-    virtual std::string str() const = 0;
+    virtual std::string str() const override = 0;
+
+    virtual bool operator==(const GaussianIntegral& other) const {
+        return this->get_value() == other.get_value();
+    }
+
     virtual ~GaussianIntegral() = default;
 };
 
+/**
+ * A GaussianIntegral storing a float value.
+ * 
+**/
 class GaussianIntegralValue : public GaussianIntegral
 {
 private:
     double _value;
 
 public:
-    double get_value() const { return _value; }
-    void set_value(double value) { _value = value; }
+    double get_value() const override { return _value; }
+    void set_value(double value) override { _value = value; }
 
-    std::string str() const { return "GaussianIntegralValue(" + std::to_string(_value) + ")"; }
+    std::string str() const override { return "GaussianIntegralValue(" + std::to_string(_value) + ")"; }
 
     GaussianIntegralValue(double value=1.): _value(value) {};
     ~GaussianIntegralValue() {};
 };
 
-class Gaussian
+/**
+ * A 2D Gaussian with a Centroid, Ellipse, and integral.
+ * 
+ * Gaussian offers some convenience functions but is otherwise a container
+ * for its three component subclasses.
+**/
+class Gaussian : public Object
 {
 private:
     std::shared_ptr<Centroid> _centroid;
@@ -75,57 +91,53 @@ private:
     std::shared_ptr<GaussianIntegral> _integral;
 
     template <typename T>
-    void _set_if_not_nullptr(std::shared_ptr<T> x, std::shared_ptr<T> to_set, std::string name) {
-        if(to_set == nullptr) throw std::invalid_argument(this->str() + "Can't set " + name + " to nullptr");
-        x = std::move(to_set);
+    std::shared_ptr<T> _check_not_nullptr(std::shared_ptr<T> ptr, std::string name) {
+        if(ptr == nullptr) throw std::invalid_argument(this->str() + "Can't set " + name + " to nullptr");
+        return ptr;
     }
 
 public:
-    double get_const_normal() const { return _integral->get_value()/(2*_ellipse->get_area()); }
-    double get_integral_value() const {return _integral->get_value();};
+    double get_const_normal() const;
+    double get_integral_value() const;
 
-    Centroid & get_centroid() { return *_centroid; }
-    Ellipse & get_ellipse() { return *_ellipse; }
-    GaussianIntegral & get_integral() { return *_integral; }
+    Centroid & get_centroid();
+    Ellipse & get_ellipse();
+    GaussianIntegral & get_integral();
 
-    std::shared_ptr<Centroid> get_centroid_ptr() { return _centroid; }
-    std::shared_ptr<Ellipse> get_ellipse_ptr() { return _ellipse; }
-    std::shared_ptr<GaussianIntegral> get_integral_ptr() { return _integral; }
+    std::shared_ptr<Centroid> get_centroid_ptr();
+    std::shared_ptr<Ellipse> get_ellipse_ptr();
+    std::shared_ptr<GaussianIntegral> get_integral_ptr();
 
-    const Centroid & get_centroid_const() const { return *_centroid;}
-    const Ellipse & get_ellipse_const() const { return *_ellipse;}
+    const Centroid & get_centroid_const() const;
+    const Ellipse & get_ellipse_const() const;
+    const GaussianIntegral & get_integral_const() const;
 
-    void set_const_normal(double const_normal) {
-        _integral->set_value(get_const_normal()*2*_ellipse->get_area());
-    }
-    void set_integral_value(double integral) {
-        _integral->set_value(integral);
-    }
+    void set_const_normal(double const_normal);
+    void set_integral_value(double integral);
 
-    void set_centroid_ptr(std::shared_ptr<Centroid> centroid) {
-        this->_set_if_not_nullptr<Centroid>(_centroid, centroid, "centroid");
-    }
-    void set_ellipse_ptr(std::shared_ptr<Ellipse> ellipse) {
-        this->_set_if_not_nullptr<Ellipse>(_ellipse, ellipse, "ellipse");
-    }
-    void set_integral_ptr(std::shared_ptr<GaussianIntegral> integral) {
-        this->_set_if_not_nullptr<GaussianIntegral>(_integral, integral, "integral");
-    }
+    void set_centroid_ptr(std::shared_ptr<Centroid> centroid);
+    void set_ellipse_ptr(std::shared_ptr<Ellipse> ellipse);
+    void set_integral_ptr(std::shared_ptr<GaussianIntegral> integral);
 
-    std::string str() const {
-        return "Gaussian(centroid=" + _centroid->str() + ", ellipse=" + _ellipse->str() + ", integral=" + _integral->str() + ")";
-    }
+    std::string str() const override;
+
+    bool operator == (const Gaussian& other) const;
+    bool operator != (const Gaussian& other) const;
 
     Gaussian(std::shared_ptr<Centroid> centroid = nullptr, std::shared_ptr<Ellipse> ellipse = nullptr,
-             std::shared_ptr<GaussianIntegral> integral = nullptr) :
-        _centroid(centroid != nullptr ? std::move(centroid): std::make_shared<Centroid>()),
-        _ellipse(ellipse != nullptr ? std::move(ellipse): std::make_shared<Ellipse>()),
-        _integral(integral != nullptr ? std::move(integral): std::make_shared<GaussianIntegralValue>()
-    ) {}
-    ~Gaussian() {};
+             std::shared_ptr<GaussianIntegral> integral = nullptr);
+    ~Gaussian();
 };
 
-class Gaussians
+/**
+ * A collection of Gaussian objects.
+ * 
+ * This class exists partly to be an immutable container of Gaussians with 
+ * convenient constructors, but also so that it can be neatly wrapped with
+ * pybind11.
+ * 
+ */
+class Gaussians : public Object
 {
 public:
     typedef std::vector<std::shared_ptr<Gaussian>> Data;
@@ -133,91 +145,70 @@ public:
 private:
     Data _data = {};
 
-    size_t assign(const Data * data, size_t i = 0)
-    {
-        size_t i_begin = i;
-        for(const auto & gauss : *data)
-        {
-            if(gauss == nullptr) throw std::runtime_error("ConvolvedGaussian data["
-                + std::to_string(i - i_begin) + "] can't be null");
-            _data[i++] = gauss;
-        }
-        return i;
-    }
+    size_t assign(const Data & data, size_t i = 0);
 
 public:
-    Gaussian& operator[](size_t i) { return *(_data[i]); }
-    const Gaussian& operator[](size_t i) const { return *(_data[i]); }
+    Gaussian & operator [] (size_t i);
+    const Gaussian & operator [] (size_t i) const;
 
-    typename Data::iterator begin() noexcept {return _data.begin();}
-    typename Data::const_iterator cbegin() const noexcept {return _data.begin();}
+    Gaussian & at(size_t i) const;
+    const Gaussian & at_const(size_t i) const;
 
-    typename Data::iterator end() noexcept {return _data.end();}
-    typename Data::const_iterator cend() const noexcept {return _data.cend();}
+    using iterator = typename Data::iterator;
+    using const_iterator = typename Data::const_iterator;
 
-    Data get_data() const { return _data; }
+    typename Data::iterator begin() noexcept;
+    typename Data::const_iterator cbegin() const noexcept;
 
-    inline std::shared_ptr<Gaussian> & at(size_t i) {return _data.at(i);}
-    size_t size() const {return _data.size();}
+    typename Data::iterator end() noexcept;
+    typename Data::const_iterator cend() const noexcept;
 
-    std::string str() const {
-        std::string s = "Gaussians([";
-        for(const auto & g : _data) s += g->str() + ",";
-        return s + "])";
-    }
+    Data get_data() const;
 
-    Gaussians(const Data * data)
-    {
-        if(data != nullptr)
-        {
-            size_t n_data = data->size();
-            if(n_data > 0)
-            {
-                _data.resize(n_data);
-                this->assign(data);
-            }
-        }
-    }
-    Gaussians(std::vector<const Data *> data)
-    {
-        size_t n_data = 0;
-        for(const auto & datum : data)
-        {
-            if(datum != nullptr) n_data += datum->size();
-        }
-        if(n_data > 0)
-        {
-            size_t i = 0;
-            _data.resize(n_data);
-            for(const auto & datum : data) i = this->assign(datum, i);
-        }
-    }
+    size_t size() const;
+
+    std::string str() const override;
+
+    // These constructors explicitly copy inputs rather than moving
+    Gaussians(std::optional<const Data> data);
+    Gaussians(std::vector<std::optional<const Data>> data);
 };
 
-class ConvolvedGaussian
+/**
+ * A convolution of a Gaussian source and kernel.
+ * 
+**/
+class ConvolvedGaussian : public Object
 {
 private:
     std::shared_ptr<Gaussian> _source;
     std::shared_ptr<Gaussian> _kernel;
 
 public:
-    Gaussian & get_source() { return *_source; }
-    Gaussian & get_kernel() { return *_kernel; }
+    Gaussian & get_source();
+    Gaussian & get_kernel();
 
-    const Gaussian & get_source_const() const { return *_source; }
-    const Gaussian & get_kernel_const() const { return *_kernel; }
+    const Gaussian & get_source_const() const;
+    const Gaussian & get_kernel_const() const;
 
-    std::string str() const {
-        return "ConvolvedGaussian(source=" + _source->str() + ", kernel=" + _kernel->str() + ")";
-    }
+    std::unique_ptr<Gaussian> make_convolution() const;
 
-    ConvolvedGaussian(std::shared_ptr<Gaussian> source = nullptr, std::shared_ptr<Gaussian> kernel = nullptr) :
-        _source(source != nullptr ? source : std::make_shared<Gaussian>()),
-        _kernel(kernel != nullptr ? kernel : std::make_shared<Gaussian>())
-    {}
+    std::string str() const override;
+
+    ConvolvedGaussian(
+        std::shared_ptr<Gaussian> source = nullptr,
+        std::shared_ptr<Gaussian> kernel = nullptr
+    );
 };
 
-class ConvolvedGaussians
+/**
+ * A collection of ConvolvedGaussian objects.
+ * 
+ * This class exists largely for the same reason as Gaussians, and to be passed
+ * to evaluators.
+ * 
+ */
+class ConvolvedGaussians : public Object
 {
 public:
     typedef std::vector<std::shared_ptr<ConvolvedGaussian>> Data;
@@ -225,65 +216,33 @@ public:
 private:
     Data _data = {};
 
-    size_t assign(const Data * data, size_t i = 0)
-    {
-        size_t i_begin = i;
-        for(const auto & gauss : *data)
-        {
-            if(gauss == nullptr) throw std::runtime_error("ConvolvedGaussian data["
-                + std::to_string(i - i_begin) + "] can't be null");
-            _data[i++] = gauss;
-        }
-        return i;
-    }
+    size_t assign(const Data & data, size_t i = 0);
 
 public:
-    ConvolvedGaussian& operator[](size_t i) { return *(_data[i]); }
-    const ConvolvedGaussian& operator[](size_t i) const { return *(_data[i]); }
+    ConvolvedGaussian & at(size_t i) const;
+    const ConvolvedGaussian & at_const(size_t i) const;
+    
+    using iterator = typename Data::iterator;
+    using const_iterator = typename Data::const_iterator;
 
-    typename Data::iterator begin() noexcept {return _data.begin();}
-    typename Data::const_iterator cbegin() const noexcept {return _data.begin();}
+    typename Data::iterator begin() noexcept;
+    typename Data::iterator end() noexcept;
 
-    typename Data::iterator end() noexcept {return _data.end();}
-    typename Data::const_iterator cend() const noexcept {return _data.cend();}
+    typename Data::const_iterator cbegin() const noexcept;
+    typename Data::const_iterator cend() const noexcept;
 
-    Data get_data() const { return _data; }
+    Data get_data() const;
 
-    inline std::shared_ptr<ConvolvedGaussian> & at(size_t i) {return _data.at(i);}
-    size_t size() const {return _data.size();}
+    size_t size() const;
 
-    std::string str() const {
-        std::string s = "ConvolvedGaussians([";
-        for(const auto & g : _data) s += g->str() + ",";
-        return s + "])";
-    }
+    std::string str() const override;
 
-    ConvolvedGaussians(const Data * data)
-    {
-        if(data != nullptr)
-        {
-            size_t n_data = data->size();
-            if(n_data > 0)
-            {
-                _data.resize(n_data);
-                this->assign(data);
-            }
-        }
-    }
-    ConvolvedGaussians(std::vector<const Data *> data)
-    {
-        size_t n_data = 0;
-        for(const auto & datum : data)
-        {
-            if(datum != nullptr) n_data += datum->size();
-        }
-        if(n_data > 0)
-        {
-            size_t i = 0;
-            _data.resize(n_data);
-            for(const auto & datum : data) i = this->assign(datum, i);
-        }
-    }
+    ConvolvedGaussian & operator [] (size_t i);
+    const ConvolvedGaussian & operator [] (size_t i) const;
+
+    // These constructors explicitly copy inputs rather than moving
+    ConvolvedGaussians(std::optional<const Data> data);
+    ConvolvedGaussians(std::vector<std::optional<const Data>> data);
 };
 
 } // namespace gauss2d

@@ -1,6 +1,10 @@
-project('libgauss2d', 'cpp',
+project(
+  'libgauss2d',
+  'cpp',
   version : '0.1.0',
-  license : 'GPL-3.0-or-later')
+  license : 'GPL-3.0-or-later',
+  default_options : ['cpp_std=c++17',],
+)
 
 inc = include_directories('include')
 

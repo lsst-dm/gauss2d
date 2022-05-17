@@ -24,17 +24,6 @@
 #ifndef GAUSS2D_EVALUATE_H
 #define GAUSS2D_EVALUATE_H
 
-//#include <functional>
-#include <iostream>
-
-#ifndef GAUSS2D_GAUSSIAN_H
-#include "gaussian.h"
-#endif
-
-#ifndef GAUSS2D_IMAGE_H
-#include "image.h"
-#endif
-
 //#include <iomanip>
 #include <iostream>
 #include <memory>
@@ -44,9 +33,12 @@
 //#include <utility>
 #include <vector>
 
+#include "gaussian.h"
+#include "image.h"
+
 namespace gauss2d {
 
-static const ConvolvedGaussians GAUSSIANS_NULL{nullptr};
+static const ConvolvedGaussians GAUSSIANS_NULL{std::nullopt};
 
 typedef size_t idx_type;
 
@@ -215,6 +207,9 @@ struct Terms
 
 Terms terms_from_covar(const double weight, const Ellipse & ell);
 
+/**
+ *
+**/
 class TermsPixel
 {
 public:
@@ -1013,8 +1008,12 @@ public:
         }
         if(_gradienttype == GradientType::loglike)
         {
-            if(!_get_likelihood) throw std::runtime_error("Can't compute likelihood gradient without computing likelihood;"
-                                                          " did you pass data and sigma_inv arrays?");
+            if(!_get_likelihood) {
+                throw std::runtime_error(
+                    "Can't compute likelihood gradient without computing likelihood;"
+                    " did you pass data and sigma_inv arrays?"
+                );
+            }
             const auto & grad_like = (*grads)[0];
             if(grad_like.get_n_cols() != N_PARAMS || grad_like.get_n_rows() != _n_gaussians)
             {

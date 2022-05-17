@@ -24,9 +24,225 @@
 #ifndef GAUSS2D_GAUSSIAN_H
 #include "gaussian.h"
 
+#include <optional>
+
 namespace gauss2d
 {
-    
+    double Gaussian::get_const_normal() const { return _integral->get_value()/(2*_ellipse->get_area()); }
+    double Gaussian::get_integral_value() const {return _integral->get_value();};
+
+    Centroid & Gaussian::get_centroid() { return *_centroid; }
+    Ellipse & Gaussian::get_ellipse() { return *_ellipse; }
+    GaussianIntegral & Gaussian::get_integral() { return *_integral; }
+
+    std::shared_ptr<Centroid> Gaussian::get_centroid_ptr() { return _centroid; }
+    std::shared_ptr<Ellipse> Gaussian::get_ellipse_ptr() { return _ellipse; }
+    std::shared_ptr<GaussianIntegral> Gaussian::get_integral_ptr() { return _integral; }
+
+    const Centroid & Gaussian::get_centroid_const() const { return *_centroid;}
+    const Ellipse & Gaussian::get_ellipse_const() const { return *_ellipse;}
+    const GaussianIntegral & Gaussian::get_integral_const() const { return *_integral;}
+
+    void Gaussian::set_const_normal(double const_normal) {
+        _integral->set_value(get_const_normal()*2*_ellipse->get_area());
+    }
+    void Gaussian::set_integral_value(double integral) {
+        _integral->set_value(integral);
+    }
+
+    void Gaussian::set_centroid_ptr(std::shared_ptr<Centroid> centroid) {
+        _centroid = this->_check_not_nullptr<Centroid>(centroid, "centroid");
+    }
+    void Gaussian::set_ellipse_ptr(std::shared_ptr<Ellipse> ellipse) {
+        _ellipse = this->_check_not_nullptr<Ellipse>(ellipse, "ellipse");
+    }
+    void Gaussian::set_integral_ptr(std::shared_ptr<GaussianIntegral> integral) {
+        _integral = this->_check_not_nullptr<GaussianIntegral>(integral, "integral");
+    }
+
+    std::string Gaussian::str() const {
+        return "Gaussian(centroid=" + _centroid->str() + ", ellipse=" + _ellipse->str()
+            + ", integral=" + _integral->str() + ")";
+    }
+
+    bool Gaussian::operator == (const Gaussian& other) const {
+        return (*_centroid == other.get_centroid_const()) && (*_ellipse == other.get_ellipse_const())
+            && (*_integral == other.get_integral_const());
+    }
+
+    bool Gaussian::operator != (const Gaussian& other) const {
+        return !(*this == other);
+    }
+
+    std::ostream & operator << (std::ostream &out, const Gaussian &g) {
+        out << g.str();
+        return out;
+    }
+
+    Gaussian::Gaussian(
+        std::shared_ptr<Centroid> centroid,
+        std::shared_ptr<Ellipse> ellipse,
+        std::shared_ptr<GaussianIntegral> integral
+    ) :
+        _centroid(centroid != nullptr ? std::move(centroid): std::make_shared<Centroid>()),
+        _ellipse(ellipse != nullptr ? std::move(ellipse): std::make_shared<Ellipse>()),
+        _integral(integral != nullptr ? std::move(integral): std::make_shared<GaussianIntegralValue>()
+    ) {}
+    Gaussian::~Gaussian() {}; 
+
+    Gaussian & Gaussians::operator [] (size_t i) { return *(_data[i]); }
+    const Gaussian & Gaussians::operator [] (size_t i) const { return *(_data[i]); }
+
+    size_t Gaussians::assign(const Data & data, size_t i)
+    {
+        size_t i_begin = i;
+        for(const auto & gauss : data)
+        {
+            if(gauss == nullptr) throw std::runtime_error("Gaussians data["
+                + std::to_string(i - i_begin) + "] can't be null");
+            _data[i++] = std::move(gauss);
+        }
+        return i;
+    }
+
+    Gaussian & Gaussians::at(size_t i) const { return *(_data.at(i)); }
+    const Gaussian & Gaussians::at_const(size_t i) const { return *(_data.at(i)); }
+
+    typename Gaussians::Data::iterator Gaussians::begin() noexcept  {return _data.begin(); }
+    typename Gaussians::Data::const_iterator Gaussians::cbegin() const noexcept { return _data.begin(); }
+
+    typename Gaussians::Data::iterator Gaussians::end() noexcept { return _data.end(); }
+    typename Gaussians::Data::const_iterator Gaussians::cend() const noexcept { return _data.cend(); }
+
+    Gaussians::Data Gaussians::get_data() const { return _data; }
+
+    size_t Gaussians::size() const { return _data.size(); }
+
+    std::string Gaussians::str() const {
+        std::string s = "Gaussians([";
+        for(const auto & g : _data) s += g->str() + ",";
+        return s + "])";
+    }
+
+    Gaussians::Gaussians(std::optional<const Data> data)
+    {
+        if(data)
+        {
+            size_t n_data = data->size();
+            if(n_data > 0)
+            {
+                _data.resize(n_data, nullptr);
+                this->assign(*data);
+            }
+        }
+    }
+    Gaussians::Gaussians(std::vector<std::optional<const Data>> data)
+    {
+        size_t n_data = 0;
+        for(const auto & datum : data)
+        {
+            if(datum) n_data += datum->size();
+        }
+        if(n_data > 0)
+        {
+            size_t i = 0;
+            _data.resize(n_data);
+            for(const auto & datum : data) i = this->assign(*datum, i);
+        }
+    }
+
+    Gaussian & ConvolvedGaussian::get_source() { return *_source; }
+    Gaussian & ConvolvedGaussian::get_kernel() { return *_kernel; }
+
+    const Gaussian & ConvolvedGaussian::get_source_const() const { return *_source; }
+    const Gaussian & ConvolvedGaussian::get_kernel_const() const { return *_kernel; }
+
+    std::unique_ptr<Gaussian> ConvolvedGaussian::make_convolution() const {
+        return std::make_unique<Gaussian>(
+            _source->get_centroid_const().make_convolution(_kernel->get_centroid_const()),
+            _source->get_ellipse_const().make_convolution(_kernel->get_ellipse_const()),
+            std::make_shared<GaussianIntegralValue>(_source->get_integral_value()
+                + _kernel->get_integral_value()
+            )
+        );
+    }
+
+    std::string ConvolvedGaussian::str() const {
+        return "ConvolvedGaussian(source=" + _source->str() + ", kernel=" + _kernel->str() + ")";
+    }
+
+    ConvolvedGaussian::ConvolvedGaussian(
+        std::shared_ptr<Gaussian> source,
+        std::shared_ptr<Gaussian> kernel
+    ) :
+        _source(source != nullptr ? source : std::make_shared<Gaussian>()),
+        _kernel(kernel != nullptr ? kernel : std::make_shared<Gaussian>())
+    {}
+
+    size_t ConvolvedGaussians::assign(const Data & data, size_t i)
+    {
+        size_t i_begin = i;
+        for(const auto & gauss : data)
+        {
+            if(gauss == nullptr) throw std::runtime_error("ConvolvedGaussian data["
+                + std::to_string(i - i_begin) + "] can't be null");
+            _data[i++] = std::move(gauss);
+        }
+        return i;
+    }
+
+    ConvolvedGaussian & ConvolvedGaussians::at(size_t i) const { return *(_data.at(i)); }
+    const ConvolvedGaussian & ConvolvedGaussians::at_const(size_t i) const { return *(_data.at(i)); }
+
+    typename ConvolvedGaussians::Data::iterator ConvolvedGaussians::begin() noexcept { return _data.begin(); }
+    typename ConvolvedGaussians::Data::iterator ConvolvedGaussians::end() noexcept { return _data.end(); }
+
+    typename ConvolvedGaussians::Data::const_iterator ConvolvedGaussians::cbegin() const noexcept {
+        return _data.begin();
+    }
+    typename ConvolvedGaussians::Data::const_iterator ConvolvedGaussians::cend() const noexcept {
+        return _data.cend();
+    }
+
+    ConvolvedGaussians::Data ConvolvedGaussians::get_data() const { return _data; }
+
+    size_t ConvolvedGaussians::size() const { return _data.size(); }
+
+    std::string ConvolvedGaussians::str() const {
+        std::string s = "ConvolvedGaussians([";
+        for(const auto & g : _data) s += g->str() + ",";
+        return s + "])";
+    }
+
+    ConvolvedGaussian & ConvolvedGaussians::operator [] (size_t i) { return *(_data[i]); }
+    const ConvolvedGaussian & ConvolvedGaussians::operator [] (size_t i) const { return *(_data[i]); }
+
+    ConvolvedGaussians::ConvolvedGaussians(std::optional<const Data> data)
+    {
+        if(data)
+        {
+            size_t n_data = data->size();
+            if(n_data > 0)
+            {
+                _data.resize(n_data);
+                this->assign(*data);
+            }
+        }
+    }
+    ConvolvedGaussians::ConvolvedGaussians(std::vector<std::optional<const Data>> data)
+    {
+        size_t n_data = 0;
+        for(const auto & datum : data)
+        {
+            if(datum) n_data += datum->size();
+        }
+        if(n_data > 0)
+        {
+            size_t i = 0;
+            _data.resize(n_data);
+            for(const auto & datum : data) i = this->assign(*datum, i);
+        }
+    }
 }
 
 #endif

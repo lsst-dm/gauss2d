@@ -1,7 +1,8 @@
 test_names = [
     'centroid',
     'ellipse',
-#    'gaussian',
+    'gaussian',
+    'image',
 ]
 foreach test_name : test_names
     test = executable(
