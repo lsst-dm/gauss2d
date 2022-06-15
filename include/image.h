@@ -185,6 +185,8 @@ public:
         static_cast<C&>(*this)._get_value_unchecked(row, col) = value;
     }
 
+    std::array<size_t, 2> shape() const { return {this->get_n_rows(), this->get_n_cols()}; }
+
     size_t size() const { return this->get_n_rows() * this->get_n_cols();};
 
     std::string str() const override {

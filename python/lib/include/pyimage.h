@@ -128,6 +128,7 @@ void declare_image(py::module &m, std::string typestr) {
     .def("get_value_unchecked", &Class::get_value_unchecked)
     .def("set_value_unchecked", &Class::set_value_unchecked)
     .def_property_readonly("size", &Class::size)
+    .def_property_readonly("shape", &Class::shape)
     .def("__repr__", &Class::str)
     ;
 }
