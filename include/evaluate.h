@@ -548,19 +548,19 @@ inline void gaussians_pixel_add_like_grad(Image<t, Data> & output,
 {
     double diff = data - model;
     chi_pix = sigma_inv * diff;
-    double diffvar = chi_pix * chi_pix;
-    /*
-    * Derivation:
-    *
-        ll = sum(-(data-model)^2*varinv/2)
-        dll/dx = --2*dmodel/dx*(data-model)*varinv/2
-        dmodelsum/dx = d(.. + model[g])/dx = dmodel[g]/dx
-        dll/dx = dmodel[g]/dx*diffvar
-    */
+    double diffvar = sigma_inv * chi_pix;
     loglike -= diff*diffvar/2.;
     for(size_t g = 0; g < N_GAUSS; ++g)
     {
         const Weights & weights = gaussweights[g];
+        /*
+        * Derivation:
+        *
+            ll = sum(-(data-model)^2*varinv/2)
+            dll/dx = --2*dmodel/dx*(data-model)*varinv/2
+            dmodelsum/dx = d(.. + model[g])/dx = dmodel[g]/dx
+            dll/dx = dmodel[g]/dx*diffvar
+        */
         gaussian_pixel_get_jacobian_from_terms(gradients, dim1, terms_pixel[g], terms_grad[g],
             weights[0]*diffvar, weights[1]*diffvar, weights[2]);
         gaussian_pixel_add_values<t>(
@@ -760,12 +760,16 @@ private:
         TermsGradientVec terms_grad(ngaussgrad);
         std::vector<Weights> weights_grad(n_gaussians*(gradient_type == GradientType::loglike));
 
+        std::vector<double> weights_conv(n_gaussians);
+
         for(size_t g = 0; g < n_gaussians; ++g)
         {
             const auto & src = _gaussians[g].get_source_const();
+            const auto & kernel = _gaussians[g].get_kernel_const();
+            weights_conv[g] = kernel.get_integral_value()*src.get_integral_value();
             const double cen_x = src.get_centroid_const().get_x();
             const double cen_y = src.get_centroid_const().get_y();
-            const Covariance cov_psf = Covariance(_gaussians[g].get_kernel_const().get_ellipse_const());
+            const Covariance cov_psf = Covariance(kernel.get_ellipse_const());
             const Covariance cov_src = Covariance(src.get_ellipse_const());
             try {
                 const auto cov = cov_src.make_convolution(cov_psf);
@@ -820,7 +824,7 @@ private:
                 for(size_t g = 0; g < n_gaussians; ++g)
                 {
                     model += gaussian_pixel_add_all<t, Data, Indices, gradient_type, do_extra>(
-                        g, j, i, _gaussians[g].get_source_const().get_integral_value(),
+                        g, j, i, weights_conv[g],
                         sigma_inv_pix, terms_pixel, output_jac_ref, grad_param_map_ref,
                         grad_param_factor_ref, weights_grad, terms_grad, gradients, *_grad_extra);
                 }
@@ -829,17 +833,20 @@ private:
                 } else if constexpr (output_type == OutputType::add) {
                     outputref.add_value_unchecked(j, i, model);
                 }
-                if constexpr(getlikelihood && ((gradient_type == GradientType::none)
-                    || (gradient_type == GradientType::jacobian)))
+                if constexpr(getlikelihood)
                 {
-                    chi_pix = (data_pix - model) * sigma_inv_pix;
-                    loglike -= chi_pix * chi_pix / 2.;
-                }
-                if constexpr(getlikelihood && (gradient_type == GradientType::loglike))
-                {
-                    gaussians_pixel_add_like_grad<t, Data, Indices, getlikelihood, gradient_type>(outputgradref, grad_param_map_ref,
-                        grad_param_factor_ref, n_gaussians, weights_grad, chi_pix, loglike, model, data_pix,
-                        sigma_inv_pix, j, i, terms_pixel, terms_grad, gradients);
+                    if((gradient_type == GradientType::none) || (gradient_type == GradientType::jacobian))
+                    {
+                        chi_pix = (data_pix - model) * sigma_inv_pix;
+                        loglike -= chi_pix * chi_pix / 2.;
+                    }
+                    else if constexpr(gradient_type == GradientType::loglike)
+                    {
+                        gaussians_pixel_add_like_grad<t, Data, Indices, getlikelihood, gradient_type>(
+                            outputgradref, grad_param_map_ref,
+                            grad_param_factor_ref, n_gaussians, weights_grad, chi_pix, loglike, model, data_pix,
+                            sigma_inv_pix, j, i, terms_pixel, terms_grad, gradients);
+                    }
                 }
                 if constexpr(do_residual) residual_ref.set_value_unchecked(j, i, chi_pix);
             }
