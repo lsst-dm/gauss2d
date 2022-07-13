@@ -1,3 +1,4 @@
+
 Gauss2D
 #######
 
@@ -12,13 +13,18 @@ package - but it can be used for any kind of image or domain.
 *gauss2d* is provided in two parts; a C++ shared library (libgauss2d) and 
 optional Python bindings.
 
-The shared library can be built using Meson as follows:
+*gauss2d* is built with `Meson <https://github.com/mesonbuild>`_ and uses
+`pkg-config <https://github.com/pkgconf/pkgconf>`_ to store package information.
+You will likely want to configure it to install in a local directory. For example,
+ if you are using a conda environment:
 
-meson --prefix=~/.local build && meson compile -C build && meson install -C build
+``PKG_CONFIG_PATH=$CONDA_PREFIX/.local/lib64/pkgconfig meson --prefix=$CONDA_PREFIX/.local build``
 
-... where the prefix argument is your desired installation path.
+You will also need to run ``meson build`` once in the ``python/lib`` folder,
+run ``meson compile -C build && meson install -C build`` once, and then
+``meson build`` in the  ``python`` folder to build the Python bindings.
 
-You may also need to configure pkg-config, e.g. prepend 
-PKG_CONFIG_PATH=~/.local/lib64/pkgconfig to the build command for a local 
-and/or non-root installation.
+A full example setup script is provided in ``setup_conda.sh``.
 
+Once the build command is run once to create the build directories, subsequent
+rebuilds can use the provided ``build*.sh`` scripts.

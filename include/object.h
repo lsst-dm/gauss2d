@@ -1,5 +1,5 @@
 /*
- * This file is part of gauss2dfit.
+ * This file is part of gauss2d.
  *
  * Developed for the LSST Data Management System.
  * This product includes software developed by the LSST Project
@@ -21,16 +21,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <pybind11/pybind11.h>
+#ifndef GAUSS2D_OBJECT_H
+#define GAUSS2D_OBJECT_H
 
-#include "pybind11.h"
+#include <string>
 
-PYBIND11_MODULE(_gauss2d, m)
+namespace gauss2d {
+
+class Object
 {
-    m.doc() = "Gauss2D Python bindings";
-    bind_centroid(m);
-    bind_ellipse(m);
-    bind_gaussian(m);
-    bind_image(m);
-    bind_object(m);
-}
+public:
+    virtual std::string str() const = 0;
+
+    friend std::ostream & operator << (std::ostream &out, const Object &obj) {
+        out << obj.str();
+        return out;
+    }
+
+    virtual ~Object() = default;
+};
+
+} // namespace gauss2d
+#endif

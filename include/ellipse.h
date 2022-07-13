@@ -26,6 +26,9 @@
 
 #include <cmath>
 #include <memory>
+#include <stdexcept>
+
+#include "object.h"
 
 namespace gauss2d {
 
@@ -37,7 +40,15 @@ const double M_180_PI = 180./M_PI;
 class Ellipse;
 class EllipseMajor;
 
-class Covariance
+/**
+ * A Covariance is a representation of a 2D Gaussian with two
+ * directional standard deviations (sigma_x, sigma_y) and a
+ *
+ * This object is intended for intermediate usage and is
+ * implemented directly with double members rather than
+ * having an abstract Data class.
+**/
+class Covariance : public Object
 {
 private:
     double _sigma_x_sq = 0;
@@ -45,28 +56,15 @@ private:
     double _cov_xy = 0;
 
 public:
-    static void check(double sigma_x_sq, double sigma_y_sq, double cov_xy)
-    {
-        double offdiag_max = sqrt(sigma_x_sq) * sqrt(sigma_y_sq);
-        // Define implied rho as -1 for negative cov and +1 for positive cov if zero size
-        // This enforces cov_xy == 0 if sigma_x_sq == sigma_y_sq == 0
-        double rho = offdiag_max > 0 ? cov_xy / offdiag_max : (cov_xy > 0) - (cov_xy < 0);
-        if(!(sigma_x_sq >= 0) || !(sigma_y_sq >= 0) || !(rho > -1 && rho < 1))
-        {
-            throw std::invalid_argument(
-                "Invalid sigma_x_sq, sigma_y_sq, cov_xy=" + std::to_string(sigma_x_sq) + ","
-                + std::to_string(sigma_y_sq) + "," + std::to_string(cov_xy) + " with implied rho="
-                + std::to_string(rho) + "; sigma_x,y_sq >= 0 and -1 < rho < 1 required."
-            );
-        }
-    }
-    void convolve(const Covariance& cov);
+    static void check(double sigma_x_sq, double sigma_y_sq, double cov_xy);
+    void convolve(const Covariance & cov);
     double get_sigma_x_sq() const { return _sigma_x_sq;};
     double get_sigma_y_sq() const { return _sigma_y_sq;};
     double get_cov_xy() const { return _cov_xy;};
     std::array<double, 3> get_xyc() const { return {_sigma_x_sq, _sigma_y_sq, _cov_xy}; }
 
-    std::shared_ptr<Covariance> make_convolution(const Covariance& cov) const;
+    std::shared_ptr<Covariance> make_convolution(const Covariance & cov) const;
+    std::unique_ptr<Covariance> make_convolution_uniq(const Covariance & cov) const;
 
     void set(const Ellipse & ellipse);
     void set(double sigma_x_sq=0, double sigma_y_sq=0, double cov_xy=0);
@@ -75,16 +73,20 @@ public:
     void set_cov_xy(double cov_xy);
     void set_xyc(const std::array<double, 3> & xyc);
 
-    std::string str() const {
-        return "Covariance(sigma_x_sq=" + std::to_string(_sigma_x_sq) + ", sigma_y_sq="
-            + std::to_string(_sigma_y_sq) + ", cov_xy=" + std::to_string(_cov_xy) + ")";
-    }
+    std::string str() const override;
 
-    Covariance(double sigma_x_sq, double sigma_y_sq, double cov_xy);
+    bool operator==(const Covariance& other) const;
+
+    friend std::ostream & operator << (std::ostream &out, const Covariance &obj);
+
+    Covariance(double sigma_x_sq=0, double sigma_y_sq=0, double cov_xy=0);
     Covariance(const Ellipse & ell);
 };
 
-class EllipseData
+/**
+ * Interface for classes storing data defining an Ellipse.
+**/
+class EllipseData : public Object
 {
 public:
     virtual double get_sigma_x() const = 0;
@@ -98,10 +100,26 @@ public:
     virtual void set(double sigma_x, double sigma_y, double rho) = 0;
     virtual void set_xyr(const std::array<double, 3> & xyr) = 0;
 
-    virtual std::string str() const = 0;
+    virtual std::string str() const override = 0;
+
+    bool operator==(const EllipseData& other) const {
+        return get_xyr() == other.get_xyr();
+    };
+
+    friend std::ostream & operator << (std::ostream &out, const EllipseData &obj) {
+        out << obj.str();
+        return out;
+    }
+
     virtual ~EllipseData() = default;
 };
 
+/**
+ * An EllipseData storing ellipse values as shared_ptrs.
+ * 
+ * shared_ptr usage allows EllipseValues to share parameters if desired. 
+ *
+**/
 class EllipseValues : public EllipseData
 {
 private:
@@ -110,20 +128,24 @@ private:
     std::shared_ptr<double> _rho;
 
 public:
-    double get_sigma_x() const { return *_sigma_x; }
-    double get_sigma_y() const { return *_sigma_y; }
-    double get_rho() const { return *_rho; }
-    std::array<double, 3> get_xyr() const { return {*_sigma_x, *_sigma_y, *_rho}; }
+    double get_sigma_x() const override { return *_sigma_x; }
+    double get_sigma_y() const override { return *_sigma_y; }
+    double get_rho() const override { return *_rho; }
+    std::array<double, 3> get_xyr() const override { return {*_sigma_x, *_sigma_y, *_rho}; }
 
-    void set_sigma_x(double sigma_x);
-    void set_sigma_y(double sigma_y);
-    void set_rho(double rho);
-    void set(double sigma_x, double sigma_y, double rho);
-    void set_xyr(const std::array<double, 3> & xyr);
+    void set_sigma_x(double sigma_x) override;
+    void set_sigma_y(double sigma_y) override;
+    void set_rho(double rho) override;
+    void set(double sigma_x, double sigma_y, double rho) override;
+    void set_xyr(const std::array<double, 3> & xyr) override;
 
-    std::string str() const;
+    std::string str() const override;
 
-    EllipseValues(std::shared_ptr<double> sigma_x, std::shared_ptr<double> sigma_y, std::shared_ptr<double> rho=nullptr) :
+    EllipseValues(
+        std::shared_ptr<double> sigma_x,
+        std::shared_ptr<double> sigma_y,
+        std::shared_ptr<double> rho=nullptr
+    ) :
         _sigma_x(sigma_x == nullptr ? std::make_shared<double>(0) : std::move(sigma_x)),
         _sigma_y(sigma_y == nullptr ? std::make_shared<double>(0) : std::move(sigma_y)),
         _rho(rho == nullptr ? std::make_shared<double>(0) : std::move(rho)) {};
@@ -132,7 +154,21 @@ public:
         _rho(std::make_shared<double>(rho)) {};
 };
 
-class Ellipse
+/**
+ * An Ellipse is the representation of the shape of an ellipse
+ * or its respective 2D Gaussian with the three unique terms 
+ * of its covariance matrix (or a weighted moment of inertia
+ * tensor). These terms are the squares of the xx and yy 
+ * moments (equivalent to the squares of the x- and y-axis
+ * standard deviations), and the (signed) xy moment (also known as 
+ * the covariance).
+ *
+ * The storage of the parameters is implemented in EllipseData;
+ * this class serves as a storage-independent interface for usage in
+ * Gaussian classes.
+ *
+**/
+class Ellipse : public Object
 {
 private:
     std::shared_ptr<EllipseData> _data;
@@ -140,12 +176,12 @@ private:
 public:
     static void check(double sigma_x, double sigma_y, double rho)
     {
-        if(!(sigma_x >= 0) || !(sigma_y >= 0) || !(rho > -1 && rho < 1))
+        if(!(sigma_x >= 0) || !(sigma_y >= 0) || !(rho >= -1 && rho <= 1))
         {
             throw std::invalid_argument(
                 "Invalid sigma_x, sigma_y, rho=" + std::to_string(sigma_x) + ","
                 + std::to_string(sigma_y) + "," + std::to_string(rho)
-                + "; sigma_x,y >= 0 and -1 < rho < 1 required."
+                + "; sigma_x,y >= 0 and 1 >= rho >= -1 required."
             );
         }
     }
@@ -153,6 +189,7 @@ public:
 
     double get_area() const;
     double get_cov_xy() const;
+    const EllipseData & get_data() const { return *_data; }
     double get_radius_trace() const;
     double get_sigma_x_sq() const;
     double get_sigma_y_sq() const;
@@ -163,6 +200,7 @@ public:
     std::array<double, 3> get_xyr() const { return  _data->get_xyr(); }
 
     std::shared_ptr<Ellipse> make_convolution(const Ellipse& ell) const;
+    std::unique_ptr<Ellipse> make_convolution_uniq(const Ellipse & ell) const;
 
     void set(double sigma_x, double sigma_y, double rho);
     void set(const Covariance & covar);
@@ -172,8 +210,12 @@ public:
     void set_sigma_y(double sigma_y);
     void set_xyr(const std::array<double, 3> & xyr);
 
-    std::string str() const {
-        return _data->str();
+    std::string str() const override {
+        return "Ellipse(data=" + _data->str() + ")";
+    }
+
+    bool operator==(const Ellipse& other) const {
+        return get_data() == other.get_data();
     }
 
     Ellipse(std::shared_ptr<EllipseData> data);
@@ -183,7 +225,18 @@ public:
     ~Ellipse() {};
 };
 
-class EllipseMajor
+/**
+ * An EllipseMajor is a representation of a 2D Gaussian with a
+ * major axis length (in units of the standard deviation),
+ * the axis ratio (minor axis divided by major), and a 
+ * position angle, by convention here defined as counter-clockwise
+ * from the positive-x axis.
+ *
+ * This object is intended for intermediate usage and is
+ * implemented directly with double members rather than
+ * having an abstract Data class.
+**/
+class EllipseMajor : public Object
 {
 private:
     double _r_major = 0.;
@@ -216,9 +269,15 @@ public:
     void set_angle(double angle);
     void set_degrees(bool degrees);
     void set_rqa(const std::array<double, 3> & rqa);
-    std::string str() const {
+
+    std::string str() const override {
         return "EllipseMajor(r_major=" + std::to_string(_r_major) + ", axrat=" + std::to_string(_axrat)
             + ", angle=" + std::to_string(_angle) + ", degrees=" + std::to_string(_degrees) + ")";
+    }
+
+    bool operator==(const EllipseMajor& other) const {
+        return (get_r_major() == other.get_r_major()) && (get_axrat() == other.get_axrat())
+            && (get_angle_degrees() == other.get_angle_degrees());
     }
 
     EllipseMajor(double r_major, double axrat, double angle, bool degrees=false);

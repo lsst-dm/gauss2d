@@ -1,12 +1,16 @@
-project('libgauss2d', 'cpp',
+project(
+  'libgauss2d',
+  'cpp',
   version : '0.1.0',
-  license : 'GPL-3.0-or-later')
+  license : 'GPL-3.0-or-later',
+  default_options : ['cpp_std=c++17',],
+)
 
 inc = include_directories('include')
 
 subdir('include')
 subdir('src')
-#subdir('test')
+subdir('tests')
 
 pkg_mod = import('pkgconfig')
 pkg_mod.generate(libraries : gauss2dlib,

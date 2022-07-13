@@ -24,9 +24,9 @@
 #ifndef GAUSS2D_ELLIPSE_H
 #include "ellipse.h"
 
-#include <string>
-#include <stdexcept>
 #include <cmath>
+#include <stdexcept>
+#include <string>
 
 namespace gauss2d
 {
@@ -41,6 +41,22 @@ namespace gauss2d
     Covariance::Covariance(const Ellipse & ell)
     {
         set(ell);
+    }
+
+    void Covariance::check(double sigma_x_sq, double sigma_y_sq, double cov_xy)
+    {
+        double offdiag_max = sqrt(sigma_x_sq) * sqrt(sigma_y_sq);
+        // Define implied rho as -1 for negative cov and +1 for positive cov if zero size
+        // This enforces cov_xy == 0 if sigma_x_sq == sigma_y_sq == 0
+        double rho = offdiag_max > 0 ? cov_xy / offdiag_max : (cov_xy > 0) - (cov_xy < 0);
+        if(!(sigma_x_sq >= 0) || !(sigma_y_sq >= 0) || !(rho >= -1 && rho <= 1))
+        {
+            throw std::invalid_argument(
+                "Invalid sigma_x_sq, sigma_y_sq, cov_xy=" + std::to_string(sigma_x_sq) + ","
+                + std::to_string(sigma_y_sq) + "," + std::to_string(cov_xy) + " with implied rho="
+                + std::to_string(rho) + "; sigma_x,y_sq >= 0 and -1 < rho < 1 required."
+            );
+        }
     }
 
     void Covariance::convolve(const Covariance& cov)
@@ -116,6 +132,20 @@ namespace gauss2d
 
     void Covariance::set_xyc(const std::array<double, 3> & xyc) {
         this->set(xyc[0], xyc[1], xyc[2]);
+    }
+
+    std::string Covariance::str() const {
+        return "Covariance(sigma_x_sq=" + std::to_string(_sigma_x_sq) + ", sigma_y_sq="
+            + std::to_string(_sigma_y_sq) + ", cov_xy=" + std::to_string(_cov_xy) + ")";
+    }
+
+    bool Covariance::operator == (const Covariance& other) const {
+        return get_xyc() == other.get_xyc();
+    }
+
+    std::ostream & operator << (std::ostream &out, const Covariance &obj) {
+        out << obj.str();
+        return out;
     }
 
     void EllipseValues::set_sigma_x(double sigma_x) {
@@ -200,7 +230,12 @@ namespace gauss2d
 
     std::shared_ptr<Ellipse> Ellipse::make_convolution(const Ellipse& ell) const
     {
-        std::shared_ptr<Ellipse> ell_ret = std::make_shared<Ellipse>(
+        return this->make_convolution_uniq(ell);
+    }
+    std::unique_ptr<Ellipse> Ellipse::make_convolution_uniq(const Ellipse& ell) const
+    {
+        // TODO: Replace with cloning derived data
+        std::unique_ptr<Ellipse> ell_ret = std::make_unique<Ellipse>(
             this->get_sigma_x(), this->get_sigma_y(), this->get_rho());
         ell_ret->convolve(ell);
         return ell_ret;
@@ -240,7 +275,8 @@ namespace gauss2d
         const double r_minor_sq = r_major_sq*axrat*axrat;
         const double sigma_x = sqrt(cos_th_sq*r_major_sq + sin_th_sq*r_minor_sq);
         const double sigma_y = sqrt(sin_th_sq*r_major_sq + cos_th_sq*r_minor_sq);
-        const double rho = sin_th*cos_th*(r_major_sq - r_minor_sq)/(sigma_x*sigma_y);
+        double rho = (sigma_x == 0 || sigma_y == 0) ? 0
+            : sin_th*cos_th*(r_major_sq - r_minor_sq)/(sigma_x*sigma_y);
         this->set(sigma_x, sigma_y, rho);
     }
 
@@ -309,7 +345,7 @@ namespace gauss2d
 
         double axrat = sqrt((x - pm)/r_major);
         r_major = sqrt(r_major);
-        double ang = atan2(2 * cov_xy, sigma_x_sq - sigma_y_sq)/2;
+        double ang = atan2(2*cov_xy, sigma_x_sq - sigma_y_sq)/2;
         if(degrees) ang *= M_180_PI;
         ellipse.set(r_major, axrat, ang);
     }

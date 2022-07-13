@@ -21,16 +21,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#ifndef GAUSS2D_PYBIND11
+#define GAUSS2D_PYBIND11
+
 #include <pybind11/pybind11.h>
 
-#include "pybind11.h"
+namespace py = pybind11;
 
-PYBIND11_MODULE(_gauss2d, m)
-{
-    m.doc() = "Gauss2D Python bindings";
-    bind_centroid(m);
-    bind_ellipse(m);
-    bind_gaussian(m);
-    bind_image(m);
-    bind_object(m);
-}
+void bind_centroid(py::module &m);
+void bind_ellipse(py::module &m);
+void bind_gaussian(py::module &m);
+void bind_image(py::module &m);
+void bind_object(py::module &m);
+
+#endif
