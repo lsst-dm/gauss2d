@@ -32,4 +32,10 @@ TEST_CASE("Ellipse")
     auto ellmaj = g2::EllipseMajor(ell);
     std::cout << ellmaj << std::endl;
     CHECK(g2::Ellipse(ellmaj) == ell);
+
+    auto ell2 = g2::Ellipse(1, 1, 0.3);
+    CHECK(ell2.get_xyr() == std::array<double, 3>{1, 1, 0.3});
+    CHECK(ell2.get_hxyr() == std::array<double, 3>{g2::M_SIGMA_HWHM, g2::M_SIGMA_HWHM, 0.3});
+    ell2.set_hxyr({1, 1, -0.3});
+    CHECK(ell2.get_xyr() == std::array<double, 3>{g2::M_HWHM_SIGMA, g2::M_HWHM_SIGMA, -0.3});
 }
