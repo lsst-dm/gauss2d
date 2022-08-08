@@ -74,8 +74,8 @@ void bind_gaussian(py::module &m)
         m, "ConvolvedGaussian")
         .def(py::init<std::shared_ptr<gauss2d::Gaussian>, std::shared_ptr<gauss2d::Gaussian>>(),
             "source"_a = nullptr, "kernel"_a = nullptr)
-        .def_property_readonly("kernel", &gauss2d::ConvolvedGaussian::get_kernel_const)
-        .def_property_readonly("source", &gauss2d::ConvolvedGaussian::get_source_const)
+        .def_property_readonly("kernel", &gauss2d::ConvolvedGaussian::get_kernel)
+        .def_property_readonly("source", &gauss2d::ConvolvedGaussian::get_source)
         .def("__repr__", &gauss2d::ConvolvedGaussian::str)
     ;
     py::class_<gauss2d::ConvolvedGaussians, std::shared_ptr<gauss2d::ConvolvedGaussians>>(
