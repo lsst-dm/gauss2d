@@ -193,6 +193,8 @@ enum class GradientType : unsigned char
     jacobian  = 2,
 };
 
+const size_t N_EXTRA_MAP = 2;
+const size_t N_EXTRA_FACTOR = 3;
 const size_t N_PARAMS = 6;
 typedef std::array<double, N_PARAMS> Weights;
 
@@ -360,10 +362,10 @@ public:
             errmsg += "extra_param_factor n_rows=" + std::to_string(n_extra_fac_rows)
                 + " != n_gauss=" + std::to_string(n_gauss) + ". ";
         }
-        if(n_extra_map_cols != 2) {
+        if(n_extra_map_cols != N_EXTRA_MAP) {
             errmsg += "extra_param_map n_cols=" + std::to_string(n_extra_map_cols) + " != 2. ";
         }
-        if(n_extra_fac_cols != 3) {
+        if(n_extra_fac_cols != N_EXTRA_FACTOR) {
             errmsg += "extra_param_factor n_cols=" + std::to_string(n_extra_fac_cols) + " != 3. ";
         }
         if(errmsg.size() > 0) throw std::runtime_error(errmsg);
@@ -620,32 +622,32 @@ inline t gaussian_pixel_add_all(size_t g, size_t j, size_t i, double weight, dou
 }
 
 template<typename Indices>
-const std::shared_ptr<const Indices> _grad_param_map_default(size_t n_gaussians, size_t n_params)
+const std::shared_ptr<const Indices> _param_map_default(size_t n_gaussians, size_t n_params=N_PARAMS)
 {
-    auto grad_param_map = std::make_shared<Indices>(n_gaussians, n_params);
+    auto param_map = std::make_shared<Indices>(n_gaussians, n_params);
     size_t index = 0;
     for(size_t g = 0; g < n_gaussians; ++g)
     {
         for(size_t p = 0; p < N_PARAMS; ++p)
         {
-            grad_param_map->set_value(g, p, index++);
+            param_map->set_value(g, p, index++);
         }
     }
-    return std::const_pointer_cast<const Indices>(grad_param_map);
+    return std::const_pointer_cast<const Indices>(param_map);
 }
 
 template<typename Data>
-const std::shared_ptr<const Data> _grad_param_factor_default(size_t n_gaussians, size_t n_params)
+const std::shared_ptr<const Data> _param_factor_default(size_t n_gaussians, size_t n_params=N_PARAMS)
 {
-    auto grad_param_factor = std::make_shared<Data>(n_gaussians, N_PARAMS);
+    auto param_factor = std::make_shared<Data>(n_gaussians, n_params);
     for(size_t g = 0; g < n_gaussians; ++g)
     {
-        for(size_t p = 0; p < N_PARAMS; ++p)
+        for(size_t p = 0; p < n_params; ++p)
         {
-            grad_param_factor->set_value(g, p, 1.);
+            param_factor->set_value(g, p, 1.);
         }
     }
-    return std::const_pointer_cast<const Data>(grad_param_factor);
+    return std::const_pointer_cast<const Data>(param_factor);
 }
 
 template<typename t, class Data, class Indices>
@@ -972,13 +974,21 @@ public:
         _get_likelihood((data != nullptr) && (sigma_inv != nullptr)),
         _data(data), _sigma_inv(sigma_inv), _output(output), _residual(residual), _grads(grads),
         _grad_param_map((_gradienttype == GradientType::none) ? nullptr : (
-            (grad_param_map == nullptr) ? _grad_param_map_default<Indices>(_gaussians.size(), N_PARAMS) : grad_param_map
+            (grad_param_map != nullptr) ? grad_param_map : 
+                _param_map_default<Indices>(_gaussians.size())
         )),
         _grad_param_factor((_gradienttype == GradientType::none) ? nullptr : (
-            (grad_param_factor == nullptr) ? _grad_param_factor_default<Data>(_gaussians.size(), N_PARAMS) : grad_param_factor
+            (grad_param_factor != nullptr) ? grad_param_factor : 
+                _param_factor_default<Data>(_gaussians.size())
         )),
-        _extra_param_map(extra_param_map),
-        _extra_param_factor(extra_param_factor),
+        _extra_param_map((_gradienttype == GradientType::none) ? nullptr : (
+            (extra_param_map != nullptr) ? extra_param_map : 
+                _param_map_default<Indices>(_gaussians.size(), N_EXTRA_MAP)
+        )),
+        _extra_param_factor((_gradienttype == GradientType::none) ? nullptr : (
+            (extra_param_factor != nullptr) ? extra_param_factor : 
+                _param_factor_default<Data>(_gaussians.size(), N_EXTRA_FACTOR)
+        )),
         _grad_extra(_do_extra ? std::make_unique<GradientsExtra<t, Data, Indices>>(
             *extra_param_map, *extra_param_factor, grads != nullptr ? *grads : IMAGEARRAY_NULL(), _n_gaussians) : nullptr
         ),
@@ -1012,6 +1022,46 @@ public:
             }
         } else if((data != nullptr) || (sigma_inv != nullptr)) {
             throw std::runtime_error("Passed only one non-null data/sigma_inv");
+        }
+        if(_gradienttype != GradientType::none)
+        {
+            const size_t n_gpm = _grad_param_map->get_n_rows();
+            const size_t n_gpf = _grad_param_factor->get_n_rows();
+
+            if((n_gpm != _n_gaussians) || (n_gpf != _n_gaussians))
+            {
+                throw std::invalid_argument(
+                    "nrows for grad_param_map,factor=" + std::to_string(n_gpm) + "," + std::to_string(n_gpf)
+                    + " != n_gaussians=" + std::to_string(_n_gaussians)
+                );
+            }
+
+            if((_grad_param_map->get_n_cols() != N_PARAMS) || (_grad_param_factor->get_n_cols() != N_PARAMS))
+            {
+                throw std::invalid_argument(
+                    "n_cols for grad_param_map,factor=" + std::to_string(n_gpm) + "," + std::to_string(n_gpf)
+                );
+            }
+
+            const size_t n_grad = _grads->size();
+            size_t idx_g_max = 0;
+            size_t idx_e_max = 0;
+            for(size_t g = 0; g < _n_gaussians; ++g) {
+                for(size_t p = 0; p < N_PARAMS; ++p) {
+                    auto value = _grad_param_map->get_value_unchecked(g, p);
+                    if(value > idx_g_max) idx_g_max = value;
+                }
+                for(size_t p = 0; p < N_EXTRA_MAP; ++p) {
+                    auto value = _extra_param_map->get_value_unchecked(g, p);
+                    if(value > idx_e_max) idx_e_max = value;
+                }
+            }
+            if(!((idx_g_max < n_grad) && (idx_e_max < n_grad))) {
+                throw std::invalid_argument(
+                    "max grad_param_map,extra_param_map=" + std::to_string(idx_g_max) + ","
+                        + std::to_string(idx_e_max) + " !< n_grad=" + std::to_string(n_grad)
+                );
+            }
         }
         if(_gradienttype == GradientType::loglike)
         {

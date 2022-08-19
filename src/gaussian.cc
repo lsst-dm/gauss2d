@@ -29,7 +29,7 @@
 namespace gauss2d
 {
     double Gaussian::get_const_normal() const { return _integral->get_value()/(2*_ellipse->get_area()); }
-    double Gaussian::get_integral_value() const {return _integral->get_value();};
+    double Gaussian::get_integral_value() const {return _integral->get_value(); };
 
     Centroid & Gaussian::get_centroid() { return *_centroid; }
     Ellipse & Gaussian::get_ellipse() { return *_ellipse; }
