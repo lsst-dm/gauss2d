@@ -67,13 +67,13 @@ private:
     std::shared_ptr<double> _y;
 
 public:
-    double get_x() const;
-    std::array<double, 2> get_xy() const;
-    double get_y() const;
+    double get_x() const override;
+    std::array<double, 2> get_xy() const override;
+    double get_y() const override;
 
-    void set_x(double x);
-    void set_xy(const std::array<double, 2> & xy);
-    void set_y(double y);
+    void set_x(double x) override;
+    void set_xy(const std::array<double, 2> & xy) override;
+    void set_y(double y) override;
 
     std::string str() const override;
 
