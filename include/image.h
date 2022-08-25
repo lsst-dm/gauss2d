@@ -175,6 +175,15 @@ public:
     void add_value_unchecked(size_t row, size_t col, t value) {
         static_cast<C&>(*this)._get_value_unchecked(row, col) += value;
     }
+    virtual void fill(t value) {
+        const size_t n_rows = get_n_rows();
+        const size_t n_cols = get_n_cols();
+        for(size_t row = 0; row < n_rows; ++row) {
+            for(size_t col = 0; col < n_cols; ++col) {
+                this->set_value_unchecked(row, col, value);
+            }
+        }
+    }
     inline t get_value(size_t row, size_t col) const {
         _check_row_col(row, col);
         return static_cast<const C&>(*this).get_value_unchecked(row, col);
@@ -194,6 +203,16 @@ public:
             + ", n_rows=" + std::to_string(this->get_n_rows())
             + ", n_cols=" + std::to_string(this->get_n_cols())
             + ")";
+    }
+
+    virtual void operator += (t value) {
+        const size_t n_rows = get_n_rows();
+        const size_t n_cols = get_n_cols();
+        for(size_t row = 0; row < n_rows; ++row) {
+            for(size_t col = 0; col < n_cols; ++col) {
+                this->add_value_unchecked(row, col, value);
+            }
+        }
     }
 
     bool operator == (const Image &other) const {
