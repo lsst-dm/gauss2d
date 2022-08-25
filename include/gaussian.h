@@ -65,15 +65,20 @@ public:
 class GaussianIntegralValue : public GaussianIntegral
 {
 private:
-    double _value;
+    // TODO: Add some value safety to this
+    // Probably must be a thin wrapper with a getter/setter enforcing >= 0
+    // either that or delete the shared_ptr constructor and add a copy constructor
+    std::shared_ptr<double> _value;
 
 public:
-    double get_value() const override { return _value; }
-    void set_value(double value) override { _value = value; }
+    double get_value() const override { return *_value; }
+    void set_value(double value) override { *_value = value; }
 
-    std::string str() const override { return "GaussianIntegralValue(" + std::to_string(_value) + ")"; }
+    std::string str() const override { return "GaussianIntegralValue(" + std::to_string(*_value) + ")"; }
 
-    GaussianIntegralValue(double value=1.): _value(value) {};
+    GaussianIntegralValue(double value=1.): _value(std::make_shared<double>(value)) {};
+    GaussianIntegralValue(std::shared_ptr<double> value)
+        : _value(value == nullptr ? std::make_shared<double>(1) : std::move(value)) {};
     ~GaussianIntegralValue() {};
 };
 
