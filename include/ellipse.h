@@ -89,15 +89,26 @@ public:
 class EllipseData : public Object
 {
 public:
+    virtual double get_hwhm_x() const { return M_SIGMA_HWHM*get_sigma_x(); };
+    virtual double get_hwhm_y() const { return M_SIGMA_HWHM*get_sigma_y(); };
     virtual double get_sigma_x() const = 0;
     virtual double get_sigma_y() const = 0;
     virtual double get_rho() const = 0;
-    virtual std::array<double, 3> get_xyr() const = 0;
+    // get hwhm_x, hwhm_y, rho
+    virtual std::array<double, 3> get_hxyr() const { return {get_hwhm_x(), get_hwhm_y(), get_rho()}; }
+    // get sigma_x, sigma_y, rho
+    virtual std::array<double, 3> get_xyr() const { return {get_sigma_x(), get_sigma_y(), get_rho()}; }
 
+    virtual void set(double sigma_x, double sigma_y, double rho) = 0;
+    virtual void set_h(double hwhm_x, double hwhm_y, double rho) = 0;
+    virtual void set_hwhm_x(double hwhm_x) { this->set_sigma_x(M_HWHM_SIGMA*hwhm_x); }
+    virtual void set_hwhm_y(double hwhm_y) { this->set_sigma_y(M_HWHM_SIGMA*hwhm_y); }
     virtual void set_sigma_x(double sigma_x) = 0;
     virtual void set_sigma_y(double sigma_y) = 0;
     virtual void set_rho(double rho) = 0;
-    virtual void set(double sigma_x, double sigma_y, double rho) = 0;
+    // set hwhm_x, hwhm_y, rho
+    virtual void set_hxyr(const std::array<double, 3> & hxyr) = 0;
+    // set sigma_x, sigma_y, rho
     virtual void set_xyr(const std::array<double, 3> & xyr) = 0;
 
     virtual std::string str() const override = 0;
@@ -131,12 +142,15 @@ public:
     double get_sigma_x() const override { return *_sigma_x; }
     double get_sigma_y() const override { return *_sigma_y; }
     double get_rho() const override { return *_rho; }
+    std::array<double, 3> get_hxyr() const override { return {get_hwhm_x(), get_hwhm_y(), *_rho}; }
     std::array<double, 3> get_xyr() const override { return {*_sigma_x, *_sigma_y, *_rho}; }
 
+    void set(double sigma_x, double sigma_y, double rho) override;
+    void set_h(double hwhm_x, double hwhm_y, double rho) override;
     void set_sigma_x(double sigma_x) override;
     void set_sigma_y(double sigma_y) override;
     void set_rho(double rho) override;
-    void set(double sigma_x, double sigma_y, double rho) override;
+    void set_hxyr(const std::array<double, 3> & hxyr) override;
     void set_xyr(const std::array<double, 3> & xyr) override;
 
     std::string str() const override;
@@ -190,6 +204,8 @@ public:
     double get_area() const;
     double get_cov_xy() const;
     const EllipseData & get_data() const { return *_data; }
+    double get_hwhm_x() const { return _data->get_hwhm_x(); }
+    double get_hwhm_y() const { return _data->get_hwhm_y(); }
     double get_radius_trace() const;
     double get_sigma_x_sq() const;
     double get_sigma_y_sq() const;
@@ -197,6 +213,7 @@ public:
     double get_sigma_x() const { return _data->get_sigma_x(); }
     double get_sigma_y() const { return _data->get_sigma_y(); }
     double get_sigma_xy() const { return _data->get_sigma_x()*_data->get_sigma_y(); }
+    std::array<double, 3> get_hxyr() const { return  _data->get_hxyr(); }
     std::array<double, 3> get_xyr() const { return  _data->get_xyr(); }
 
     std::shared_ptr<Ellipse> make_convolution(const Ellipse& ell) const;
@@ -205,9 +222,13 @@ public:
     void set(double sigma_x, double sigma_y, double rho);
     void set(const Covariance & covar);
     void set(const EllipseMajor & ellipse);
+    void set_h(double hwhm_x, double hwhm_y, double rho);
+    void set_hwhm_x(double hwhm_x);
+    void set_hwhm_y(double hwhm_y);
     void set_rho(double rho);
     void set_sigma_x(double sigma_x);
     void set_sigma_y(double sigma_y);
+    void set_hxyr(const std::array<double, 3> & hxyr);
     void set_xyr(const std::array<double, 3> & xyr);
 
     std::string str() const override {

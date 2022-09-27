@@ -181,6 +181,17 @@ namespace gauss2d
         *_rho = rho;
     }
 
+    void EllipseValues::set_h(double hwhm_x, double hwhm_y, double rho) {
+        Ellipse::check(hwhm_x, hwhm_y, rho);
+        *_sigma_x = M_HWHM_SIGMA*hwhm_x;
+        *_sigma_y = M_HWHM_SIGMA*hwhm_y;
+        *_rho = rho;
+    }
+
+    void EllipseValues::set_hxyr(const std::array<double, 3> & hxyr) {
+        this->set_h(hxyr[0], hxyr[1], hxyr[2]);
+    }
+
     void EllipseValues::set_xyr(const std::array<double, 3> & xyr) {
         this->set(xyr[0], xyr[1], xyr[2]);
     }
@@ -280,6 +291,16 @@ namespace gauss2d
         this->set(sigma_x, sigma_y, rho);
     }
 
+    void Ellipse::set_h(double hwhm_x, double hwhm_y, double rho) {
+        _data->set_h(hwhm_x, hwhm_y, rho);
+    }
+    void Ellipse::set_hwhm_x(double hwhm_x) {
+        _data->set_hwhm_x(hwhm_x);
+    }
+    void Ellipse::set_hwhm_y(double hwhm_y) {
+        _data->set_hwhm_y(hwhm_y);
+    }
+
     void Ellipse::set_rho(double rho) {
         _data->set_rho(rho);
     }
@@ -290,6 +311,10 @@ namespace gauss2d
 
     void Ellipse::set_sigma_y(double sigma_y) {
         _data->set_sigma_y(sigma_y);
+    }
+
+    void Ellipse::set_hxyr(const std::array<double, 3> & hxyr) {
+        this->set_h(hxyr[0], hxyr[1], hxyr[2]);
     }
 
     void Ellipse::set_xyr(const std::array<double, 3> & xyr) {

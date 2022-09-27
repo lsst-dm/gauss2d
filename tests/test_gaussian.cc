@@ -59,8 +59,8 @@ TEST_CASE("ConvolvedGaussian")
         std::make_shared<g2::GaussianIntegralValue>(2)
     );
     auto gc = g2::ConvolvedGaussian(g1, g2);
-    CHECK(&(gc.get_source_const()) == &(*g1));
-        CHECK(&(gc.get_kernel_const()) == &(*g2));
+    CHECK(&(gc.get_source()) == &(*g1));
+        CHECK(&(gc.get_kernel()) == &(*g2));
 }
 
 TEST_CASE("ConvolvedGaussians")

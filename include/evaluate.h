@@ -764,8 +764,8 @@ private:
 
         for(size_t g = 0; g < n_gaussians; ++g)
         {
-            const auto & src = _gaussians[g].get_source_const();
-            const auto & kernel = _gaussians[g].get_kernel_const();
+            const auto & src = _gaussians[g].get_source();
+            const auto & kernel = _gaussians[g].get_kernel();
             weights_conv[g] = kernel.get_integral_value()*src.get_integral_value();
             const double cen_x = src.get_centroid_const().get_x();
             const double cen_y = src.get_centroid_const().get_y();

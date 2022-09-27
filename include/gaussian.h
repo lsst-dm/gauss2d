@@ -160,6 +160,9 @@ public:
     typename Data::iterator begin() noexcept;
     typename Data::const_iterator cbegin() const noexcept;
 
+    typename Data::const_iterator begin() const noexcept;
+    typename Data::const_iterator end() const noexcept;
+    
     typename Data::iterator end() noexcept;
     typename Data::const_iterator cend() const noexcept;
 
@@ -181,23 +184,20 @@ public:
 class ConvolvedGaussian : public Object
 {
 private:
-    std::shared_ptr<Gaussian> _source;
-    std::shared_ptr<Gaussian> _kernel;
+    std::shared_ptr<const Gaussian> _source;
+    std::shared_ptr<const Gaussian> _kernel;
 
 public:
-    Gaussian & get_source();
-    Gaussian & get_kernel();
-
-    const Gaussian & get_source_const() const;
-    const Gaussian & get_kernel_const() const;
+    const Gaussian & get_source() const;
+    const Gaussian & get_kernel() const;
 
     std::unique_ptr<Gaussian> make_convolution() const;
 
     std::string str() const override;
 
     ConvolvedGaussian(
-        std::shared_ptr<Gaussian> source = nullptr,
-        std::shared_ptr<Gaussian> kernel = nullptr
+        std::shared_ptr<const Gaussian> source = nullptr,
+        std::shared_ptr<const Gaussian> kernel = nullptr
     );
 };
 
@@ -227,6 +227,9 @@ public:
 
     typename Data::iterator begin() noexcept;
     typename Data::iterator end() noexcept;
+
+    typename Data::const_iterator begin() const noexcept;
+    typename Data::const_iterator end() const noexcept;
 
     typename Data::const_iterator cbegin() const noexcept;
     typename Data::const_iterator cend() const noexcept;

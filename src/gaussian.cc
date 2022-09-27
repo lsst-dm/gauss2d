@@ -109,9 +109,11 @@ namespace gauss2d
     const Gaussian & Gaussians::at_const(size_t i) const { return *(_data.at(i)); }
 
     typename Gaussians::Data::iterator Gaussians::begin() noexcept  {return _data.begin(); }
-    typename Gaussians::Data::const_iterator Gaussians::cbegin() const noexcept { return _data.begin(); }
+    typename Gaussians::Data::const_iterator Gaussians::begin() const noexcept { return _data.cbegin(); }
+    typename Gaussians::Data::const_iterator Gaussians::cbegin() const noexcept { return _data.cbegin(); }
 
     typename Gaussians::Data::iterator Gaussians::end() noexcept { return _data.end(); }
+    typename Gaussians::Data::const_iterator Gaussians::end() const noexcept { return _data.cend(); }
     typename Gaussians::Data::const_iterator Gaussians::cend() const noexcept { return _data.cend(); }
 
     Gaussians::Data Gaussians::get_data() const { return _data; }
@@ -151,11 +153,8 @@ namespace gauss2d
         }
     }
 
-    Gaussian & ConvolvedGaussian::get_source() { return *_source; }
-    Gaussian & ConvolvedGaussian::get_kernel() { return *_kernel; }
-
-    const Gaussian & ConvolvedGaussian::get_source_const() const { return *_source; }
-    const Gaussian & ConvolvedGaussian::get_kernel_const() const { return *_kernel; }
+    const Gaussian & ConvolvedGaussian::get_source() const { return *_source; }
+    const Gaussian & ConvolvedGaussian::get_kernel() const { return *_kernel; }
 
     std::unique_ptr<Gaussian> ConvolvedGaussian::make_convolution() const {
         return std::make_unique<Gaussian>(
@@ -171,12 +170,14 @@ namespace gauss2d
         return "ConvolvedGaussian(source=" + _source->str() + ", kernel=" + _kernel->str() + ")";
     }
 
+    static const std::shared_ptr<const Gaussian> GAUSS_ZERO = std::make_shared<const Gaussian>();
+
     ConvolvedGaussian::ConvolvedGaussian(
-        std::shared_ptr<Gaussian> source,
-        std::shared_ptr<Gaussian> kernel
+        std::shared_ptr<const Gaussian> source,
+        std::shared_ptr<const Gaussian> kernel
     ) :
-        _source(source != nullptr ? source : std::make_shared<Gaussian>()),
-        _kernel(kernel != nullptr ? kernel : std::make_shared<Gaussian>())
+        _source(source != nullptr ? source : GAUSS_ZERO),
+        _kernel(kernel != nullptr ? kernel : GAUSS_ZERO)
     {}
 
     size_t ConvolvedGaussians::assign(const Data & data, size_t i)
@@ -196,6 +197,13 @@ namespace gauss2d
 
     typename ConvolvedGaussians::Data::iterator ConvolvedGaussians::begin() noexcept { return _data.begin(); }
     typename ConvolvedGaussians::Data::iterator ConvolvedGaussians::end() noexcept { return _data.end(); }
+
+    typename ConvolvedGaussians::Data::const_iterator ConvolvedGaussians::begin() const noexcept {
+        return _data.begin();
+    }
+    typename ConvolvedGaussians::Data::const_iterator ConvolvedGaussians::end() const noexcept {
+        return _data.cend();
+    }
 
     typename ConvolvedGaussians::Data::const_iterator ConvolvedGaussians::cbegin() const noexcept {
         return _data.begin();
