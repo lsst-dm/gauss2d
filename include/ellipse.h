@@ -24,6 +24,7 @@
 #ifndef GAUSS2D_ELLIPSE_H
 #define GAUSS2D_ELLIPSE_H
 
+#include <array>
 #include <cmath>
 #include <memory>
 #include <stdexcept>

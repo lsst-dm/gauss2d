@@ -24,6 +24,7 @@
 #ifndef GAUSS2D_IMAGE_H
 #define GAUSS2D_IMAGE_H
 
+#include <array>
 #include <cstddef>
 #include <iterator>
 #include <memory>

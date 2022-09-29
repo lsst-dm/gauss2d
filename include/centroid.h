@@ -24,6 +24,7 @@
 #ifndef GAUSS2D_CENTROID_H
 #define GAUSS2D_CENTROID_H
 
+#include <array>
 #include <memory>
 #include <string>
 
