@@ -79,8 +79,8 @@ public:
     //void add_value_unchecked(size_t row, size_t col, t value) {
     //    _get_value_unchecked(row, col) += value;
     //}
-    const inline t get_value_unchecked(size_t row, size_t col) const  { return this->_data_ref(row, col); };
-    void set_value(size_t row, size_t col, t value) { this->_data_ref(row, col) = value;}
+    const inline t get_value_unchecked(size_t row, size_t col) const { return this->_data_ref(row, col); };
+    void set_value_unchecked(size_t row, size_t col, t value) { this->_data_ref(row, col) = value;}
     //void set_value_unchecked(size_t row, size_t col, t value) { _get_value_unchecked(row, col) = value;};
 
     PyImage(
@@ -114,7 +114,7 @@ void declare_image(py::module &m, std::string typestr) {
     py::class_<Class, std::shared_ptr<Class>>(m, pyclass_name.c_str())
     .def(
         py::init<size_t, size_t, const std::shared_ptr<const gauss2d::CoordinateSystem>>(),
-        "dim_y"_a, "dim_x"_a, "coordsys"_a = gauss2d::COORDS_DEFAULT
+        "n_rows"_a, "n_cols"_a, "coordsys"_a = gauss2d::COORDS_DEFAULT
     )
     .def(
         py::init<py::array_t<T>, const std::shared_ptr<const gauss2d::CoordinateSystem>>(),

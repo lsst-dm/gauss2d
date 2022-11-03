@@ -161,7 +161,7 @@ public:
         if(!(row < this->get_n_rows()) && !(row < this->get_n_rows())) {
             throw std::out_of_range("row,col = " + std::to_string(row) + ","  + std::to_string(col)
                 + " n_rows,n_cols = " + std::to_string(this->get_n_rows()) + ","
-                + std::to_string(this->get_n_rows())
+                + std::to_string(this->get_n_cols())
             );
         }
     }
