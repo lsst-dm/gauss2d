@@ -17,6 +17,7 @@ depends = declare_dependency(
 )
 
 subdir('include')
+subdir('tests')
 
 pkg_mod = import('pkgconfig')
 pkg_mod.generate(version : '0.1',

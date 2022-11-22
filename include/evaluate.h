@@ -174,7 +174,7 @@ inline double degrees_to_radians(double degrees)
     exp(-((x-m)%5E2*s%5E2+%2B+(y-n)%5E2*t%5E2+-+2*r*(x-m)*(y-n)*s*t)%2F(2*(1-r%5E2)))+wrt+s
 */
 
-//typedef std::array<double, N_PARAMS> Weights;
+//typedef std::array<double, N_PARAMS_GAUSS2D> Weights;
 enum class BackgroundType : unsigned char
 {
     none      = 0,
@@ -193,8 +193,10 @@ enum class GradientType : unsigned char
     jacobian  = 2,
 };
 
-const size_t N_PARAMS = 6;
-typedef std::array<double, N_PARAMS> Weights;
+const size_t N_EXTRA_MAP = 2;
+const size_t N_EXTRA_FACTOR = 3;
+const size_t N_PARAMS_GAUSS2D = 6;
+typedef std::array<double, N_PARAMS_GAUSS2D> Weights;
 
 // Various multiplicative terms that appread in a Gaussian PDF
 struct Terms
@@ -208,12 +210,13 @@ struct Terms
 Terms terms_from_covar(const double weight, const Ellipse & ell);
 
 /**
- *
+ *  Storage for terms common to Gaussians for a single pixel.
 **/
 class TermsPixel
 {
 public:
     double weight = 0;
+    double weight_kernel = 0;
     double xmc = 0;
     double xmc_weighted = 0;
     vecdptr ymc_weighted = nullptr;
@@ -222,14 +225,16 @@ public:
     vecdptr yy_weighted = nullptr;
     // TODO: Give these variables more compelling names
 
-    TermsPixel(double weight_i=0, double xmc_i=0, double xmc_weighted_i=0, vecdptr ymc_weighted_i=nullptr,
+    TermsPixel(double weight_i=0, double weight_kernel=0, double xmc_i=0, double xmc_weighted_i=0, vecdptr ymc_weighted_i=nullptr,
         double weight_xx_i=0, double xmc_sq_norm_i=0, vecdptr yy_weighted_i=nullptr) :
         weight(weight_i), xmc(xmc_i), xmc_weighted(xmc_weighted_i), ymc_weighted(std::move(ymc_weighted_i)),
         weight_xx(weight_xx_i), xmc_sq_norm(xmc_sq_norm_i), yy_weighted(std::move(yy_weighted_i)) {}
 
-    void set(double weight, double xmc, double xx, vecdptr ymc_weighted, vecdptr yy_weighted)
+    // Set values that are specific to a given gaussian
+    void set(double weight, double weight_kernel, double xmc, double xx, vecdptr ymc_weighted, vecdptr yy_weighted)
     {
         this->weight = weight;
+        this->weight_kernel = weight_kernel;
         this->xmc = xmc;
         this->weight_xx = xx;
         this->ymc_weighted = std::move(ymc_weighted);
@@ -360,10 +365,10 @@ public:
             errmsg += "extra_param_factor n_rows=" + std::to_string(n_extra_fac_rows)
                 + " != n_gauss=" + std::to_string(n_gauss) + ". ";
         }
-        if(n_extra_map_cols != 2) {
+        if(n_extra_map_cols != N_EXTRA_MAP) {
             errmsg += "extra_param_map n_cols=" + std::to_string(n_extra_map_cols) + " != 2. ";
         }
-        if(n_extra_fac_cols != 3) {
+        if(n_extra_fac_cols != N_EXTRA_FACTOR) {
             errmsg += "extra_param_factor n_cols=" + std::to_string(n_extra_fac_cols) + " != 3. ";
         }
         if(errmsg.size() > 0) throw std::runtime_error(errmsg);
@@ -510,7 +515,7 @@ inline void gaussian_pixel_get_jacobian_from_terms(
     const TermsGradient & terms_grad, double m, double m_unweighted, double xy_norm)
 {
     gaussian_pixel_get_jacobian(out,
-        m, m_unweighted,
+        m, m_unweighted*terms_pixel.weight_kernel,
         terms_pixel.xmc_weighted, (*terms_pixel.ymc_weighted)[dim1],
         terms_pixel.xmc, (*terms_grad.ymc)[dim1],
         terms_grad.yy_weight, terms_grad.xmc_t_xy_weight,
@@ -539,7 +544,7 @@ inline void gaussian_pixel_add_values(
 }
 
 // Computes and stores LL along with dll/dx for all components
-template <typename t, class Data, class Indices, bool getlikelihood, GradientType gradient_type>
+template <typename t, class Data, class Indices>
 inline void gaussians_pixel_add_like_grad(Image<t, Data> & output,
     const Image<idx_type, Indices> & grad_param_map, const Image<t, Data> & grad_param_factor, const size_t N_GAUSS,
     const std::vector<Weights> & gaussweights, double & chi_pix, double & loglike, const double model,
@@ -600,8 +605,8 @@ inline t gaussian_pixel_add_all(size_t g, size_t j, size_t i, double weight, dou
     }
     else if constexpr(gradient_type == GradientType::jacobian)
     {
-        gaussian_pixel_get_jacobian_from_terms(gradients, j, terms_pixel_vec[g], terms_grad_vec[g],
-            -sigma_inv * value, -sigma_inv * value_unweight, xy_norm);
+        gaussian_pixel_get_jacobian_from_terms(gradients, j, terms_pixel, terms_grad_vec[g],
+            sigma_inv * value, sigma_inv * value_unweight, xy_norm);
         gaussian_pixel_add_values<t>(
             output_jac_ref[grad_param_map.get_value_unchecked(g, 0)]._get_value_unchecked(j, i),
             output_jac_ref[grad_param_map.get_value_unchecked(g, 1)]._get_value_unchecked(j, i),
@@ -620,32 +625,35 @@ inline t gaussian_pixel_add_all(size_t g, size_t j, size_t i, double weight, dou
 }
 
 template<typename Indices>
-const std::shared_ptr<const Indices> _grad_param_map_default(size_t n_gaussians, size_t n_params)
+const std::shared_ptr<const Indices> _param_map_default(size_t n_gaussians, size_t n_params=N_PARAMS_GAUSS2D,
+    size_t increment=1)
 {
-    auto grad_param_map = std::make_shared<Indices>(n_gaussians, n_params);
+    auto param_map = std::make_shared<Indices>(n_gaussians, n_params);
     size_t index = 0;
     for(size_t g = 0; g < n_gaussians; ++g)
     {
-        for(size_t p = 0; p < N_PARAMS; ++p)
+        for(size_t p = 0; p < n_params; ++p)
         {
-            grad_param_map->set_value(g, p, index++);
+            param_map->set_value(g, p, index);
+            index += increment;
         }
     }
-    return std::const_pointer_cast<const Indices>(grad_param_map);
+    return std::const_pointer_cast<const Indices>(param_map);
 }
 
 template<typename Data>
-const std::shared_ptr<const Data> _grad_param_factor_default(size_t n_gaussians, size_t n_params)
+const std::shared_ptr<const Data> _param_factor_default(size_t n_gaussians, size_t n_params=N_PARAMS_GAUSS2D,
+    double value = 1.)
 {
-    auto grad_param_factor = std::make_shared<Data>(n_gaussians, N_PARAMS);
+    auto param_factor = std::make_shared<Data>(n_gaussians, n_params);
     for(size_t g = 0; g < n_gaussians; ++g)
     {
-        for(size_t p = 0; p < N_PARAMS; ++p)
+        for(size_t p = 0; p < n_params; ++p)
         {
-            grad_param_factor->set_value(g, p, 1.);
+            param_factor->set_value(g, p, value);
         }
     }
-    return std::const_pointer_cast<const Data>(grad_param_factor);
+    return std::const_pointer_cast<const Data>(param_factor);
 }
 
 template<typename t, class Data, class Indices>
@@ -698,7 +706,7 @@ private:
         std::vector<size_t> grad_param_idx;
         std::set<size_t> grad_param_idx_uniq;
         for (size_t g = 0; g < _n_gaussians; ++g) {
-            for (size_t p = 0; p < N_PARAMS; ++p) {
+            for (size_t p = 0; p < N_PARAMS_GAUSS2D; ++p) {
                 grad_param_idx_uniq.insert(_grad_param_map->get_value(g, p));
             }
             if(_do_extra) _grad_extra->add_index_to_set(g, grad_param_idx_uniq);
@@ -730,8 +738,7 @@ private:
 
         DataT & outputgradref = is_loglike ? _grads->at(0) : (DataT &)(IMAGE_NULL());
         ImageArrayT & output_jac_ref = gradient_type == GradientType::jacobian ? (*_grads) : IMAGEARRAY_NULL();
-        std::vector<size_t> grad_param_idx;
-        size_t grad_param_idx_size = 0;
+        size_t grad_param_idx_size = _grad_param_idx.size();
 
         DataT & outputref = writeoutput ? (*_output) : IMAGE_NULL();
         DataT & residual_ref = do_residual ? (*_residual) : IMAGE_NULL();
@@ -766,7 +773,10 @@ private:
         {
             const auto & src = _gaussians[g].get_source();
             const auto & kernel = _gaussians[g].get_kernel();
-            weights_conv[g] = kernel.get_integral_value()*src.get_integral_value();
+            const auto weight_src = src.get_integral_value();
+            const auto weight_kernel = kernel.get_integral_value();
+            // TODO: intelligently skip if weight is zero
+            weights_conv[g] = weight_src*weight_kernel;
             const double cen_x = src.get_centroid_const().get_x();
             const double cen_y = src.get_centroid_const().get_y();
             const Covariance cov_psf = Covariance(kernel.get_ellipse_const());
@@ -774,12 +784,13 @@ private:
             try {
                 const auto cov = cov_src.make_convolution(cov_psf);
 
-                // Deliberately omit luminosity for now
+                // Deliberately omit weights for now
                 const Terms terms = terms_from_covar(bin_x*bin_y, Ellipse(*cov));
                 auto yvals = gaussian_pixel_x_xx(cen_y, y_min, bin_y, _n_rows, terms.yy, terms.xy);
 
-                terms_pixel[g].set(terms.weight, x_min - cen_x + bin_x_half, terms.xx,
-                    std::move(yvals.x_norm), std::move(yvals.xx));
+                terms_pixel[g].set(terms.weight, weight_kernel, x_min - cen_x + bin_x_half, terms.xx,
+                    std::move(yvals.x_norm), std::move(yvals.xx)
+                );
                 if(do_gradient)
                 {
                     terms_grad[g].set(terms, cov_src, cov_psf, *cov, std::move(yvals.x));
@@ -814,7 +825,7 @@ private:
                 model = background_flat;
                 if constexpr(gradient_type == GradientType::jacobian) {
                     for(size_t k = 0; k < grad_param_idx_size; ++k) {
-                        output_jac_ref[grad_param_idx[k]].set_value_unchecked(j, i, 0);
+                        output_jac_ref[_grad_param_idx[k]].set_value_unchecked(j, i, 0);
                     }
                 }
                 if constexpr(getlikelihood || (gradient_type == GradientType::jacobian)) {
@@ -835,14 +846,18 @@ private:
                 }
                 if constexpr(getlikelihood)
                 {
-                    if((gradient_type == GradientType::none) || (gradient_type == GradientType::jacobian))
+                    static_assert(getlikelihood);
+                    if constexpr(
+                        (gradient_type == GradientType::none) || (gradient_type == GradientType::jacobian)
+                    )
                     {
                         chi_pix = (data_pix - model) * sigma_inv_pix;
                         loglike -= chi_pix * chi_pix / 2.;
                     }
+                    // gaussians_pixel_add_like_grad adds to the loglike to avoid redundant calculations
                     else if constexpr(gradient_type == GradientType::loglike)
                     {
-                        gaussians_pixel_add_like_grad<t, Data, Indices, getlikelihood, gradient_type>(
+                        gaussians_pixel_add_like_grad<t, Data, Indices>(
                             outputgradref, grad_param_map_ref,
                             grad_param_factor_ref, n_gaussians, weights_grad, chi_pix, loglike, model, data_pix,
                             sigma_inv_pix, j, i, terms_pixel, terms_grad, gradients);
@@ -962,7 +977,7 @@ public:
         _do_residual(residual != nullptr),
         _has_background(background != nullptr),
         _gradienttype((grads != nullptr && grads->size() > 0) ? (
-                    ((*grads)[0].get_n_rows() == _n_gaussians && (*grads)[0].get_n_cols() == N_PARAMS) ? GradientType::loglike :
+                    ((*grads)[0].get_n_rows() == _n_gaussians && (*grads)[0].get_n_cols() == N_PARAMS_GAUSS2D) ? GradientType::loglike :
                         GradientType::jacobian
             ) : GradientType::none),
         _do_extra(extra_param_map != nullptr && extra_param_factor != nullptr && _gradienttype == GradientType::jacobian),
@@ -972,13 +987,21 @@ public:
         _get_likelihood((data != nullptr) && (sigma_inv != nullptr)),
         _data(data), _sigma_inv(sigma_inv), _output(output), _residual(residual), _grads(grads),
         _grad_param_map((_gradienttype == GradientType::none) ? nullptr : (
-            (grad_param_map == nullptr) ? _grad_param_map_default<Indices>(_gaussians.size(), N_PARAMS) : grad_param_map
+            (grad_param_map != nullptr) ? grad_param_map : 
+                _param_map_default<Indices>(_gaussians.size())
         )),
         _grad_param_factor((_gradienttype == GradientType::none) ? nullptr : (
-            (grad_param_factor == nullptr) ? _grad_param_factor_default<Data>(_gaussians.size(), N_PARAMS) : grad_param_factor
+            (grad_param_factor != nullptr) ? grad_param_factor : 
+                _param_factor_default<Data>(_gaussians.size())
         )),
-        _extra_param_map(extra_param_map),
-        _extra_param_factor(extra_param_factor),
+        _extra_param_map((_gradienttype == GradientType::none) ? nullptr : (
+            (extra_param_map != nullptr) ? extra_param_map : 
+                _param_map_default<Indices>(_gaussians.size(), N_EXTRA_MAP, 0)
+        )),
+        _extra_param_factor((_gradienttype == GradientType::none) ? nullptr : (
+            (extra_param_factor != nullptr) ? extra_param_factor : 
+                _param_factor_default<Data>(_gaussians.size(), N_EXTRA_FACTOR, 0.)
+        )),
         _grad_extra(_do_extra ? std::make_unique<GradientsExtra<t, Data, Indices>>(
             *extra_param_map, *extra_param_factor, grads != nullptr ? *grads : IMAGEARRAY_NULL(), _n_gaussians) : nullptr
         ),
@@ -997,9 +1020,11 @@ public:
     {
         if(gaussians == nullptr) throw std::runtime_error("Gaussians can't be null");
         if(_has_background && background->size() > 1) throw std::runtime_error("Background model size can't be > 1");
-        if(!(_n_cols > 0 && _n_rows > 0)) throw std::runtime_error("Data can't have n_rows/cols == 0; " + std::to_string(output == nullptr));
+        if(!(_n_cols > 0 && _n_rows > 0)) throw std::runtime_error("Data can't have n_rows/cols == 0; "
+            + std::to_string(output == nullptr));
         if(!_do_extra && ((extra_param_map != nullptr) || (extra_param_factor != nullptr))) {
-            throw std::runtime_error("Must pass all of extra_param_map, extra_param_factor and grads to compute extra gradients");
+            throw std::runtime_error("Must pass all of extra_param_map, extra_param_factor and grads"
+                " to compute extra gradients");
         }
         if(_get_likelihood)
         {
@@ -1013,6 +1038,49 @@ public:
         } else if((data != nullptr) || (sigma_inv != nullptr)) {
             throw std::runtime_error("Passed only one non-null data/sigma_inv");
         }
+        if(_gradienttype != GradientType::none)
+        {
+            const size_t n_gpm = _grad_param_map->get_n_rows();
+            const size_t n_gpf = _grad_param_factor->get_n_rows();
+
+            if((n_gpm != _n_gaussians) || (n_gpf != _n_gaussians))
+            {
+                throw std::invalid_argument(
+                    "nrows for grad_param_map,factor=" + std::to_string(n_gpm) + "," + std::to_string(n_gpf)
+                    + " != n_gaussians=" + std::to_string(_n_gaussians)
+                );
+            }
+
+            if((_grad_param_map->get_n_cols() != N_PARAMS_GAUSS2D) || (_grad_param_factor->get_n_cols() != N_PARAMS_GAUSS2D))
+            {
+                throw std::invalid_argument(
+                    "n_cols for grad_param_map,factor=" + std::to_string(n_gpm) + "," + std::to_string(n_gpf)
+                );
+            }
+
+            const size_t n_grad = _grads->size();
+            size_t idx_g_max = 0;
+            size_t idx_e_gauss_max = 0;
+            size_t idx_e_param_max = 0;
+            for(size_t g = 0; g < _n_gaussians; ++g) {
+                for(size_t p = 0; p < N_PARAMS_GAUSS2D; ++p) {
+                    auto value = _grad_param_map->get_value_unchecked(g, p);
+                    if(value > idx_g_max) idx_g_max = value;
+                }
+                auto value = _extra_param_map->get_value_unchecked(g, 0);
+                if(value > idx_e_gauss_max) idx_e_gauss_max = value;
+                value = _extra_param_map->get_value_unchecked(g, 1);
+                if(value > idx_e_param_max) idx_e_param_max = value;
+            }
+            if(!((idx_g_max < n_grad) && (idx_e_gauss_max < _n_gaussians) && (idx_e_param_max < n_grad))) {
+                throw std::invalid_argument(
+                    "max grad_param_map,extra_param_map[1]=" + std::to_string(idx_g_max) + ","
+                        + std::to_string(idx_e_param_max) + " !< n_grad=" + std::to_string(n_grad)
+                        + " or max extra_param_map[0]=" + std::to_string(idx_e_gauss_max)
+                        + " !< n_gaussians=" + std::to_string(_n_gaussians)
+                );
+            }
+        }
         if(_gradienttype == GradientType::loglike)
         {
             if(!_get_likelihood) {
@@ -1022,10 +1090,10 @@ public:
                 );
             }
             const auto & grad_like = (*grads)[0];
-            if(grad_like.get_n_cols() != N_PARAMS || grad_like.get_n_rows() != _n_gaussians)
+            if(grad_like.get_n_cols() != N_PARAMS_GAUSS2D || grad_like.get_n_rows() != _n_gaussians)
             {
                 throw std::runtime_error("Expected likelihood gradient matrix dimensions ["
-                    + std::to_string(N_PARAMS) + ',' + std::to_string(_n_gaussians) + "] don't match grads[0] dimensions ["
+                    + std::to_string(N_PARAMS_GAUSS2D) + ',' + std::to_string(_n_gaussians) + "] don't match grads[0] dimensions ["
                     + std::to_string(grad_like.get_n_cols()) + ',' + std::to_string(grad_like.get_n_rows()) + ']');
             }
         }

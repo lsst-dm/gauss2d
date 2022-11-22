@@ -1,6 +1,7 @@
 test_names = [
     'centroid',
     'ellipse',
+    'evaluate',
     'gaussian',
     'image',
 ]
