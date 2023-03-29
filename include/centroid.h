@@ -33,14 +33,20 @@
 namespace gauss2d {
 
 /**
- * Interface for an object storing Centroid data.
+ * @brief Interface for an object storing Centroid data.
+ * 
+ * This is an abstract class designed to store data for a Centroid to
+ * retrieve. No additional restrictions are placed on implementations.
  *
 **/
 class CentroidData : public Object
 {
 public:
+    /// Get the x value
     virtual double get_x() const = 0;
+    /// Get the x and y values
     virtual std::array<double, 2> get_xy() const = 0;
+    /// Get the y value
     virtual double get_y() const = 0;
 
     virtual void set_x(double x) = 0;
@@ -57,9 +63,10 @@ public:
 };
 
 /**
- * A CentroidData storing centroid values as shared_ptrs.
+ * @brief A CentroidData storing centroid values as shared_ptrs.
  * 
- * shared_ptr usage allows CentroidData to share parameters if desired. 
+ * This implementation stores values in shared_ptrs, allowing sharing
+ * of values with other instances.
  *
 **/
 class CentroidValues : public virtual CentroidData
@@ -80,6 +87,12 @@ public:
     std::string repr(bool name_keywords=false) const override;
     std::string str() const override;
 
+    /**
+     * @brief Construct a new Centroid Values object
+     * 
+     * @param x The x-axis centroid value
+     * @param y The y-axis centroid value
+     */
     CentroidValues(std::shared_ptr<double> x, std::shared_ptr<double> y);
     CentroidValues(double x=0, double y=0);
 
@@ -87,13 +100,12 @@ public:
 };
 
 /**
- * A Centroid is a 2D coordinate representing the center of a plane figure
- * (specifically an ellipse in this package).
+ * @brief A 2D coordinate representing the center of a plane figure.
+ * 
+ * This is a centroid in a 2D coordinate system, generally used for ellipses
+ * in this package. Storage is implemented in CentroidData.
  *
- * The storage of the parameters is implemented in CentroidData;
- * this class serves as a storage-independent interface for usage in
- * Ellipse classes.
- *
+ * @param data The centroid data
 **/
 class Centroid : public Object
 {
@@ -101,15 +113,36 @@ private:
     std::shared_ptr<CentroidData> _data;
 
 public:
+    /**
+     * @brief Convolve this with another centroid.
+     *
+     * Convolution simply adds the value of the other centroid to this.
+     * 
+     * @param cen The centroid to convolve with
+     */
     void convolve(const Centroid & cen);
 
+    /// Get this centroid's data
     const CentroidData & get_data() const;
+    /// Get the x value
     double get_x() const;
+    /// Get the x and y values
     std::array<double, 2> get_xy() const;
+    /// Get the y value
     double get_y() const;
 
-    std::shared_ptr<Centroid> make_convolution(const Centroid& ell) const;
-    std::unique_ptr<Centroid> make_convolution_uniq(const Centroid & ell) const;
+    /**
+     * @brief Return the convolution of this with another centroid.
+     *
+     * Convolution simply adds the values of both centroids together
+     * 
+     * @param cen The centroid to convolve with
+     *
+     * @return A new centroid with values set to the convolution.
+     */
+    std::shared_ptr<Centroid> make_convolution(const Centroid& cen) const;
+    /// Same as make_convolution(), but returning a unique_ptr.
+    std::unique_ptr<Centroid> make_convolution_uniq(const Centroid& cen) const;
 
     void set_x(double x);
     void set_xy(const std::array<double, 2> & xy);

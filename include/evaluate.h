@@ -656,6 +656,16 @@ const std::shared_ptr<const Data> _param_factor_default(size_t n_gaussians, size
     return std::const_pointer_cast<const Data>(param_factor);
 }
 
+/**
+ * @brief A class that evaluates 2D Gaussians and renders them in images.
+ * 
+ * This class is designed for repeated re-evaluation of Gaussian mixture models
+ * by caching references to the inputs and outputs.
+ *
+ * @tparam t The data type (e.g. float, int)
+ * @tparam Data The data array class
+ * @tparam Indices The index array class (usually a size_t array)
+ */
 template<typename t, class Data, class Indices>
 class GaussianEvaluator
 {
@@ -937,22 +947,28 @@ public:
     GaussianEvaluator(int x = 0, const std::shared_ptr<const ConvolvedGaussians> gaussians = nullptr) {};
 
     /**
-    * Construct a Gaussian Evaluator with resuable settings.
-    *
-    * @param gaussians N x 6 matrix of Gaussian parameters [cen_x, cen_y, flux, sigma_x, sigma_y, rho]
-    * @param coordsys Coordinate system for all images.
-    * @param data 2D input Data matrix.
-    * @param sigma_inv 2D inverse sigma (sqrt variance) map of the same size as ImageD.
-    * @param output 2D output matrix of the same size as ImageD.
-    * @param grad Output for gradients. Can either an M x 1 vector or M x Data 3D Jacobian matrix,
-    *    where M <= N x 6 to allow for condensing gradients based on grad_param_map.
-    * @param grad_param_map Nx6 matrix of indices of grad to add each gradient to. For example, if four gaussians
-    *    share the same cen_x, one could set grad_param_map[0:4,0] = 0. All values must be < grad.size().
-    * @param grad_param_factor Nx6 matrix of multiplicative factors for each gradient term. For example, if a
-    *    Gaussian is a sub-component of a multi-Gaussian component with a total flux parameter but fixed
-    *    ratios, as in multi-Gaussian Sersic models.
-    * @param output 2D output matrix of the same size as ImageD.
-    */
+     * @brief Construct a GaussianEvaluator, inferring outputs from inputs.
+     *
+     * @param gaussians N x 6 matrix of Gaussian parameters [cen_x, cen_y, flux, sigma_x, sigma_y, rho]
+     * @param coordsys Coordinate system for all images.
+     * @param data 2D input Data matrix.
+     * @param sigma_inv 2D inverse sigma (sqrt variance) map of the same size as data.
+     * @param output 2D output matrix of the same size as ImageD.
+     * @param residual 2D output matrix for residual ((data-model)/sigma) of the same size as data.
+     * @param grads Output for gradients. Can either an M x 1 vector or M x Data 3D Jacobian matrix,
+     *    where M <= N x 6 to allow for condensing gradients based on grad_param_map.
+     * @param grad_param_map Nx6 matrix of indices of grad to add each gradient to. For example, if four
+     *    gaussians share the same cen_x, one could set grad_param_map[0:4,0] = 0. All values must have
+     *    index < grad.size().
+     * @param grad_param_factor Nx6 matrix of multiplicative factors for each gradient term. For example, if a
+     *    Gaussian is a sub-component of a multi-Gaussian component with a total flux parameter but fixed
+     *    ratios, as in multi-Gaussian Sersic models.
+     * @param extra_param_map Nx2 matrix of indices to add to an extra (meta)parameter. The first item is
+     *    the index of the Gaussian to add and the second is the index of the metaparameter.
+     * @param extra_param_factor Nx3 matrix of multiplicative factors for each extra gradient term. The
+     *    factors are ordered L, sigma_x, sigma_y.
+     * @param background A background model image. Only 1x1 (constant level) backgrounds are supported.
+     */
     GaussianEvaluator(
         const std::shared_ptr<const ConvolvedGaussians> gaussians,
         const std::shared_ptr<const CoordinateSystem> coordsys = nullptr,
@@ -1167,14 +1183,19 @@ Indices & GaussianEvaluator<t, Data, Indices>::INDICES_NULL() const
     return null;
 }
 
-/*
-(const Gaussians & gaussians,
-    const Data * const data, const Data * const sigma_inv,
-    const CoordinateSystem * coordsys = nullptr, Data * output = nullptr,
-    Data * residual = nullptr, ImageDArray * grads = nullptr,
-    Indices * grad_param_map = nullptr, Data * grad_param_factor = nullptr,
-    std::unique_ptr<GradientsExtra> grad_extra = nullptr, Data * background = nullptr)
-*/
+/**
+ * @brief Add gaussians to an image, creating one if needed
+ * 
+ * @tparam t The data type (e.g. float, int)
+ * @tparam Data The data array class
+ * @tparam Indices The index array class (usually a size_t array)
+ * @param gaussians The gaussians to add
+ * @param output The image to add gaussians to. If null, it will be initialized
+ * @param n_rows The number of rows, if creating a new image
+ * @param n_cols The number of columns, if creating a new image
+ * @param coordsys The image's coordinate system
+ * @return std::shared_ptr<Data> The output pointer, assigned if originally null
+ */
 template<typename t, class Data, class Indices>
 std::shared_ptr<Data> make_gaussians_pixel(
         const std::shared_ptr<const ConvolvedGaussians> gaussians,
@@ -1190,6 +1211,16 @@ std::shared_ptr<Data> make_gaussians_pixel(
     return output;
 }
 
+/**
+ * @brief Add Gaussians to an image
+ * 
+ * @tparam t The data type (e.g. float, int)
+ * @tparam Data The data array class
+ * @tparam Indices The index array class (usually a size_t array)
+ * @param gaussians The gaussians to add
+ * @param output The image to add gaussians to
+ * @param coordsys The image's coordinate system
+ */
 template<typename t, class Data, class Indices>
 void add_gaussians_pixel(
     const ConvolvedGaussians& gaussians,

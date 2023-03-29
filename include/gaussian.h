@@ -40,9 +40,9 @@
 namespace gauss2d {
 
 /**
- * Interface for the normalization (total integrated value) of a 2D Gaussian.
+ * @brief Interface for the normalization (total integrated value) of a 2D Gaussian.
  * 
-**/
+ */
 class GaussianIntegral : public Object
 {
 public:
@@ -60,9 +60,12 @@ public:
 };
 
 /**
- * A GaussianIntegral storing a float value.
+ * @brief A GaussianIntegral storing a float value.
  * 
-**/
+ * @note At the moments, limits are not enforced as there is no way to prevent
+ * external methods setting the value negative and/or non-finite.
+ *
+ **/
 class GaussianIntegralValue : public GaussianIntegral
 {
 private:
@@ -85,11 +88,11 @@ public:
 };
 
 /**
- * A 2D Gaussian with a Centroid, Ellipse, and integral.
+ * @brief A 2D Gaussian with a Centroid, Ellipse, and integral.
  * 
  * Gaussian offers some convenience functions but is otherwise a container
  * for its three component subclasses.
-**/
+ **/
 class Gaussian : public Object
 {
 private:
@@ -97,6 +100,14 @@ private:
     std::shared_ptr<Ellipse> _ellipse;
     std::shared_ptr<GaussianIntegral> _integral;
 
+    /**
+     * @brief Check if a pointer is null and throw if so
+     * 
+     * @tparam T The type of the object to check
+     * @param ptr The pointer to check
+     * @param name The name of the pointer to include in the error message (if null)
+     * @return std::shared_ptr<T> The pointer that passed the check
+     */
     template <typename T>
     std::shared_ptr<T> _check_not_nullptr(std::shared_ptr<T> ptr, std::string name) {
         if(ptr == nullptr) throw std::invalid_argument(this->str() + "Can't set " + name + " to nullptr");
@@ -104,11 +115,16 @@ private:
     }
 
 public:
+    /// Get the multiplicative factor for Gaussian function evaluations: integral/(2*area)
     double get_const_normal() const;
+    /// Get the integral value
     double get_integral_value() const;
 
+    /// Get the centroid object
     Centroid & get_centroid();
+    /// Get the ellipse object
     Ellipse & get_ellipse();
+    /// Get the integral object
     GaussianIntegral & get_integral();
 
     std::shared_ptr<Centroid> get_centroid_ptr();
@@ -132,13 +148,20 @@ public:
     bool operator == (const Gaussian& other) const;
     bool operator != (const Gaussian& other) const;
 
+    /**
+     * @brief Construct a new Gaussian object
+     * 
+     * @param centroid The centroid. Defaults to a new, default Centroid.
+     * @param ellipse The ellipse. Defaults to a new, default Ellipse.
+     * @param integral The integral. Defaults to a new, default GaussianIntegralValue.
+     */
     Gaussian(std::shared_ptr<Centroid> centroid = nullptr, std::shared_ptr<Ellipse> ellipse = nullptr,
              std::shared_ptr<GaussianIntegral> integral = nullptr);
     ~Gaussian();
 };
 
 /**
- * A collection of Gaussian objects.
+ * @brief An array of Gaussian objects.
  * 
  * This class exists partly to be an immutable container of Gaussians with 
  * convenient constructors, but also so that it can be neatly wrapped with

@@ -265,9 +265,9 @@ public:
 
 /**
  * @brief An array of compatible Images.
- * 
- * See images_compatible for the definition of compatibility.
- * 
+ *
+ * See images_compatible() for the definition of compatibility.
+ *
  * @tparam t The numeric type.
  * @tparam C The specialized class.
  */
