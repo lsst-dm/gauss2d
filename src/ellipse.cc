@@ -134,6 +134,13 @@ namespace gauss2d
         this->set(xyc[0], xyc[1], xyc[2]);
     }
 
+    std::string Covariance::repr(bool name_keywords) const {
+        return std::string("Covariance(")
+            + (name_keywords ? "sigma_x_sq=" : "") + std::to_string(_sigma_x_sq) + ", "
+            + (name_keywords ? "sigma_y_sq=" : "") + std::to_string(_sigma_y_sq) + ", "
+            + (name_keywords ? "cov_xy=" : "") + std::to_string(_cov_xy) + ")";
+    }
+
     std::string Covariance::str() const {
         return "Covariance(sigma_x_sq=" + std::to_string(_sigma_x_sq) + ", sigma_y_sq="
             + std::to_string(_sigma_y_sq) + ", cov_xy=" + std::to_string(_cov_xy) + ")";
@@ -194,6 +201,13 @@ namespace gauss2d
 
     void EllipseValues::set_xyr(const std::array<double, 3> & xyr) {
         this->set(xyr[0], xyr[1], xyr[2]);
+    }
+
+    std::string EllipseValues::repr(bool name_keywords) const {
+        return std::string("EllipseValues(")
+            + (name_keywords ? "sigma_x=" : "") + std::to_string(this->get_sigma_x()) + ", "
+            + (name_keywords ? "sigma_y=" : "") + std::to_string(this->get_sigma_y()) + ", "
+            + (name_keywords ? "rho=" : "") + std::to_string(this->get_rho()) + ")";
     }
 
     std::string EllipseValues::str() const {
@@ -321,6 +335,18 @@ namespace gauss2d
         this->set(xyr[0], xyr[1], xyr[2]);
     }
 
+    std::string Ellipse::repr(bool name_keywords) const {
+        return std::string("Ellipse(") + (name_keywords ? "data=" : "") + _data->repr(name_keywords) + ")";
+    }
+
+    std::string Ellipse::str() const {
+        return "Ellipse(data=" + _data->str() + ")";
+    }
+
+    bool Ellipse::operator == (const Ellipse& other) const {
+        return get_data() == other.get_data();
+    };
+
     Ellipse::Ellipse(std::shared_ptr<EllipseData> data) :
         _data(data == nullptr ? std::make_shared<EllipseValues>() : std::move(data)) {};
 
@@ -436,6 +462,25 @@ namespace gauss2d
     void EllipseMajor::set_rqa(const std::array<double, 3> & rqa) {
         this->set(rqa[0], rqa[1], rqa[2]);
     }
+    
+    std::string EllipseMajor::repr(bool name_keywords) const {
+        return std::string("EllipseMajor(")
+            + (name_keywords ? "r_major=" : "") + std::to_string(_r_major) + ", "
+            + (name_keywords ? "axrat=" : "") + std::to_string(_axrat) + ", "
+            + (name_keywords ? "angle=" : "") + std::to_string(_angle)  + ", "
+            + (name_keywords ? "degrees=" : "") + std::to_string(_degrees) + ")";
+    }
+
+    std::string EllipseMajor::str() const {
+        return "EllipseMajor(r_major=" + std::to_string(_r_major) + ", axrat=" + std::to_string(_axrat)
+            + ", angle=" + std::to_string(_angle) + ", degrees=" + std::to_string(_degrees) + ")";
+    }
+
+    bool EllipseMajor::operator==(const EllipseMajor& other) const {
+        return (get_r_major() == other.get_r_major()) && (get_axrat() == other.get_axrat())
+            && (get_angle_degrees() == other.get_angle_degrees());
+    }
+
 
 }
 

@@ -47,7 +47,8 @@ void bind_gaussian(py::module &m)
             std::shared_ptr<gauss2d::GaussianIntegralValue>>(m, "GaussianIntegralValue")
         .def(py::init<double>(), "value"_a=1)
         .def_property("value", &gauss2d::GaussianIntegralValue::get_value, &gauss2d::GaussianIntegralValue::set_value)
-        .def("__repr__", &gauss2d::GaussianIntegralValue::str)
+        .def("__repr__", [](const gauss2d::GaussianIntegralValue & self) { return self.repr(true); })
+        .def("__str__", &gauss2d::GaussianIntegralValue::str)
     ;
 
     py::class_<gauss2d::Gaussian, std::shared_ptr<gauss2d::Gaussian>>(m, "Gaussian")
@@ -61,14 +62,16 @@ void bind_gaussian(py::module &m)
             &gauss2d::Gaussian::set_const_normal)
         .def_property("integral_value", &gauss2d::Gaussian::get_integral_value,
             &gauss2d::Gaussian::set_integral_value)
-        .def("__repr__", &gauss2d::Gaussian::str)
+        .def("__repr__", [](const gauss2d::Gaussian & self) { return self.repr(true); })
+        .def("__str__", &gauss2d::Gaussian::str)
     ;
     py::class_<gauss2d::Gaussians, std::shared_ptr<gauss2d::Gaussians>>(m, "Gaussians")
         .def(py::init<std::optional<const gauss2d::Gaussians::Data>>(), "gaussians"_a)
         .def("at", &gauss2d::Gaussians::at)
         .def_property_readonly("size", &gauss2d::Gaussians::size)
         .def("__len__", &gauss2d::Gaussians::size)
-        .def("__repr__", &gauss2d::Gaussians::str)
+        .def("__repr__", [](const gauss2d::Gaussians & self) { return self.repr(true); })
+        .def("__str__", &gauss2d::Gaussians::str)
     ;
     py::class_<gauss2d::ConvolvedGaussian, std::shared_ptr<gauss2d::ConvolvedGaussian>>(
         m, "ConvolvedGaussian")
@@ -76,7 +79,8 @@ void bind_gaussian(py::module &m)
             "source"_a = nullptr, "kernel"_a = nullptr)
         .def_property_readonly("kernel", &gauss2d::ConvolvedGaussian::get_kernel)
         .def_property_readonly("source", &gauss2d::ConvolvedGaussian::get_source)
-        .def("__repr__", &gauss2d::ConvolvedGaussian::str)
+        .def("__repr__", [](const gauss2d::ConvolvedGaussian & self) { return self.repr(true); })
+        .def("__str__", &gauss2d::ConvolvedGaussian::str)
     ;
     py::class_<gauss2d::ConvolvedGaussians, std::shared_ptr<gauss2d::ConvolvedGaussians>>(
         m, "ConvolvedGaussians")
@@ -84,7 +88,8 @@ void bind_gaussian(py::module &m)
         .def("at", &gauss2d::ConvolvedGaussians::at)
         .def_property_readonly("size", &gauss2d::ConvolvedGaussians::size)
         .def("__len__", &gauss2d::ConvolvedGaussians::size)
-        .def("__repr__", &gauss2d::ConvolvedGaussians::str)
+        .def("__repr__", [](const gauss2d::ConvolvedGaussians & self) { return self.repr(true); })
+        .def("__str__", &gauss2d::ConvolvedGaussians::str)
     ;
 }
 

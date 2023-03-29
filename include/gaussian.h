@@ -49,6 +49,7 @@ public:
     virtual double get_value() const = 0;
     virtual void set_value(double value) = 0;
 
+    virtual std::string repr(bool name_keywords=false) const override = 0;
     virtual std::string str() const override = 0;
 
     virtual bool operator==(const GaussianIntegral& other) const {
@@ -74,11 +75,12 @@ public:
     double get_value() const override { return *_value; }
     void set_value(double value) override { *_value = value; }
 
-    std::string str() const override { return "GaussianIntegralValue(" + std::to_string(*_value) + ")"; }
+    std::string repr(bool name_keywords=false) const override;
+    std::string str() const override;
 
-    GaussianIntegralValue(double value=1.): _value(std::make_shared<double>(value)) {};
-    GaussianIntegralValue(std::shared_ptr<double> value)
-        : _value(value == nullptr ? std::make_shared<double>(1) : std::move(value)) {};
+    GaussianIntegralValue(double value=1.);
+    GaussianIntegralValue(std::shared_ptr<double> value);
+
     ~GaussianIntegralValue() {};
 };
 
@@ -124,6 +126,7 @@ public:
     void set_ellipse_ptr(std::shared_ptr<Ellipse> ellipse);
     void set_integral_ptr(std::shared_ptr<GaussianIntegral> integral);
 
+    std::string repr(bool name_keywords=false) const override;
     std::string str() const override;
 
     bool operator == (const Gaussian& other) const;
@@ -175,6 +178,7 @@ public:
 
     size_t size() const;
 
+    std::string repr(bool name_keywords=false) const override;
     std::string str() const override;
 
     // These constructors explicitly copy inputs rather than moving
@@ -198,6 +202,7 @@ public:
 
     std::unique_ptr<Gaussian> make_convolution() const;
 
+    std::string repr(bool name_keywords=false) const override;
     std::string str() const override;
 
     ConvolvedGaussian(
@@ -243,6 +248,7 @@ public:
 
     size_t size() const;
 
+    std::string repr(bool name_keywords=false) const override;
     std::string str() const override;
 
     ConvolvedGaussian & operator [] (size_t i);

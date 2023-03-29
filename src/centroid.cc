@@ -38,8 +38,14 @@ void CentroidValues::set_x(double x) { *_x = x; }
 void CentroidValues::set_xy(const std::array<double, 2> & xy) { *_x = xy[0]; *_y = xy[1]; };
 void CentroidValues::set_y(double y) { *_y = y; }
 
+std::string CentroidValues::repr(bool name_keywords) const {
+    return std::string("CentroidValues(")
+        + (name_keywords ? "x=" : "") + std::to_string(*_x) + ", "
+        + (name_keywords ? "y=" : "") + std::to_string(*_y) + ")";
+}
+
 std::string CentroidValues::str() const {
-    return "Centroid(x=" + std::to_string(*_x) + ", y=" + std::to_string(*_y) + ")";
+    return "CentroidValues(x=" + std::to_string(*_x) + ", y=" + std::to_string(*_y) + ")";
 }
 
 CentroidValues::CentroidValues(std::shared_ptr<double> x, std::shared_ptr<double> y) :
@@ -82,8 +88,12 @@ void Centroid::set_x(double x) { _data->set_x(x); }
 void Centroid::set_xy(const std::array<double, 2> & xy) { _data->set_xy(xy); }
 void Centroid::set_y(double y) { _data->set_y(y); }
 
+std::string Centroid::repr(bool name_keywords) const {
+    return std::string("Centroid(") + (name_keywords ? "data=" : "") + _data->repr(name_keywords) + ")";
+}
+
 std::string Centroid::str() const {
-    return  _data->str();
+    return  "Centroid(data=" +_data->str() + ")";
 }
 
 bool Centroid::operator == (const Centroid& other) const {

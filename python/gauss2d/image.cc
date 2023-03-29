@@ -43,6 +43,8 @@ void bind_image(py::module &m)
 {
     py::class_<gauss2d::CoordinateSystem, std::shared_ptr<gauss2d::CoordinateSystem>>(m, "CoordinateSystem")
         .def(py::init<double, double>(), "d1"_a=1., "d2"_a=1.)
+        .def("__repr__", [](const gauss2d::CoordinateSystem & self) { return self.repr(true); })
+        .def("__str__", &gauss2d::CoordinateSystem::str)
     ;
     declare_image<bool>(m, "B");
     declare_image<float>(m, "F");

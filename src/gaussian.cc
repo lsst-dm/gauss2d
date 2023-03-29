@@ -28,6 +28,15 @@
 
 namespace gauss2d
 {
+    std::string GaussianIntegralValue::repr(bool name_keywords) const {
+        return std::string("GaussianIntegralValue(") + (name_keywords ? "value=" : "") + std::to_string(*_value) + ")";
+    }
+    std::string GaussianIntegralValue::str() const { return "GaussianIntegralValue(value=" + std::to_string(*_value) + ")"; }
+
+    GaussianIntegralValue::GaussianIntegralValue(double value): _value(std::make_shared<double>(value)) {};
+    GaussianIntegralValue::GaussianIntegralValue(std::shared_ptr<double> value)
+        : _value(value == nullptr ? std::make_shared<double>(1) : std::move(value)) {};
+
     double Gaussian::get_const_normal() const { return _integral->get_value()/(2*_ellipse->get_area()); }
     double Gaussian::get_integral_value() const {return _integral->get_value(); };
 
@@ -58,6 +67,13 @@ namespace gauss2d
     }
     void Gaussian::set_integral_ptr(std::shared_ptr<GaussianIntegral> integral) {
         _integral = this->_check_not_nullptr<GaussianIntegral>(integral, "integral");
+    }
+
+    std::string Gaussian::repr(bool name_keywords) const {
+        return std::string("Gaussian(")
+            + (name_keywords ? "centroid=" : "") + _centroid->str() + ", "
+            + (name_keywords ? "ellipse=" : "") + _ellipse->str() + ", "
+            + (name_keywords ? "integral=" : "") + _integral->str() + ")";
     }
 
     std::string Gaussian::str() const {
@@ -120,8 +136,14 @@ namespace gauss2d
 
     size_t Gaussians::size() const { return _data.size(); }
 
+    std::string Gaussians::repr(bool name_keywords) const {
+        std::string s = std::string("Gaussians(") + (name_keywords ? "data=[" : "[");
+        for(const auto & g : _data) s += g->repr(name_keywords) + ", ";
+        return s + "])";
+    }
+
     std::string Gaussians::str() const {
-        std::string s = "Gaussians([";
+        std::string s = "Gaussians(data=[";
         for(const auto & g : _data) s += g->str() + ",";
         return s + "])";
     }
@@ -164,6 +186,12 @@ namespace gauss2d
                 + _kernel->get_integral_value()
             )
         );
+    }
+
+    std::string ConvolvedGaussian::repr(bool name_keywords) const {
+        return std::string("ConvolvedGaussian(")
+            + (name_keywords ? "source=" : "") + _source->repr(name_keywords) + ", "
+            + (name_keywords ? "kernel=" : "") + _kernel->repr(name_keywords) + ")";
     }
 
     std::string ConvolvedGaussian::str() const {
@@ -215,6 +243,13 @@ namespace gauss2d
     ConvolvedGaussians::Data ConvolvedGaussians::get_data() const { return _data; }
 
     size_t ConvolvedGaussians::size() const { return _data.size(); }
+
+
+    std::string ConvolvedGaussians::repr(bool name_keywords) const {
+        std::string s = std::string("ConvolvedGaussians(") + (name_keywords ? "data=[" : "[");
+        for(const auto & g : _data) s += g->repr(name_keywords) + ", ";
+        return s + "])";
+    }
 
     std::string ConvolvedGaussians::str() const {
         std::string s = "ConvolvedGaussians([";

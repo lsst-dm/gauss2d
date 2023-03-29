@@ -46,7 +46,8 @@ void bind_centroid(py::module &m)
         .def_property("x", &gauss2d::CentroidValues::get_x, &gauss2d::CentroidValues::set_x)
         .def_property("y", &gauss2d::CentroidValues::get_y, &gauss2d::CentroidValues::set_y)
         .def_property("xy", &gauss2d::CentroidValues::get_xy, &gauss2d::CentroidValues::set_xy)
-        .def("__repr__", &gauss2d::CentroidValues::str)
+        .def("__repr__", [](const gauss2d::CentroidValues & self) { return self.repr(true); })
+        .def("__str__", &gauss2d::CentroidValues::str)
     ;
     py::class_<gauss2d::Centroid, std::shared_ptr<gauss2d::Centroid>>(m, "Centroid")
         .def(py::init<std::shared_ptr<gauss2d::CentroidData>>(), "data"_a)
@@ -54,6 +55,7 @@ void bind_centroid(py::module &m)
         .def_property("x", &gauss2d::Centroid::get_x, &gauss2d::Centroid::set_x)
         .def_property("y", &gauss2d::Centroid::get_y, &gauss2d::Centroid::set_y)
         .def_property("xy", &gauss2d::Centroid::get_xy, &gauss2d::Centroid::set_xy)
-        .def("__repr__", &gauss2d::Centroid::str)
+        .def("__repr__", [](const gauss2d::Centroid & self) { return self.repr(true); })
+        .def("__str__", &gauss2d::Centroid::str)
     ;
 }
