@@ -25,6 +25,7 @@
 #include "gaussian.h"
 
 #include <optional>
+#include <stdexcept>
 
 namespace gauss2d
 {
@@ -111,6 +112,14 @@ namespace gauss2d
 
     size_t Gaussians::assign(const Data & data, size_t i)
     {
+        const size_t n_data = this->_data.size();
+        const size_t i_max = i + data.size();
+        if(!(i_max <= n_data)) {
+            throw std::out_of_range(
+                "data i_max=" + std::to_string(i_max) + ">= this._data.size()=" + std::to_string(n_data)
+                + " for this=" + this->str()
+            );
+        }
         size_t i_begin = i;
         for(const auto & gauss : data)
         {
@@ -138,13 +147,13 @@ namespace gauss2d
 
     std::string Gaussians::repr(bool name_keywords) const {
         std::string s = std::string("Gaussians(") + (name_keywords ? "data=[" : "[");
-        for(const auto & g : _data) s += g->repr(name_keywords) + ", ";
+        for(const auto & g : _data) s += (g == nullptr ? "null" : g->repr(name_keywords)) + ", ";
         return s + "])";
     }
 
     std::string Gaussians::str() const {
         std::string s = "Gaussians(data=[";
-        for(const auto & g : _data) s += g->str() + ",";
+        for(const auto & g : _data) s += (g == nullptr ? "null" : g->str()) + ",";
         return s + "])";
     }
 
@@ -210,6 +219,14 @@ namespace gauss2d
 
     size_t ConvolvedGaussians::assign(const Data & data, size_t i)
     {
+        const size_t n_data = this->_data.size();
+        const size_t i_max = i + data.size();
+        if(!(i_max <= n_data)) {
+            throw std::out_of_range(
+                "data i_max=" + std::to_string(i_max) + ">= this._data.size()=" + std::to_string(n_data)
+                + " for this=" + this->str()
+            );
+        }
         size_t i_begin = i;
         for(const auto & gauss : data)
         {
@@ -247,13 +264,13 @@ namespace gauss2d
 
     std::string ConvolvedGaussians::repr(bool name_keywords) const {
         std::string s = std::string("ConvolvedGaussians(") + (name_keywords ? "data=[" : "[");
-        for(const auto & g : _data) s += g->repr(name_keywords) + ", ";
+        for(const auto & g : _data) s += (g == nullptr ? "null" : g->repr(name_keywords)) + ", ";
         return s + "])";
     }
 
     std::string ConvolvedGaussians::str() const {
         std::string s = "ConvolvedGaussians([";
-        for(const auto & g : _data) s += g->str() + ",";
+        for(const auto & g : _data) s += (g == nullptr ? "null" : g->str()) + ",";
         return s + "])";
     }
 
