@@ -18,3 +18,5 @@ pkg_mod.generate(libraries : gauss2dlib,
                  name : 'libgauss2d',
                  filebase : 'gauss2d',
                  description : 'Create, manipulate and evaluate 2D Gaussian mixtures and images thereof.')
+
+subdir('doc')
