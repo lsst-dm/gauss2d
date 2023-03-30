@@ -7,7 +7,7 @@ test_names = [
 ]
 foreach test_name : test_names
     test = executable(
-        'gauss2_test_' + test_name,
+        'gauss2d_test_' + test_name,
         'test_' + test_name + '.cc',
         include_directories : inc,
         link_with : gauss2dlib,
