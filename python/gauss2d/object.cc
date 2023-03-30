@@ -33,7 +33,6 @@
 
 namespace py = pybind11;
 
-void bind_object(py::module &m)
-{
+void bind_object(py::module &m) {
     py::class_<gauss2d::Object, std::shared_ptr<gauss2d::Object>>(m, "Object");
 }

@@ -40,8 +40,7 @@ namespace gauss2d {
     in production.
 */
 template <typename t>
-class VectorImage : public gauss2d::Image<t, VectorImage<t>>
-{
+class VectorImage : public gauss2d::Image<t, VectorImage<t>> {
 private:
     const size_t _n_rows;
     const size_t _n_cols;
@@ -50,27 +49,23 @@ private:
     std::vector<std::deque<t>> _data;
 
 public:
-    inline t & _get_value_unchecked(size_t row, size_t col) { return this->_data[row][col]; };
+    inline t& _get_value_unchecked(size_t row, size_t col) { return this->_data[row][col]; };
     const inline t get_value_unchecked(size_t row, size_t col) const { return this->_data[row][col]; };
 
     size_t get_n_cols() const { return _n_cols; };
     size_t get_n_rows() const { return _n_rows; };
 
-    VectorImage(
-        size_t n_rows, size_t n_cols,
-        const std::shared_ptr<const gauss2d::CoordinateSystem> coordsys = nullptr
-    ) :
-        gauss2d::Image<t, VectorImage<t>>(coordsys),
-        _n_rows(n_rows), _n_cols(n_cols)
-    {
+    VectorImage(size_t n_rows, size_t n_cols,
+                const std::shared_ptr<const gauss2d::CoordinateSystem> coordsys = nullptr)
+            : gauss2d::Image<t, VectorImage<t>>(coordsys), _n_rows(n_rows), _n_cols(n_cols) {
         _data.resize(n_rows);
-        for(size_t row = 0; row < n_rows; row++) {
+        for (size_t row = 0; row < n_rows; row++) {
             _data[row].resize(n_cols);
         }
     }
-    ~VectorImage() {};
+    ~VectorImage(){};
 };
 #pragma GCC visibility pop
 
-}
+}  // namespace gauss2d
 #endif

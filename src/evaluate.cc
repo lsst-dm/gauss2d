@@ -26,21 +26,18 @@
 
 namespace gauss2d {
 
-Terms terms_from_covar(const double weight, const Ellipse & ell)
-{
+Terms terms_from_covar(const double weight, const Ellipse& ell) {
     double sig_x = ell.get_sigma_x();
     double sig_y = ell.get_sigma_y();
     double rho = ell.get_rho();
 
-    const double norm_exp = 1./(1-rho*rho);
-    Terms rval = {
-        .weight = weight/(2.*M_PI*sig_x*sig_y)*sqrt(norm_exp),
-        .xx = norm_exp/(2.*sig_x*sig_x),
-        .yy = norm_exp/(2.*sig_y*sig_y),
-        .xy = rho*norm_exp/(sig_x*sig_y)
-    };
+    const double norm_exp = 1. / (1 - rho * rho);
+    Terms rval = {.weight = weight / (2. * M_PI * sig_x * sig_y) * sqrt(norm_exp),
+                  .xx = norm_exp / (2. * sig_x * sig_x),
+                  .yy = norm_exp / (2. * sig_y * sig_y),
+                  .xy = rho * norm_exp / (sig_x * sig_y)};
     return rval;
 }
 
-}
+}  // namespace gauss2d
 #endif

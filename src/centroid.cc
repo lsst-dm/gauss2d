@@ -27,44 +27,41 @@
 #include <memory>
 #include <string>
 
-namespace gauss2d
-{
+namespace gauss2d {
 
 double CentroidValues::get_x() const { return *_x; }
 std::array<double, 2> CentroidValues::get_xy() const { return {*_x, *_y}; }
 double CentroidValues::get_y() const { return *_y; }
 
 void CentroidValues::set_x(double x) { *_x = x; }
-void CentroidValues::set_xy(const std::array<double, 2> & xy) { *_x = xy[0]; *_y = xy[1]; };
+void CentroidValues::set_xy(const std::array<double, 2>& xy) {
+    *_x = xy[0];
+    *_y = xy[1];
+};
 void CentroidValues::set_y(double y) { *_y = y; }
 
 std::string CentroidValues::repr(bool name_keywords) const {
-    return std::string("CentroidValues(")
-        + (name_keywords ? "x=" : "") + std::to_string(*_x) + ", "
-        + (name_keywords ? "y=" : "") + std::to_string(*_y) + ")";
+    return std::string("CentroidValues(") + (name_keywords ? "x=" : "") + std::to_string(*_x) + ", "
+           + (name_keywords ? "y=" : "") + std::to_string(*_y) + ")";
 }
 
 std::string CentroidValues::str() const {
     return "CentroidValues(x=" + std::to_string(*_x) + ", y=" + std::to_string(*_y) + ")";
 }
 
-CentroidValues::CentroidValues(std::shared_ptr<double> x, std::shared_ptr<double> y) :
-    _x(x == nullptr ? std::make_shared<double>(0) : std::move(x)),
-    _y(y == nullptr ? std::make_shared<double>(0) : std::move(y))
-{
-}
+CentroidValues::CentroidValues(std::shared_ptr<double> x, std::shared_ptr<double> y)
+        : _x(x == nullptr ? std::make_shared<double>(0) : std::move(x)),
+          _y(y == nullptr ? std::make_shared<double>(0) : std::move(y)) {}
 
-CentroidValues::CentroidValues(double x, double y) :
-    _x(std::make_shared<double>(x)), _y(std::make_shared<double>(y))
-{
-}
+CentroidValues::CentroidValues(double x, double y)
+        : _x(std::make_shared<double>(x)), _y(std::make_shared<double>(y)) {}
 
-void Centroid::convolve(const Centroid & cen) {
+void Centroid::convolve(const Centroid& cen) {
     this->set_x(this->get_x() + cen.get_x());
     this->set_y(this->get_y() + cen.get_y());
 }
 
-const CentroidData & Centroid::get_data() const { return *_data;}
+const CentroidData& Centroid::get_data() const { return *_data; }
 
 double Centroid::get_x() const { return _data->get_x(); }
 
@@ -75,41 +72,33 @@ double Centroid::get_y() const { return _data->get_y(); }
 std::shared_ptr<Centroid> Centroid::make_convolution(const Centroid& cen) const {
     return this->make_convolution_uniq(cen);
 }
-std::unique_ptr<Centroid> Centroid::make_convolution_uniq(const Centroid & cen) const {
+std::unique_ptr<Centroid> Centroid::make_convolution_uniq(const Centroid& cen) const {
     // TODO: Replace with cloning derived data
-    std::unique_ptr<Centroid> cen_ret = std::make_unique<Centroid>(
-        this->get_x(), this->get_y()
-    );
+    std::unique_ptr<Centroid> cen_ret = std::make_unique<Centroid>(this->get_x(), this->get_y());
     cen_ret->convolve(cen);
     return cen_ret;
 }
 
 void Centroid::set_x(double x) { _data->set_x(x); }
-void Centroid::set_xy(const std::array<double, 2> & xy) { _data->set_xy(xy); }
+void Centroid::set_xy(const std::array<double, 2>& xy) { _data->set_xy(xy); }
 void Centroid::set_y(double y) { _data->set_y(y); }
 
 std::string Centroid::repr(bool name_keywords) const {
     return std::string("Centroid(") + (name_keywords ? "data=" : "") + _data->repr(name_keywords) + ")";
 }
 
-std::string Centroid::str() const {
-    return  "Centroid(data=" +_data->str() + ")";
-}
+std::string Centroid::str() const { return "Centroid(data=" + _data->str() + ")"; }
 
-bool Centroid::operator == (const Centroid& other) const {
-    return get_data() == other.get_data();
-};
+bool Centroid::operator==(const Centroid& other) const { return get_data() == other.get_data(); };
 
-Centroid::Centroid(std::shared_ptr<CentroidData> data) : 
-    _data(data == nullptr ? std::make_shared<CentroidValues>() : std::move(data))
-{
-}
+Centroid::Centroid(std::shared_ptr<CentroidData> data)
+        : _data(data == nullptr ? std::make_shared<CentroidValues>() : std::move(data)) {}
 
 Centroid::Centroid(double x, double y) : _data(std::make_shared<CentroidValues>()) {
     set_x(x);
     set_y(y);
 }
 
-} // namespace gauss2d
+}  // namespace gauss2d
 
 #endif

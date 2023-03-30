@@ -8,8 +8,7 @@
 
 namespace g2 = gauss2d;
 
-TEST_CASE("Centroid")
-{
+TEST_CASE("Centroid") {
     double x = 1, y = -1;
     auto values = std::make_shared<g2::CentroidValues>(x, y);
     CHECK(*values == g2::CentroidValues(x, y));
