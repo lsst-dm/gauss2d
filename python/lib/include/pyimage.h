@@ -129,7 +129,8 @@ void declare_image(py::module &m, std::string typestr) {
     .def("set_value_unchecked", &Class::set_value_unchecked)
     .def_property_readonly("size", &Class::size)
     .def_property_readonly("shape", &Class::shape)
-    .def("__repr__", &Class::str)
+    .def("__repr__", [](const Class & self) { return self.repr(true); })
+    .def("__str__", &Class::str)
     ;
 }
 
@@ -141,7 +142,8 @@ void declare_image_array(py::module &m, std::string typestr) {
     .def(py::init<const typename Class::Data*>(), "data"_a)
     .def("at", &Class::at, py::return_value_policy::reference)
     .def_property_readonly("size", &Class::size)
-    .def("__repr__", &Class::str)
+    .def("__repr__", [](const Class & self) { return self.repr(true); })
+    .def("__str__", &Class::str)
     ;
 }
 

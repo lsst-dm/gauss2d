@@ -25,8 +25,7 @@
 
 #include "pybind11.h"
 
-PYBIND11_MODULE(_gauss2d, m)
-{
+PYBIND11_MODULE(_gauss2d, m) {
     m.doc() = "Gauss2D Python bindings";
     bind_centroid(m);
     bind_ellipse(m);

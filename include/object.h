@@ -28,12 +28,12 @@
 
 namespace gauss2d {
 
-class Object
-{
+class Object {
 public:
+    virtual std::string repr(bool name_keywords = false) const = 0;
     virtual std::string str() const = 0;
 
-    friend std::ostream & operator << (std::ostream &out, const Object &obj) {
+    friend std::ostream &operator<<(std::ostream &out, const Object &obj) {
         out << obj.str();
         return out;
     }
@@ -41,5 +41,5 @@ public:
     virtual ~Object() = default;
 };
 
-} // namespace gauss2d
+}  // namespace gauss2d
 #endif
