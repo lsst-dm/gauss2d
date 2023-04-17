@@ -24,8 +24,13 @@ TEST_CASE("PyImage")
     size_t n_rows = 3, n_cols = 2;
     std::shared_ptr<Image> image = std::make_shared<Image>(n_rows, n_cols);
     Image zeros{n_rows, n_cols};
-    auto x = Image(n_rows, n_cols) == zeros;
-    CHECK(x);
+    for(size_t row = 0; row < n_rows; ++row) {
+        for(size_t col = 0; col < n_cols; ++col) {
+            image->set_value(row, col, 0);
+            zeros.set_value(row, col, 0);
+        }
+    }
+    CHECK(*image == zeros);
     CHECK(image->get_coordsys() == g2::COORDS_DEFAULT);
     CHECK(&(image->get_coordsys()) == &(g2::COORDS_DEFAULT));
     CHECK(image->get_n_cols() == n_cols);
