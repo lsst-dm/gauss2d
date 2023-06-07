@@ -156,7 +156,7 @@ public:
     virtual inline t& _get_value_unchecked(size_t row, size_t col) = 0;
 
     void _check_row_col(size_t row, size_t col) const {
-        if (!(row < this->get_n_rows()) && !(row < this->get_n_rows())) {
+        if (!(row < this->get_n_rows()) && !(col < this->get_n_cols())) {
             throw std::out_of_range("row,col = " + std::to_string(row) + "," + std::to_string(col)
                                     + " n_rows,n_cols = " + std::to_string(this->get_n_rows()) + ","
                                     + std::to_string(this->get_n_cols()));
