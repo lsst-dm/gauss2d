@@ -335,11 +335,11 @@ EllipseMajor::EllipseMajor(double r_major, double axrat, double angle, bool degr
     EllipseMajor::check(r_major, axrat, angle);
 }
 
-EllipseMajor::EllipseMajor(Covariance& covar, bool degrees) : _degrees(degrees) {
+EllipseMajor::EllipseMajor(const Covariance& covar, bool degrees) : _degrees(degrees) {
     init(*this, covar, degrees);
 }
 
-EllipseMajor::EllipseMajor(Ellipse& ellipse, bool degrees) : _degrees(degrees) {
+EllipseMajor::EllipseMajor(const Ellipse& ellipse, bool degrees) : _degrees(degrees) {
     init(*this, Covariance(ellipse), degrees);
 }
 
