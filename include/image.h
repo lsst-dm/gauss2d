@@ -196,7 +196,7 @@ public:
 
     size_t size() const { return this->get_n_rows() * this->get_n_cols(); };
 
-    std::string repr(bool name_keywords) const {
+    std::string repr(bool name_keywords) const override {
         return std::string(type_name<C>()) + "(" + (name_keywords ? "coordsys=" : "")
                + _coordsys.repr(name_keywords) + ", " + (name_keywords ? "n_rows=" : "")
                + std::to_string(this->get_n_rows()) + ", " + (name_keywords ? "n_cols=" : "")
