@@ -83,9 +83,33 @@ TEST_CASE("Evaluator") {
     double loglike_like = eval_like->loglike_pixel();
     CHECK(loglike_like != 0);
 
+    auto img_loglike_grads = std::make_shared<Image>(1, n_params);
+    ImageArray::Data data_loglike_grads = {img_loglike_grads};
+
+    Evaluator eval_loglike_grad(gaussians, nullptr, image, sigma_inv, nullptr,
+                                nullptr,  // residual,
+                                std::make_shared<ImageArray>(&data_loglike_grads));
+    eval_loglike_grad.loglike_pixel();
+
+    double dx = 1e-8;
+
+    for (size_t idx_param = 0; idx_param < n_params; idx_param++) {
+        double& value = *(values[idx_param]);
+        double value_old = value;
+        value += dx;
+        double dloglike_findif = eval_like->loglike_pixel();
+        value = value_old - dx;
+        dloglike_findif = (dloglike_findif - eval_like->loglike_pixel()) / (2 * dx);
+        double dloglike_eval = img_loglike_grads->get_value(0, idx_param);
+        double delta_dloglike_max = 1e-3 * std::abs((dloglike_eval + dloglike_findif) / 2.) + 1e-4;
+        CHECK(std::abs(dloglike_eval - dloglike_findif) < delta_dloglike_max);
+        value = value_old;
+    }
+
     ImageArray::Data data_jacs;
-    for (size_t idx_param = 0; idx_param < n_params; idx_param++)
+    for (size_t idx_param = 0; idx_param < n_params; idx_param++) {
         data_jacs.push_back(std::make_shared<Image>(n_rows, n_cols));
+    }
 
     auto jacs = std::make_shared<ImageArray>(&data_jacs);
 
