@@ -308,9 +308,11 @@ std::pair<double, double> get_x_pm(double sigma_x_sq, double sigma_y_sq, double 
     // double pm = sqrt(apc*apc - 4*(sigma_x_sq*sigma_y_sq - cov_xy*cov_xy))/2;
     // Two more multiplications, but seemingly more stable
     // Cancels out cross term from apc (2*sigma_x_sq*sigma_y_sq)
-    double pm = sqrt(sigma_x_sq * sigma_x_sq + sigma_y_sq * sigma_y_sq
-                     - 2 * (sigma_x_sq * sigma_y_sq - 2 * cov_xy * cov_xy))
-                / 2;
+    double pm = (sigma_x_sq * sigma_x_sq + sigma_y_sq * sigma_y_sq
+                 - 2 * (sigma_x_sq * sigma_y_sq - 2 * cov_xy * cov_xy));
+    // Return zero if the result is negative
+    // TODO: Consider checking if < -machine_eps?
+    pm = (pm > 0) ? sqrt(pm)/2 : 0;
     return {x, pm};
 }
 
@@ -335,11 +337,11 @@ EllipseMajor::EllipseMajor(double r_major, double axrat, double angle, bool degr
     EllipseMajor::check(r_major, axrat, angle);
 }
 
-EllipseMajor::EllipseMajor(Covariance& covar, bool degrees) : _degrees(degrees) {
+EllipseMajor::EllipseMajor(const Covariance& covar, bool degrees) : _degrees(degrees) {
     init(*this, covar, degrees);
 }
 
-EllipseMajor::EllipseMajor(Ellipse& ellipse, bool degrees) : _degrees(degrees) {
+EllipseMajor::EllipseMajor(const Ellipse& ellipse, bool degrees) : _degrees(degrees) {
     init(*this, Covariance(ellipse), degrees);
 }
 

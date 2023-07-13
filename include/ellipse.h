@@ -370,8 +370,8 @@ public:
      * @param degrees Whether the angle unit is degrees (true) or radians (false)
      */
     EllipseMajor(double r_major, double axrat, double angle, bool degrees = false);
-    EllipseMajor(Covariance& covar, bool degrees = false);
-    EllipseMajor(Ellipse& ellipse, bool degrees = false);
+    EllipseMajor(const Covariance& covar, bool degrees = false);
+    EllipseMajor(const Ellipse& ellipse, bool degrees = false);
 };
 
 }  // namespace gauss2d

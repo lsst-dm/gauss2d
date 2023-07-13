@@ -1036,7 +1036,7 @@ public:
                                             + std::to_string(n_gpf));
             }
 
-            const size_t n_grad = _grads->size();
+            const size_t n_grad = (_gradienttype == GradientType::jacobian) ? _grads->size() : (n_gpm*_grad_param_map->get_n_cols());
             size_t idx_g_max = 0;
             size_t idx_e_gauss_max = 0;
             size_t idx_e_param_max = 0;
@@ -1050,13 +1050,19 @@ public:
                 value = _extra_param_map->get_value_unchecked(g, 1);
                 if (value > idx_e_param_max) idx_e_param_max = value;
             }
-            if (!((idx_g_max < n_grad) && (idx_e_gauss_max < _n_gaussians) && (idx_e_param_max < n_grad))) {
+            if (!((idx_e_gauss_max < _n_gaussians) && (idx_e_param_max < n_grad))) {
                 throw std::invalid_argument(
-                        "max grad_param_map,extra_param_map[1]=" + std::to_string(idx_g_max) + ","
-                        + std::to_string(idx_e_param_max) + " !< n_grad=" + std::to_string(n_grad)
-                        + " or max extra_param_map[0]=" + std::to_string(idx_e_gauss_max)
-                        + " !< n_gaussians=" + std::to_string(_n_gaussians));
+                    " max extra_param_map[0]=" + std::to_string(idx_e_gauss_max)
+                    + " !< n_gaussians=" + std::to_string(_n_gaussians) + " and/or "
+		    + " max extra_param_map[1]=" + std::to_string(idx_e_param_max)
+		    + " !< n_grad=" + std::to_string(n_grad)
+		);
             }
+	    if (!(idx_g_max < n_grad)) {
+	        throw std::invalid_argument(
+                    "max grad_param_map,extra_param_map[1]=" + std::to_string(idx_g_max)
+		);
+	    }			
         }
         if (_gradienttype == GradientType::loglike) {
             if (!_get_likelihood) {

@@ -37,3 +37,9 @@ TEST_CASE("Ellipse") {
     ell2.set_hxyr({1, 1, -0.3});
     CHECK(ell2.get_xyr() == std::array<double, 3>{g2::M_HWHM_SIGMA, g2::M_HWHM_SIGMA, -0.3});
 }
+
+TEST_CASE("Marginal Major Ellipse") {
+    auto covar = g2::Covariance(0.08333332098858685, 0.08333332098858683, 1.337355953645e-13);
+    auto ellipse_maj = g2::EllipseMajor(covar);
+    CHECK(ellipse_maj.get_r_major() > 0);
+}

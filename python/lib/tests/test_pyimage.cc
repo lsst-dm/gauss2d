@@ -42,8 +42,8 @@ TEST_CASE("PyImage")
     image->add_value_unchecked(0, 0, 1);
     CHECK(image->get_value_unchecked(0, 0) == 1);
     CHECK(*image != zeros);
-    CHECK_THROWS_AS(image->get_value(n_rows, n_cols), std::out_of_range);
-    CHECK_THROWS_AS(image->set_value(n_rows, n_cols, 1), std::out_of_range);
+    CHECK_THROWS_AS(image->get_value(0, n_cols), std::out_of_range);
+    CHECK_THROWS_AS(image->set_value(n_rows, 0, 1), std::out_of_range);
     double & value = image->_get_value_unchecked(1, 1);
     value = -1;
     CHECK(image->get_value_unchecked(1, 1) == -1);
