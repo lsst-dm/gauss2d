@@ -123,6 +123,7 @@ void declare_image(py::module &m, std::string typestr) {
     .def_property_readonly("n_rows", &Class::get_n_rows)
     .def_property_readonly("n_cols", &Class::get_n_cols)
     .def_property_readonly("data", &Class::get_data)
+    .def("fill", &Class::fill)
     .def("get_value", &Class::get_value)
     .def("set_value", &Class::set_value)
     .def("get_value_unchecked", &Class::get_value_unchecked)
