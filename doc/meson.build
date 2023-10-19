@@ -23,7 +23,7 @@ if doxygen.found()
                                 output: 'xml',
                                 command: [doxygen, doxygen_file],
                                 install: true,
-                                install_dir: build + '/build-release',
+                                install_dir: build + '/doc',
                                 )
 
     subdir('sphinx')

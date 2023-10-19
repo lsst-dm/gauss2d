@@ -1,6 +1,9 @@
 # Meson/build
 build
 builddir
+build-debug
+build-release
+python/gauss2d.egg-info/
 
 # IDE folders and files
 .cache/

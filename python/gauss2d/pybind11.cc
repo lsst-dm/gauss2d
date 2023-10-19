@@ -25,6 +25,9 @@
 
 #include "pybind11.h"
 
+#define STRINGIFY(x) #x
+#define MACRO_STRINGIFY(x) STRINGIFY(x)
+
 PYBIND11_MODULE(_gauss2d, m) {
     m.doc() = "Gauss2D Python bindings";
     bind_centroid(m);
@@ -32,4 +35,9 @@ PYBIND11_MODULE(_gauss2d, m) {
     bind_gaussian(m);
     bind_image(m);
     bind_object(m);
+#ifdef VERSION
+    m.attr("__version__") = MACRO_STRINGIFY(VERSION);
+#else
+    m.attr("__version__") = "dev";
+#endif
 }
