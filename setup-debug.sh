@@ -1,4 +1,4 @@
-export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$CONDA_PREFIX/.local/lib64/pkgconfig
+# Configure package and build debug libraries
 meson --prefix=$PWD/debug --buildtype debug build-debug
 ./build-cc-debug.sh
 cd python/lib

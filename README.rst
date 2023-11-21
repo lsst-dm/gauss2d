@@ -36,7 +36,8 @@ elsewhere (e.g. ``~/.local``):
 ``CONDA_PREFIX=~ sh setup-conda-release.sh``
 
 Once the build command is run once to create the build directories, subsequent
-rebuilds can use the provided ``build*.sh`` scripts.
+rebuilds can use the provided ``build*.sh`` scripts. Additional steps may be
+needed to configure conda; see set script file for details.
 
 One can also build a configuration for debugging purposes: see
 ``setup-debug.sh`` for an example. Note that meson defaults to a build
@@ -47,3 +48,10 @@ command. The example scripts configure separate ``build-debug`` and
 
 Note: You may need to change include and/or LD paths to debug the Python
 bindings with ``build-debug``; this has not been tested yet.
+
+To build with eups for use with the LSST pipelines, call:
+
+``setup -jr .``
+``eupspkg -e -v 1 config``
+``eupspkg -e -v 1 build``
+
