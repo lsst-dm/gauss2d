@@ -1,19 +1,22 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-
 #include "doctest.h"
 
 #include <memory>
 
 #include "image.h"
-#include "vectorimage.h"
+#include "carrayimage.h"
 
 namespace g2 = gauss2d;
 
-typedef g2::VectorImage<double> Image;
+typedef g2::CArrayImage<double> Image;
 typedef g2::ImageArray<double, Image> ImageArray;
-typedef g2::VectorImage<bool> Mask;
+typedef g2::CArrayImage<bool> Mask;
 
-TEST_CASE("VectorImage") {
+TEST_CASE("CArrayImage") {
+    const double value_init = -42.1;
+    Image nonzero{1, 1, &value_init};
+    CHECK(nonzero.get_value(0, 0) == value_init);
+
     size_t n_rows = 3, n_cols = 2;
     std::shared_ptr<Image> image = std::make_shared<Image>(n_rows, n_cols);
     Image zeros{n_rows, n_cols};
@@ -55,8 +58,13 @@ TEST_CASE("VectorImageArray") {
 TEST_CASE("VectorMask") {
     auto image = Image(2, 2);
     auto mask = Mask(2, 2);
+    CHECK_THROWS_AS(mask.get_value(2, 1), std::out_of_range);
+    CHECK_THROWS_AS(mask.get_value(1, 2), std::out_of_range);
+    mask.set_value_unchecked(0, 0, false);
     CHECK(mask.get_value_unchecked(0, 0) == false);
     mask._get_value_unchecked(1, 1) = true;
     CHECK(mask.get_value_unchecked(1, 1) == true);
+    mask.set_value(1, 1, false);
+    CHECK(mask.get_value(1, 1) == false);
     CHECK(g2::images_compatible<double, Image, bool, Mask>(image, mask));
 }

@@ -1,25 +1,18 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-
 #include "doctest.h"
 
 #include <memory>
 
-#include "gauss2d/image.h"
-#include "pyimage.h"
-
-#include <pybind11/embed.h>
+#include "image.h"
+#include "vectorimage.h"
 
 namespace g2 = gauss2d;
 
-typedef g2::python::PyImage<double> Image; 
-typedef g2::ImageArray<double, Image> ImageArray; 
-typedef g2::python::PyImage<bool> Mask;
+typedef g2::VectorImage<double> Image;
+typedef g2::ImageArray<double, Image> ImageArray;
+typedef g2::VectorImage<bool> Mask;
 
-// Import numpy, otherwise all Image calls will segfault
-py::scoped_interpreter guard{};
-py::module_ numpy = py::module_::import("numpy");
-
-TEST_CASE("PyImage") {
+TEST_CASE("VectorImage") {
     const double value_init = -42.1;
     Image nonzero{1, 1, &value_init};
     CHECK(nonzero.get_value(0, 0) == value_init);
@@ -63,15 +56,20 @@ TEST_CASE("VectorImageArray") {
 }
 
 TEST_CASE("VectorMask") {
-    auto image = Image(2, 2);
-    auto mask = Mask(2, 2);
-    CHECK_THROWS_AS(mask.get_value(2, 1), std::out_of_range);
-    CHECK_THROWS_AS(mask.get_value(1, 2), std::out_of_range);
+    size_t n_cr = 2;
+    auto image = Image(n_cr, n_cr);
+    auto mask = Mask(n_cr, n_cr);
+    CHECK_THROWS_AS(mask.get_value(n_cr, n_cr-1), std::out_of_range);
+    CHECK_THROWS_AS(mask.get_value(n_cr-1, n_cr), std::out_of_range);
     mask.set_value_unchecked(0, 0, false);
     CHECK(mask.get_value_unchecked(0, 0) == false);
-    mask._get_value_unchecked(1, 1) = true;
+    // Can't do this because vector<bool> can't return references
+    // mask._get_value_unchecked(1, 1) = true;
+    mask.set_value(1, 1, true);
     CHECK(mask.get_value_unchecked(1, 1) == true);
     mask.set_value(1, 1, false);
+    CHECK_THROWS_AS(mask.set_value(n_cr, n_cr-1, false), std::out_of_range);
+    CHECK_THROWS_AS(mask.set_value(n_cr-1, n_cr, true), std::out_of_range);
     CHECK(mask.get_value(1, 1) == false);
     CHECK(g2::images_compatible<double, Image, bool, Mask>(image, mask));
 }

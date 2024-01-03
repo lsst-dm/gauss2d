@@ -1,9 +1,10 @@
 test_names = [
+    'carrayimage',
     'centroid',
     'ellipse',
     'evaluate',
     'gaussian',
-    'image',
+    'vectorimage',
 ]
 foreach test_name : test_names
     test = executable(

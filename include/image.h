@@ -136,7 +136,7 @@ bool images_compatible(const Image<t1, C1>& img1, const Image<t2, C2>& img2, std
  *
  * Basic implementations of most functions are provided. Derived classes
  * should override any and all if the default implementations are not
- * effecient enough.
+ * efficient enough.
  *
  * @tparam t The numeric type.
  * @tparam C The specialized class.
@@ -149,14 +149,33 @@ private:
     const std::shared_ptr<const CoordinateSystem> _coordsys_ptr;
     const gauss2d::CoordinateSystem& _coordsys;
 
+    inline C & self() {
+        return static_cast<C&>(*this);
+    };
+    inline const C & self_const() const {
+        return static_cast<const C&>(*this);
+    };
+
 public:
+    static constexpr t _value_default = 0;
+    static const t* _value_default_ptr() { return &_value_default; };
+
     t& _get_value(size_t row, size_t col) {
+        return static_cast<C&>(*this)._get_value_impl(row, col);
+    }
+    t& _get_value_impl(size_t row, size_t col) {
         _check_row_col(row, col);
         return this->_get_value_unchecked(row, col);
     }
-    virtual inline t& _get_value_unchecked(size_t row, size_t col) = 0;
+    inline t& _get_value_unchecked(size_t row, size_t col) {
+        return self()._get_value_unchecked_impl(row, col);
+    }
+    inline t& _get_value_unchecked_impl(size_t row, size_t col) = delete;
 
     void _check_row_col(size_t row, size_t col) const {
+        return self_const()._check_row_col_impl(row, col);
+    }
+    void _check_row_col_impl(size_t row, size_t col) const {
         if (!((row < this->get_n_rows()) && (col < this->get_n_cols()))) {
             throw std::out_of_range("row,col = " + std::to_string(row) + "," + std::to_string(col)
                                     + " n_rows,n_cols = " + std::to_string(this->get_n_rows()) + ","
@@ -164,17 +183,32 @@ public:
         }
     }
 
-    virtual const CoordinateSystem& get_coordsys() const { return _coordsys; };
-    virtual std::shared_ptr<const CoordinateSystem> get_coordsys_ptr_const() const { return _coordsys_ptr; };
+    const CoordinateSystem& get_coordsys() const { return _coordsys; };
+    std::shared_ptr<const CoordinateSystem> get_coordsys_ptr_const() const { return _coordsys_ptr; };
 
-    virtual size_t get_n_cols() const = 0;
-    virtual size_t get_n_rows() const = 0;
-
-    void add_value(size_t row, size_t col, t value) { this->_get_value(row, col) += value; }
-    void add_value_unchecked(size_t row, size_t col, t value) {
-        static_cast<C&>(*this)._get_value_unchecked(row, col) += value;
+    size_t get_n_cols() const {
+        return static_cast<const C&>(*this).get_n_cols_impl();
     }
-    virtual void fill(t value) {
+    size_t get_n_cols_impl() const = delete;
+    size_t get_n_rows() const {
+        return static_cast<const C&>(*this).get_n_rows_impl();
+    }
+    size_t get_n_rows_impl() = delete;
+
+    void add_value(size_t row, size_t col, t value) {
+        self().add_value_impl(row, col, value);
+    }
+    void add_value_impl(size_t row, size_t col, t value) { this->_get_value(row, col) += value; }
+    void add_value_unchecked(size_t row, size_t col, t value) {
+        self().add_value_unchecked_impl(row, col, value);
+    }
+    void add_value_unchecked_impl(size_t row, size_t col, t value) {
+        self()._get_value_unchecked(row, col) += value;
+    }
+    void fill(t value) {
+        self().fill_impl(value);
+    }
+    void fill_impl(t value) {
         const size_t n_rows = get_n_rows();
         const size_t n_cols = get_n_cols();
         for (size_t row = 0; row < n_rows; ++row) {
@@ -184,13 +218,27 @@ public:
         }
     }
     inline t get_value(size_t row, size_t col) const {
-        _check_row_col(row, col);
-        return static_cast<const C&>(*this).get_value_unchecked(row, col);
+        return self_const().get_value_impl(row, col);
     }
-    virtual const inline t get_value_unchecked(size_t row, size_t col) const = 0;
-    inline void set_value(size_t row, size_t col, t value) { _get_value(row, col) = value; }
+    inline t get_value_impl(size_t row, size_t col) const {
+        _check_row_col(row, col);
+        return self_const().get_value_unchecked(row, col);
+    }
+    inline t get_value_unchecked(size_t row, size_t col) const {
+        return self_const().get_value_unchecked_impl(row, col);
+    }
+    inline t get_value_unchecked_impl(size_t row, size_t col) const = delete;
+    inline void set_value(size_t row, size_t col, t value) {
+        return self().set_value_impl(row, col, value);
+    }
+    inline void set_value_impl(size_t row, size_t col, t value) {
+        self()._get_value(row, col) = value;
+    }
     inline void set_value_unchecked(size_t row, size_t col, t value) {
-        static_cast<C&>(*this)._get_value_unchecked(row, col) = value;
+        self().set_value_unchecked_impl(row, col, value);
+    }
+    inline void set_value_unchecked_impl(size_t row, size_t col, t value) {
+        self()._get_value_unchecked(row, col) = value;
     }
 
     std::array<size_t, 2> shape() const { return {this->get_n_rows(), this->get_n_cols()}; }
@@ -209,7 +257,7 @@ public:
                + std::to_string(this->get_n_rows()) + ", n_cols=" + std::to_string(this->get_n_cols()) + ")";
     }
 
-    virtual void operator+=(t value) {
+    void operator+=(t value) {
         const size_t n_rows = get_n_rows();
         const size_t n_cols = get_n_cols();
         for (size_t row = 0; row < n_rows; ++row) {
@@ -238,13 +286,15 @@ public:
     const bool operator!=(const Image& other) const { return !(*this == other); }
 
     // TODO: Figure out if there's any point to this in CRTP (or otherwise)
-    Image(size_t n_rows, size_t n_cols, const std::shared_ptr<const CoordinateSystem> coordsys = nullptr)
+    Image(size_t n_rows, size_t n_cols, const t* value_init = _value_default_ptr(),
+          const std::shared_ptr<const CoordinateSystem> coordsys = nullptr)
             = delete;
 
+    // Convenience initializer for a coordsys (could be private method?)
     Image(const std::shared_ptr<const CoordinateSystem> coordsys = nullptr)
             : _coordsys_ptr(coordsys == nullptr ? nullptr : std::move(coordsys)),
               _coordsys(coordsys == nullptr ? COORDS_DEFAULT : *_coordsys_ptr) {}
-    virtual ~Image() = default;
+    ~Image() = default;
 };
 
 /**

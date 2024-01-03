@@ -45,11 +45,17 @@ namespace python {
 /*
     Convenience functions for binding concrete image types.
 */
-
+/*
+Compiling without this pragma gives this warning, which I don't understand:
+warning: 'gauss2d::python::PyImage<double>' declared with greater visibility
+than the type of its field
+'gauss2d::python::PyImage<double>::_data' [-Wattributes]
+*/
 #pragma GCC visibility push(hidden)
 template <typename t>
-class PyImage : public gauss2d::Image<t, PyImage<t>>
+class PyImage : public Image<t, PyImage<t>>
 {
+#pragma GCC visibility pop
 private:
     const size_t _n_rows;
     const size_t _n_cols;
@@ -65,27 +71,28 @@ private:
     }
 
 public:
-    inline t & _get_value_unchecked(size_t row, size_t col) { return this->_data_ref(row, col); };
+    inline t & _get_value_unchecked_impl(size_t row, size_t col) { return this->_data_ref(row, col); };
 
     py::array_t<t> & get_data() {
         py::array_t<t> & rv = _ptr_own == nullptr ? _data : *_ptr_own;
         return rv;
     }
 
-    size_t get_n_cols() const { return _n_cols;};
-    size_t get_n_rows() const { return _n_rows;};
+    size_t get_n_cols_impl() const { return _n_cols;};
+    size_t get_n_rows_impl() const { return _n_rows;};
 
     //void add_value(size_t row, size_t col, t value) { this->_get_value(row, col) += value;}
     //void add_value_unchecked(size_t row, size_t col, t value) {
     //    _get_value_unchecked(row, col) += value;
     //}
-    const inline t get_value_unchecked(size_t row, size_t col) const { return this->_data_ref(row, col); };
-    void set_value_unchecked(size_t row, size_t col, t value) { this->_data_ref(row, col) = value;}
+    inline t get_value_unchecked_impl(size_t row, size_t col) const { return this->_data_ref(row, col); };
+    void set_value_unchecked_impl(size_t row, size_t col, t value) { this->_data_ref(row, col) = value;}
     //void set_value_unchecked(size_t row, size_t col, t value) { _get_value_unchecked(row, col) = value;};
 
     PyImage(
         size_t n_rows, size_t n_cols,
-        const std::shared_ptr<const gauss2d::CoordinateSystem> coordsys = nullptr
+        const t* value_init = Image<t, PyImage<t>>::_value_default_ptr(),
+        const std::shared_ptr<const CoordinateSystem> coordsys = nullptr
     ) :
         gauss2d::Image<t, PyImage<t>>(coordsys),
         _n_rows(n_rows), _n_cols(n_cols),
@@ -93,19 +100,20 @@ public:
         _data_ref(this->get_data().template mutable_unchecked<2>())
     {
         _validate();
+        if(value_init != nullptr) {
+            this->fill(*value_init);
+        }
     }
-    PyImage(py::array_t<t> data, const std::shared_ptr<const gauss2d::CoordinateSystem> coordsys = nullptr) : 
-        gauss2d::Image<t, PyImage<t>>(coordsys),
+    PyImage(py::array_t<t> data, const std::shared_ptr<const CoordinateSystem> coordsys = nullptr) :
+        Image<t, PyImage<t>>(coordsys),
         _n_rows(data.shape(0)), _n_cols(data.shape(1)),
         _data(data),
         _data_ref(this->get_data().template mutable_unchecked<2>())
     {
         _validate();
     }
-
     ~PyImage() {};
 };
-#pragma GCC visibility pop
 
 template<typename T>
 void declare_image(py::module &m, std::string typestr) {
@@ -113,8 +121,9 @@ void declare_image(py::module &m, std::string typestr) {
     std::string pyclass_name = std::string("Image") + typestr;
     py::class_<Class, std::shared_ptr<Class>>(m, pyclass_name.c_str())
     .def(
-        py::init<size_t, size_t, const std::shared_ptr<const gauss2d::CoordinateSystem>>(),
-        "n_rows"_a, "n_cols"_a, "coordsys"_a = gauss2d::COORDS_DEFAULT
+        py::init<size_t, size_t, const T*, const std::shared_ptr<const gauss2d::CoordinateSystem>>(),
+        "n_rows"_a, "n_cols"_a, "value_init"_a = Class::_value_default_ptr(),
+                    "coordsys"_a = gauss2d::COORDS_DEFAULT
     )
     .def(
         py::init<py::array_t<T>, const std::shared_ptr<const gauss2d::CoordinateSystem>>(),

@@ -1158,7 +1158,7 @@ std::shared_ptr<Data> make_gaussians_pixel(const std::shared_ptr<const Convolved
                                            std::shared_ptr<Data> output = nullptr,
                                            const unsigned int n_rows = 0, const unsigned int n_cols = 0,
                                            const std::shared_ptr<const CoordinateSystem> coordsys = nullptr) {
-    if (output == nullptr) output = std::make_shared<Data>(n_rows, n_cols, coordsys);
+    if (output == nullptr) output = std::make_shared<Data>(n_rows, n_cols, nullptr, coordsys);
     auto evaluator = std::make_shared<GaussianEvaluator<t, Data, Indices>>(gaussians, coordsys, nullptr,
                                                                            nullptr, output);
     evaluator->loglike_pixel();

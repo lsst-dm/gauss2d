@@ -31,13 +31,15 @@
 
 namespace gauss2d {
 
-#pragma GCC visibility push(hidden)
 /*
-    A basic Image class using a vector of deques.
+    An Image stored as a vector of vectors.
 
-    This very basic implementation is mainly for testing purposes.
-    It almost certainly does not perform well and should not be used
-    in production.
+    The bool version of this uses std::vector<bool>, which is a special
+    memory-efficient bitset that unfortunately cannot return references
+    to member elements.
+
+    The non-bool versions of this class are likely less efficient and
+    performant than CArrayImage.
 */
 template <typename t>
 class VectorImage : public gauss2d::Image<t, VectorImage<t>> {
@@ -46,26 +48,59 @@ private:
     const size_t _n_cols;
 
     // This is a workaround for the C++98 specialization of vector<bool>
-    std::vector<std::deque<t>> _data;
+    std::vector<std::vector<t>> _data;
 
 public:
-    inline t& _get_value_unchecked(size_t row, size_t col) { return this->_data[row][col]; };
-    const inline t get_value_unchecked(size_t row, size_t col) const { return this->_data[row][col]; };
+    t& _get_value_impl(size_t row, size_t col) {
+        // This doesn't work on vector<bool> because it's bit-packed
+        // One could specialize: if constexpr (std::is_same_v<bool, t>)
+        // ... if there were a workable alternative, but there isn't.
+        if constexpr (std::is_same_v<bool, t>) {
+            throw std::logic_error("VectorImage<bool> cannot use _get_value");
+        } else {
+            // TODO: Check at performance vs default implementation
+            return this->_data.at(row).at(col);
+        }
+    }
+    inline t& _get_value_unchecked_impl(size_t row, size_t col) {
+        // See note in _get_value
+        if constexpr (std::is_same_v<bool, t>) {
+            throw std::logic_error("VectorImage<bool> cannot use _get_value_unchecked");
+        } else {
+            return this->_data[row][col];
+        }
+    }
+    void add_value_unchecked_impl(size_t row, size_t col, t value) {
+        this->_data[row][col] += value;
+    }
+    inline t get_value_unchecked_impl(size_t row, size_t col) const {
+        return this->_data[row][col];
+    }
+    inline void set_value_impl(size_t row, size_t col, t value) {
+        this->_data.at(row).at(col) = value;
+    }
+    inline void set_value_unchecked_impl(size_t row, size_t col, t value) {
+        this->_data[row][col] = value;
+    }
 
-    size_t get_n_cols() const { return _n_cols; };
-    size_t get_n_rows() const { return _n_rows; };
+    size_t get_n_cols_impl() const { return _n_cols; };
+    size_t get_n_rows_impl() const { return _n_rows; };
 
     VectorImage(size_t n_rows, size_t n_cols,
-                const std::shared_ptr<const gauss2d::CoordinateSystem> coordsys = nullptr)
-            : gauss2d::Image<t, VectorImage<t>>(coordsys), _n_rows(n_rows), _n_cols(n_cols) {
+                const t* value_init = Image<t, VectorImage<t>>::_value_default_ptr(),
+                const std::shared_ptr<const CoordinateSystem> coordsys = nullptr)
+            : Image<t, VectorImage<t>>(coordsys), _n_rows(n_rows), _n_cols(n_cols) {
         _data.resize(n_rows);
-        for (size_t row = 0; row < n_rows; row++) {
-            _data[row].resize(n_cols);
+        // No real option but to resize with vectors
+        // Just reserving would cause _unchecked calls to break
+        t value_init_override = value_init != nullptr ? *value_init : (
+            Image<t, VectorImage<t>>::_value_default);
+        for (size_t row = 0; row < _n_rows; row++) {
+            _data[row].resize(n_cols, value_init_override);
         }
     }
     ~VectorImage(){};
 };
-#pragma GCC visibility pop
 
 }  // namespace gauss2d
 #endif

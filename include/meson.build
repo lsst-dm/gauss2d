@@ -1,4 +1,5 @@
 gauss2d_headers = [
+    'carrayimage.h',
     'centroid.h',
     'ellipse.h',
     'evaluate.h',
