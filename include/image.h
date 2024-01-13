@@ -164,6 +164,7 @@ public:
         }
     }
 
+    // TODO: Consider removing this; it probably adds nothing
     virtual const CoordinateSystem& get_coordsys() const { return _coordsys; };
     virtual std::shared_ptr<const CoordinateSystem> get_coordsys_ptr_const() const { return _coordsys_ptr; };
 
@@ -218,6 +219,9 @@ public:
             }
         }
     }
+
+    // TODO: Implement if deemed worthwhile
+    // virtual void operator+=(t value);
 
     bool operator==(const Image& other) const {
         if (images_compatible<t, C, t, C>(*this, other)) {
