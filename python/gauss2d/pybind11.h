@@ -29,6 +29,7 @@
 namespace py = pybind11;
 
 void bind_centroid(py::module &m);
+void bind_coordinatesystem(py::module &m);
 void bind_ellipse(py::module &m);
 void bind_gaussian(py::module &m);
 void bind_image(py::module &m);

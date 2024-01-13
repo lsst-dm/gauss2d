@@ -29,6 +29,7 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <pybind11/operators.h>
 #include <pybind11/stl.h>
 
 #include "gauss2d/evaluate.h"
@@ -120,9 +121,10 @@ void declare_image(py::module &m, std::string typestr) {
         py::init<py::array_t<T>, const std::shared_ptr<const gauss2d::CoordinateSystem>>(),
         "data"_a, "coordsys"_a = gauss2d::COORDS_DEFAULT
     )
+    .def_property_readonly("coordsys", &Class::get_coordsys_ptr_const)
+    .def_property_readonly("data", &Class::get_data)
     .def_property_readonly("n_rows", &Class::get_n_rows)
     .def_property_readonly("n_cols", &Class::get_n_cols)
-    .def_property_readonly("data", &Class::get_data)
     .def("fill", &Class::fill)
     .def("get_value", &Class::get_value)
     .def("set_value", &Class::set_value)
@@ -130,6 +132,9 @@ void declare_image(py::module &m, std::string typestr) {
     .def("set_value_unchecked", &Class::set_value_unchecked)
     .def_property_readonly("size", &Class::size)
     .def_property_readonly("shape", &Class::shape)
+    .def(py::self == py::self)
+    .def(py::self != py::self)
+    .def(py::self += T())
     .def("__repr__", [](const Class & self) { return self.repr(true); })
     .def("__str__", &Class::str)
     ;

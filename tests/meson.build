@@ -1,5 +1,6 @@
 test_names = [
     'centroid',
+    'coordinatesystem',
     'ellipse',
     'evaluate',
     'gaussian',
