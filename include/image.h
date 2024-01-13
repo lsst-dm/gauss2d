@@ -136,7 +136,7 @@ bool images_compatible(const Image<t1, C1>& img1, const Image<t2, C2>& img2, std
  *
  * Basic implementations of most functions are provided. Derived classes
  * should override any and all if the default implementations are not
- * effecient enough.
+ * efficient enough.
  *
  * @tparam t The numeric type.
  * @tparam C The specialized class.
