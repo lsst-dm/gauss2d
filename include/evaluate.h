@@ -1151,36 +1151,27 @@ Indices& GaussianEvaluator<t, Data, Indices>::INDICES_NULL() const {
  * @param n_rows The number of rows, if creating a new image
  * @param n_cols The number of columns, if creating a new image
  * @param coordsys The image's coordinate system
+ * @param to_add Whether to add to an existing image. throws if output is nullptr.
  * @return std::shared_ptr<Data> The output pointer, assigned if originally null
  */
 template <typename t, class Data, class Indices>
 std::shared_ptr<Data> make_gaussians_pixel(const std::shared_ptr<const ConvolvedGaussians> gaussians,
                                            std::shared_ptr<Data> output = nullptr,
-                                           const unsigned int n_rows = 0, const unsigned int n_cols = 0,
-                                           const std::shared_ptr<const CoordinateSystem> coordsys = nullptr) {
-    if (output == nullptr) output = std::make_shared<Data>(n_rows, n_cols, coordsys);
+                                           const unsigned int n_rows = 0,
+                                           const unsigned int n_cols = 0,
+                                           const std::shared_ptr<const CoordinateSystem> coordsys = nullptr,
+                                           bool to_add=false
+                                           ) {
+    if (output == nullptr) {
+        if(to_add) {
+            throw std::invalid_argument("Cannot set to_add if output is nullptr");
+        }
+        output = std::make_shared<Data>(n_rows, n_cols, coordsys);
+    }
     auto evaluator = std::make_shared<GaussianEvaluator<t, Data, Indices>>(gaussians, coordsys, nullptr,
                                                                            nullptr, output);
-    evaluator->loglike_pixel();
+    evaluator->loglike_pixel(to_add);
     return output;
-}
-
-/**
- * @brief Add Gaussians to an image
- *
- * @tparam t The data type (e.g. float, int)
- * @tparam Data The data array class
- * @tparam Indices The index array class (usually a size_t array)
- * @param gaussians The gaussians to add
- * @param output The image to add gaussians to
- * @param coordsys The image's coordinate system
- */
-template <typename t, class Data, class Indices>
-void add_gaussians_pixel(const ConvolvedGaussians& gaussians, Data& output,
-                         const std::shared_ptr<const CoordinateSystem> coordsys = nullptr) {
-    auto evaluator = std::make_shared<GaussianEvaluator<t, Data, Indices>>(gaussians, coordsys, nullptr,
-                                                                           nullptr, output);
-    evaluator->loglike_pixel(true);
 }
 }  // namespace gauss2d
 #endif

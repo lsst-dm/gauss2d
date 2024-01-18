@@ -199,7 +199,7 @@ void declare_maker(py::module &m, std::string typestr) {
         ("make_gaussians_pixel_" + typestr).c_str(), gauss2d::make_gaussians_pixel<t, Data, Indices>,
         "Evaluate a 2D Gaussian at the centers of pixels on a rectangular grid using the standard bivariate"
         "Gaussian PDF.",
-        "gaussians"_a, "output"_a=nullptr, "n_rows"_a=0, "n_cols"_a=0, "coordsys"_a=nullptr
+        "gaussians"_a, "output"_a=nullptr, "n_rows"_a=0, "n_cols"_a=0, "coordsys"_a=nullptr, "to_add"_a=false
     );
 }
 
