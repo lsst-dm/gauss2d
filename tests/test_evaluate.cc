@@ -59,7 +59,7 @@ TEST_CASE("Evaluator") {
                                                      std::make_shared<g2::GaussianIntegralValue>())));
     }
     const size_t n_params = values.size();
-    CHECK(n_params == n_comp * g2::N_PARAMS_GAUSS2D);
+    CHECK_EQ(n_params, n_comp * g2::N_PARAMS_GAUSS2D);
 
     auto gaussians = std::make_shared<const g2::ConvolvedGaussians>(data);
     auto sigma_inv = std::make_shared<Image>(n_rows, n_cols);
@@ -68,20 +68,32 @@ TEST_CASE("Evaluator") {
 
     auto eval_img = std::make_shared<Evaluator>(gaussians, nullptr, nullptr, nullptr, image);
 
-    CHECK(image != nullptr);
+    CHECK_NE(image, nullptr);
+    CHECK_EQ(eval_img->get_n_cols(), n_cols);
+    CHECK_EQ(eval_img->get_n_rows(), n_rows);
+    CHECK_EQ(eval_img->get_size(), n_cols*n_rows);
 
     double loglike_img = eval_img->loglike_pixel();
-    CHECK(loglike_img == 0);
+    CHECK_EQ(loglike_img, 0);
+
+    auto image2 = std::make_shared<Image>(n_rows, n_cols);
+    double x_min = 2.0;
+    double y_min = 1.0;
+    auto coordsys2 = std::make_shared<g2::CoordinateSystem>(1., 1., x_min, y_min);
+    auto eval_offset = std::make_shared<Evaluator>(gaussians, coordsys2, nullptr, nullptr, image2);
+
+    eval_offset->loglike_pixel();
+    CHECK_EQ(image2->get_value(0, 0), image->get_value(y_min, x_min));
 
     // Add a small offset so the chi is not zero everywhere
     *image += err;
 
     auto eval_like = std::make_shared<Evaluator>(gaussians, nullptr, image, sigma_inv);
 
-    CHECK(sigma_inv != nullptr);
+    CHECK_NE(sigma_inv, nullptr);
 
     double loglike_like = eval_like->loglike_pixel();
-    CHECK(loglike_like != 0);
+    CHECK_NE(loglike_like, 0);
 
     auto img_loglike_grads = std::make_shared<Image>(1, n_params);
     ImageArray::Data data_loglike_grads = {img_loglike_grads};
@@ -124,10 +136,10 @@ TEST_CASE("Evaluator") {
                          */
     );
 
-    CHECK(gaussians != nullptr);
+    CHECK_NE(gaussians, nullptr);
 
     double loglike_jacob = eval_jacob.loglike_pixel();
-    CHECK(loglike_jacob == loglike_like);
+    CHECK_EQ(loglike_jacob, loglike_like);
 
     // Subtract that small offset back from the image
     *image += -err;
@@ -178,5 +190,5 @@ TEST_CASE("Evaluator") {
         std::copy(std::begin(errors), std::end(errors), std::experimental::make_ostream_joiner(ss, "\n"));
         errormsg = ss.str();
     }
-    CHECK(errormsg == "");
+    CHECK_EQ(errormsg, "");
 }
