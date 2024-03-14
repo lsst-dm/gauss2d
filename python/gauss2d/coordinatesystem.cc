@@ -22,38 +22,25 @@
  */
 
 #include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-#include <pybind11/stl.h>
-
-#include <memory>
-#include <stdexcept>
+#include <pybind11/operators.h>
 
 #include "pybind11.h"
 
-#include "gauss2d/evaluate.h"
-#include "gauss2d/image.h"
-#include "gauss2d/python/pyimage.h"
-//#include "gauss2d/integrator.h"
+#include "gauss2d/coordinatesystem.h"
 
 namespace py = pybind11;
 using namespace pybind11::literals;
-using namespace gauss2d::python;
 
-void bind_image(py::module &m) {
-    declare_image<bool>(m, "B");
-    declare_image<float>(m, "F");
-    declare_image<double>(m, "D");
-    declare_image<int>(m, "I");
-    declare_image<unsigned int>(m, "U");
-    declare_image<size_t>(m, "S");
-    declare_image_array<bool>(m, "B");
-    declare_image_array<float>(m, "F");
-    declare_image_array<double>(m, "D");
-    declare_image_array<int>(m, "I");
-    declare_image_array<unsigned int>(m, "U");
-    declare_image_array<size_t>(m, "S");
-    declare_evaluator<float>(m, "F");
-    declare_evaluator<double>(m, "D");
-    declare_maker<float, PyImage<float>, PyImage<size_t>>(m, "F");
-    declare_maker<double, PyImage<double>, PyImage<size_t>>(m, "D");
+void bind_coordinatesystem(py::module &m) {
+    py::class_<gauss2d::CoordinateSystem, std::shared_ptr<gauss2d::CoordinateSystem>>(m, "CoordinateSystem")
+            .def(py::init<double, double, double, double>(),
+                 "dx1"_a = 1., "dy2"_a = 1., "x_min"_a = 0., "y_min"_a = 0.)
+            .def_property_readonly("dx1", &gauss2d::CoordinateSystem::get_dx1)
+            .def_property_readonly("dy2", &gauss2d::CoordinateSystem::get_dy2)
+            .def_property_readonly("x_min", &gauss2d::CoordinateSystem::get_x_min)
+            .def_property_readonly("y_min", &gauss2d::CoordinateSystem::get_y_min)
+            .def(py::self == py::self)
+            .def(py::self != py::self)
+            .def("__repr__", [](const gauss2d::CoordinateSystem &self) { return self.repr(true); })
+            .def("__str__", &gauss2d::CoordinateSystem::str);
 }

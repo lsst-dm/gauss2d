@@ -30,6 +30,7 @@
 
 PYBIND11_MODULE(_gauss2d, m) {
     m.doc() = "Gauss2D Python bindings";
+    bind_coordinatesystem(m);
     bind_centroid(m);
     bind_ellipse(m);
     bind_gaussian(m);

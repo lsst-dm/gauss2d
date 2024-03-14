@@ -34,57 +34,11 @@
 #include <utility>
 #include <vector>
 
+#include "coordinatesystem.h"
 #include "object.h"
 #include "type_name.h"
 
 namespace gauss2d {
-
-/**
- * A coordinate system specifying image scale and orientation.
- *
- * This is intended to mimic some of the functionality of e.g. basic
- * FITS header, in order for evaluators to draw images at different
- * scales and/or with rotation/translation.
- *
- **/
-class CoordinateSystem : public Object {
-private:
-    double _dx1;
-    double _dy2;
-
-    double _x_min = 0.;
-    double _y_min = 0.;
-
-public:
-    // x,y coords of the bottom left corner of the image if not rotated
-    // TBD how to implement this if there is rotation...
-
-    double get_dx1() const { return _dx1; }
-    double get_dy2() const { return _dy2; }
-
-    double get_x_min() const { return _x_min; }
-    double get_y_min() const { return _y_min; }
-
-    bool is_xy_aligned() const { return true; };
-
-    bool operator==(const CoordinateSystem& other) const {
-        return (_dx1 == other.get_dx1()) && (_dy2 == other.get_dy2()) && (_x_min == other.get_x_min())
-               && (_y_min == other.get_y_min());
-    }
-
-    std::string repr(bool name_keywords) const override {
-        return std::string("CoordinateSystem(") + (name_keywords ? "d1=" : "") + std::to_string(_dx1) + ", "
-               + (name_keywords ? "d2=" : "") + std::to_string(_dy2) + ")";
-    }
-
-    std::string str() const override {
-        return "CoordinateSystem(d1=" + std::to_string(_dx1) + ", d2=" + std::to_string(_dy2) + ")";
-    }
-
-    CoordinateSystem(double d1 = 1., double d2 = 1) : _dx1(d1), _dy2(d2){};
-};
-
-static const CoordinateSystem COORDS_DEFAULT{};
 
 template <typename t, class Data, class Indices>
 class GaussianEvaluator;
@@ -111,8 +65,9 @@ class Image;
  * @return true If images are compatible.
  **/
 template <typename t1, class C1, typename t2, class C2>
-bool images_compatible(const Image<t1, C1>& img1, const Image<t2, C2>& img2, std::string* msg = nullptr) {
-    bool coordsys_equal = img1.get_coordsys() == img2.get_coordsys();
+bool images_compatible(const Image<t1, C1>& img1, const Image<t2, C2>& img2, bool compare_coordsys=true,
+                       std::string* msg = nullptr) {
+    bool coordsys_equal = !compare_coordsys || (img1.get_coordsys() == img2.get_coordsys());
     bool return_msg = msg != nullptr;
     if (!return_msg && !coordsys_equal) return false;
     bool cols_equal = img1.get_n_cols() == img2.get_n_cols();
@@ -120,11 +75,15 @@ bool images_compatible(const Image<t1, C1>& img1, const Image<t2, C2>& img2, std
     bool passed = coordsys_equal && cols_equal && rows_equal;
     if (!passed) {
         if (return_msg) {
-            if (!coordsys_equal) *msg += img1.get_coordsys().str() + "!=" + img2.get_coordsys().str() + ",";
-            if (!cols_equal)
+            if (!coordsys_equal) {
+                *msg += img1.get_coordsys().str() + "!=" + img2.get_coordsys().str() + ",";
+            }
+            if (!cols_equal) {
                 *msg += std::to_string(img1.get_n_cols()) + "!=" + std::to_string(img2.get_n_cols()) + ",";
-            if (!rows_equal)
+            }
+            if (!rows_equal) {
                 *msg += std::to_string(img1.get_n_rows()) + "!=" + std::to_string(img2.get_n_rows());
+            }
         }
         return false;
     }
@@ -136,7 +95,7 @@ bool images_compatible(const Image<t1, C1>& img1, const Image<t2, C2>& img2, std
  *
  * Basic implementations of most functions are provided. Derived classes
  * should override any and all if the default implementations are not
- * effecient enough.
+ * efficient enough.
  *
  * @tparam t The numeric type.
  * @tparam C The specialized class.
@@ -164,6 +123,7 @@ public:
         }
     }
 
+    // TODO: Consider removing this; it probably adds nothing
     virtual const CoordinateSystem& get_coordsys() const { return _coordsys; };
     virtual std::shared_ptr<const CoordinateSystem> get_coordsys_ptr_const() const { return _coordsys_ptr; };
 
@@ -218,6 +178,9 @@ public:
             }
         }
     }
+
+    // TODO: Implement if deemed worthwhile
+    // virtual void operator+=(t value);
 
     bool operator==(const Image& other) const {
         if (images_compatible<t, C, t, C>(*this, other)) {

@@ -1,5 +1,6 @@
 gauss2d_headers = [
     'centroid.h',
+    'coordinatesystem.h',
     'ellipse.h',
     'evaluate.h',
     'gaussian.h',

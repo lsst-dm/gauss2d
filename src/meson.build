@@ -1,5 +1,6 @@
 gauss2d_sources = [
     'centroid.cc',
+    'coordinatesystem.cc',
     'ellipse.cc',
     'evaluate.cc',
     'gaussian.cc',

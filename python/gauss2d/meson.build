@@ -1,5 +1,6 @@
 sources = [
     'centroid.cc',
+    'coordinatesystem.cc',
     'ellipse.cc',
     'gaussian.cc',
     'image.cc',
