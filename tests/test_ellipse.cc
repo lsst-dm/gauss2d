@@ -16,30 +16,30 @@ TEST_CASE("Ellipse") {
     CHECK_THROWS_AS(g2::Covariance(0, -1), std::invalid_argument);
     CHECK_THROWS_AS(g2::Covariance(0, 0, rho_max), std::invalid_argument);
     CHECK_THROWS_AS(g2::Covariance(0, 0, rho_min), std::invalid_argument);
-    CHECK(g2::Covariance(0, 0, 0).get_xyc() == std::array<double, 3>({0., 0., 0.}));
-    CHECK(*(g2::Covariance(9, 9, 0).make_convolution(g2::Covariance(16, 16, 0)))
-          == g2::Covariance(25, 25, 0));
+    CHECK_EQ(g2::Covariance(0, 0, 0).get_xyc(), std::array<double, 3>({0., 0., 0.}));
+    CHECK_EQ(*(g2::Covariance(9, 9, 0).make_convolution(g2::Covariance(16, 16, 0))),
+             g2::Covariance(25, 25, 0));
 
     CHECK_THROWS_AS(g2::Ellipse(-1), std::invalid_argument);
     CHECK_THROWS_AS(g2::Ellipse(0, -1), std::invalid_argument);
     CHECK_THROWS_AS(g2::Ellipse(0, 0, rho_max), std::invalid_argument);
     CHECK_THROWS_AS(g2::Ellipse(0, 0, rho_min), std::invalid_argument);
-    CHECK(*(g2::Ellipse(3, 3, 0).make_convolution(g2::Ellipse(4, 4, 0))) == g2::Ellipse(5, 5, 0));
+    CHECK_EQ(*(g2::Ellipse(3, 3, 0).make_convolution(g2::Ellipse(4, 4, 0))), g2::Ellipse(5, 5, 0));
     auto ell = g2::Ellipse(3, 0, 0);
-    CHECK(g2::Ellipse(g2::Covariance(ell)) == ell);
+    CHECK_EQ(g2::Ellipse(g2::Covariance(ell)), ell);
     auto ellmaj = g2::EllipseMajor(ell);
     std::cout << ellmaj << std::endl;
-    CHECK(g2::Ellipse(ellmaj) == ell);
+    CHECK_EQ(g2::Ellipse(ellmaj), ell);
 
     auto ell2 = g2::Ellipse(1, 1, 0.3);
-    CHECK(ell2.get_xyr() == std::array<double, 3>{1, 1, 0.3});
-    CHECK(ell2.get_hxyr() == std::array<double, 3>{g2::M_SIGMA_HWHM, g2::M_SIGMA_HWHM, 0.3});
+    CHECK_EQ(ell2.get_xyr(), std::array<double, 3>{1, 1, 0.3});
+    CHECK_EQ(ell2.get_hxyr(), std::array<double, 3>{g2::M_SIGMA_HWHM, g2::M_SIGMA_HWHM, 0.3});
     ell2.set_hxyr({1, 1, -0.3});
-    CHECK(ell2.get_xyr() == std::array<double, 3>{g2::M_HWHM_SIGMA, g2::M_HWHM_SIGMA, -0.3});
+    CHECK_EQ(ell2.get_xyr(), std::array<double, 3>{g2::M_HWHM_SIGMA, g2::M_HWHM_SIGMA, -0.3});
 }
 
 TEST_CASE("Marginal Major Ellipse") {
     auto covar = g2::Covariance(0.08333332098858685, 0.08333332098858683, 1.337355953645e-13);
     auto ellipse_maj = g2::EllipseMajor(covar);
-    CHECK(ellipse_maj.get_r_major() > 0);
+    CHECK_GT(ellipse_maj.get_r_major(), 0);
 }

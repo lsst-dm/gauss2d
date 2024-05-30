@@ -15,14 +15,14 @@ TEST_CASE("Gaussian") {
     auto g1 = g2::Gaussian{};
     auto g2 = std::make_shared<g2::Gaussian>(g1.get_centroid_ptr(), g1.get_ellipse_ptr(),
                                              std::make_shared<g2::GaussianIntegralValue>(2));
-    CHECK(g1 != *g2);
+    CHECK_NE(g1, *g2);
     g2->set_integral_value(g1.get_integral_value());
-    CHECK(g1 == *g2);
+    CHECK_EQ(g1, *g2);
     auto cen = std::make_shared<g2::Centroid>(0.5, 0.5);
     g2->set_centroid_ptr(cen);
-    CHECK(g2->get_centroid().get_x() == 0.5);
-    CHECK(g2->get_centroid().get_y() == 0.5);
-    CHECK(g1 != *g2);
+    CHECK_EQ(g2->get_centroid().get_x(), 0.5);
+    CHECK_EQ(g2->get_centroid().get_y(), 0.5);
+    CHECK_NE(g1, *g2);
 }
 
 TEST_CASE("Gaussians") {
@@ -32,10 +32,10 @@ TEST_CASE("Gaussians") {
     CHECK(&(gs[0]) == &(gs[1]));
     CHECK_THROWS_AS(gs.at(2), std::out_of_range);
     for (g2::Gaussians::const_iterator it = gs.cbegin(); it != gs.cend(); ++it) {
-        CHECK(*it == g1);
+        CHECK_EQ(*it, g1);
     }
     for (const auto& gauss : gs) {
-        CHECK(gauss == g1);
+        CHECK_EQ(gauss, g1);
     }
 
     std::vector<std::optional<const g2::Gaussians::Data>> data_vec;
@@ -51,8 +51,8 @@ TEST_CASE("ConvolvedGaussian") {
     auto g2 = std::make_shared<g2::Gaussian>(nullptr, std::make_shared<g2::Ellipse>(4, 8, 0),
                                              std::make_shared<g2::GaussianIntegralValue>(2));
     auto gc = g2::ConvolvedGaussian(g1, g2);
-    CHECK(&(gc.get_source()) == &(*g1));
-    CHECK(&(gc.get_kernel()) == &(*g2));
+    CHECK_EQ(&(gc.get_source()), &(*g1));
+    CHECK_EQ(&(gc.get_kernel()), &(*g2));
 }
 
 TEST_CASE("ConvolvedGaussians") {
@@ -72,10 +72,10 @@ TEST_CASE("ConvolvedGaussians") {
     auto gcs = g2::ConvolvedGaussians(data);
     size_t i = 0;
     for (g2::ConvolvedGaussians::const_iterator it = gcs.cbegin(); it != gcs.cend(); ++it) {
-        CHECK(*it == data.at(i++));
+        CHECK_EQ(*it, data.at(i++));
     }
     i = 0;
     for (const auto& gauss : gcs) {
-        CHECK(gauss == data.at(i++));
+        CHECK_EQ(gauss, data.at(i++));
     }
 }

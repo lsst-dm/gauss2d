@@ -71,7 +71,7 @@ TEST_CASE("Evaluator") {
     CHECK_NE(image, nullptr);
     CHECK_EQ(eval_img->get_n_cols(), n_cols);
     CHECK_EQ(eval_img->get_n_rows(), n_rows);
-    CHECK_EQ(eval_img->get_size(), n_cols*n_rows);
+    CHECK_EQ(eval_img->get_size(), n_cols * n_rows);
 
     double loglike_img = eval_img->loglike_pixel();
     CHECK_EQ(loglike_img, 0);
@@ -114,7 +114,7 @@ TEST_CASE("Evaluator") {
         dloglike_findif = (dloglike_findif - eval_like->loglike_pixel()) / (2 * dx);
         double dloglike_eval = img_loglike_grads->get_value(0, idx_param);
         double delta_dloglike_max = 1e-3 * std::abs((dloglike_eval + dloglike_findif) / 2.) + 1e-4;
-        CHECK(std::abs(dloglike_eval - dloglike_findif) < delta_dloglike_max);
+        CHECK_LT(std::abs(dloglike_eval - dloglike_findif), delta_dloglike_max);
         value = value_old;
     }
 
