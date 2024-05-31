@@ -5,9 +5,9 @@
 #include <cmath>
 #include <memory>
 
-#include "ellipse.h"
+#include "lsst/gauss2d/ellipse.h"
 
-namespace g2 = gauss2d;
+namespace g2 = lsst::gauss2d;
 
 TEST_CASE("Ellipse") {
     double rho_max = std::nextafter(1., 2.);

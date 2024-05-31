@@ -30,13 +30,14 @@
 
 #include "pybind11.h"
 
-#include "gauss2d/evaluate.h"
-#include "gauss2d/image.h"
-#include "gauss2d/python/pyimage.h"
-//#include "gauss2d/integrator.h"
+#include "lsst/gauss2d/evaluate.h"
+#include "lsst/gauss2d/image.h"
+#include "lsst/gauss2d/python/pyimage.h"
 
 namespace py = pybind11;
 using namespace pybind11::literals;
+
+namespace gauss2d = lsst::gauss2d;
 using namespace gauss2d::python;
 
 void bind_image(py::module &m) {

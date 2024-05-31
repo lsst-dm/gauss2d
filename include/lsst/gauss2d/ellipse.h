@@ -21,8 +21,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef GAUSS2D_ELLIPSE_H
-#define GAUSS2D_ELLIPSE_H
+#ifndef LSST_GAUSS2D_ELLIPSE_H
+#define LSST_GAUSS2D_ELLIPSE_H
 
 #include <array>
 #include <cmath>
@@ -31,7 +31,7 @@
 
 #include "object.h"
 
-namespace gauss2d {
+namespace lsst::gauss2d {
 
 const double M_HWHM_SIGMA = 1.1774100225154746910115693264599;
 const double M_SIGMA_HWHM = 0.84932180028801904272150283410295;
@@ -374,5 +374,5 @@ public:
     EllipseMajor(const Ellipse& ellipse, bool degrees = false);
 };
 
-}  // namespace gauss2d
+}  // namespace lsst::gauss2d
 #endif

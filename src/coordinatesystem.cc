@@ -21,14 +21,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef GAUSS2D_COORDINATESYSTEM_H
-#include "coordinatesystem.h"
+#ifndef LSST_GAUSS2D_COORDINATESYSTEM_H
 
 #include <cmath>
 #include <stdexcept>
 #include <string>
 
-namespace gauss2d {
+#include "lsst/gauss2d/coordinatesystem.h"
+
+namespace lsst::gauss2d {
 
 double CoordinateSystem::get_dx1() const { return _dx1; }
 double CoordinateSystem::get_dy2() const { return _dy2; }
@@ -70,6 +71,6 @@ CoordinateSystem::CoordinateSystem(double dx1, double dy2, double x_min, double 
 
 CoordinateSystem::~CoordinateSystem() {}
 
-}  // namespace gauss2d
+}  // namespace lsst::gauss2d
 
 #endif

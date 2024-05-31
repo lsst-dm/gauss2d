@@ -21,14 +21,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef GAUSS2D_ELLIPSE_H
-#include "ellipse.h"
+#ifndef LSST_GAUSS2D_ELLIPSE_H
 
 #include <cmath>
 #include <stdexcept>
 #include <string>
 
-namespace gauss2d {
+#include "lsst/gauss2d/ellipse.h"
+
+namespace lsst::gauss2d {
 template <class S>
 std::pair<S, S> sincos(S arg) {
     return {std::sin(arg), std::cos(arg)};
@@ -398,6 +399,6 @@ bool EllipseMajor::operator==(const EllipseMajor& other) const {
            && (get_angle_degrees() == other.get_angle_degrees());
 }
 
-}  // namespace gauss2d
+}  // namespace lsst::gauss2d
 
 #endif

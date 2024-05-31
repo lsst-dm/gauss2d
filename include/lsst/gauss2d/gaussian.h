@@ -21,8 +21,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef GAUSS2D_GAUSSIAN_H
-#define GAUSS2D_GAUSSIAN_H
+#ifndef LSST_GAUSS2D_GAUSSIAN_H
+#define LSST_GAUSS2D_GAUSSIAN_H
 
 #include <algorithm>
 #include <iostream>
@@ -37,7 +37,7 @@
 #include "ellipse.h"
 #include "object.h"
 
-namespace gauss2d {
+namespace lsst::gauss2d {
 
 /**
  * @brief Interface for the normalization (total integrated value) of a 2D Gaussian.
@@ -274,5 +274,5 @@ public:
     ConvolvedGaussians(std::vector<std::optional<const Data>> data);
 };
 
-}  // namespace gauss2d
+}  // namespace lsst::gauss2d
 #endif

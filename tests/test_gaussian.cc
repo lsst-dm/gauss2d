@@ -6,10 +6,10 @@
 #include <memory>
 #include <stdexcept>
 
-#include "centroid.h"
-#include "gaussian.h"
+#include "lsst/gauss2d/centroid.h"
+#include "lsst/gauss2d/gaussian.h"
 
-namespace g2 = gauss2d;
+namespace g2 = lsst::gauss2d;
 
 TEST_CASE("Gaussian") {
     auto g1 = g2::Gaussian{};

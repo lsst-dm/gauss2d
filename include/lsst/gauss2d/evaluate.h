@@ -21,8 +21,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef GAUSS2D_EVALUATE_H
-#define GAUSS2D_EVALUATE_H
+#ifndef LSST_GAUSS2D_EVALUATE_H
+#define LSST_GAUSS2D_EVALUATE_H
 
 //#include <iomanip>
 #include <iostream>
@@ -36,7 +36,7 @@
 #include "gaussian.h"
 #include "image.h"
 
-namespace gauss2d {
+namespace lsst::gauss2d {
 
 static const ConvolvedGaussians GAUSSIANS_NULL{std::nullopt};
 
@@ -1173,5 +1173,5 @@ std::shared_ptr<Data> make_gaussians_pixel(const std::shared_ptr<const Convolved
     evaluator->loglike_pixel(to_add);
     return output;
 }
-}  // namespace gauss2d
+}  // namespace lsst::gauss2d
 #endif

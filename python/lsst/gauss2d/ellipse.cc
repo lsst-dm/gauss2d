@@ -29,10 +29,12 @@
 
 #include "pybind11.h"
 
-#include "gauss2d/ellipse.h"
+#include "lsst/gauss2d/ellipse.h"
 
 namespace py = pybind11;
 using namespace pybind11::literals;
+
+namespace gauss2d = lsst::gauss2d;
 
 void bind_ellipse(py::module &m) {
     py::class_<gauss2d::Covariance, std::shared_ptr<gauss2d::Covariance>>(m, "Covariance")

@@ -4,9 +4,9 @@
 
 #include <memory>
 
-#include "centroid.h"
+#include "lsst/gauss2d/centroid.h"
 
-namespace g2 = gauss2d;
+namespace g2 = lsst::gauss2d;
 
 TEST_CASE("Centroid") {
     double x = 1, y = -1;

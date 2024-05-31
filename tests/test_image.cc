@@ -4,10 +4,10 @@
 
 #include <memory>
 
-#include "image.h"
-#include "vectorimage.h"
+#include "lsst/gauss2d/image.h"
+#include "lsst/gauss2d/vectorimage.h"
 
-namespace g2 = gauss2d;
+namespace g2 = lsst::gauss2d;
 
 typedef g2::VectorImage<double> Image;
 typedef g2::ImageArray<double, Image> ImageArray;
@@ -58,5 +58,5 @@ TEST_CASE("VectorMask") {
     CHECK_EQ(mask.get_value_unchecked(0, 0), false);
     mask._get_value_unchecked(1, 1) = true;
     CHECK_EQ(mask.get_value_unchecked(1, 1), true);
-    CHECK(g2::images_compatible<double, Image, bool, Mask>(image, mask));
+    CHECK_EQ(g2::images_compatible<double, Image, bool, Mask>(image, mask), true);
 }

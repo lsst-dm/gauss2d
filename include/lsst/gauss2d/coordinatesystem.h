@@ -21,15 +21,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef GAUSS2D_COORDINATESYSTEM_H
-#define GAUSS2D_COORDINATESYSTEM_H
+#ifndef LSST_GAUSS2D_COORDINATESYSTEM_H
+#define LSST_GAUSS2D_COORDINATESYSTEM_H
 
 #include <string>
 
 #include "object.h"
 #include "type_name.h"
 
-namespace gauss2d {
+namespace lsst::gauss2d {
 
 /**
  * A coordinate system specifying image scale and orientation.
@@ -71,5 +71,5 @@ public:
 
 static const CoordinateSystem COORDS_DEFAULT{};
 
-}  // namespace gauss2d
-#endif  // GAUSS2D_COORDINATESYSTEM_H
+}  // namespace lsst::gauss2d
+#endif  // LSST_GAUSS2D_COORDINATESYSTEM_H

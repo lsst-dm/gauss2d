@@ -21,15 +21,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef GAUSS2D_VECTORIMAGE_H
-#define GAUSS2D_VECTORIMAGE_H
+#ifndef LSST_GAUSS2D_VECTORIMAGE_H
+#define LSST_GAUSS2D_VECTORIMAGE_H
 
 #include <deque>
 #include <vector>
 
 #include "image.h"
 
-namespace gauss2d {
+namespace lsst::gauss2d {
 
 #pragma GCC visibility push(hidden)
 /*
@@ -67,5 +67,5 @@ public:
 };
 #pragma GCC visibility pop
 
-}  // namespace gauss2d
+}  // namespace lsst::gauss2d
 #endif

@@ -21,8 +21,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef GAUSS2D_CENTROID_H
-#define GAUSS2D_CENTROID_H
+#ifndef LSST_GAUSS2D_CENTROID_H
+#define LSST_GAUSS2D_CENTROID_H
 
 #include <array>
 #include <memory>
@@ -30,7 +30,7 @@
 
 #include "object.h"
 
-namespace gauss2d {
+namespace lsst::gauss2d {
 
 /**
  * @brief Interface for an object storing Centroid data.
@@ -154,5 +154,5 @@ public:
     Centroid(double x = 0, double y = 0);
 };
 
-}  // namespace gauss2d
+}  // namespace lsst::gauss2d
 #endif

@@ -1,7 +1,7 @@
 project(
   'libgauss2d',
   'cpp',
-  version : run_command('cat', meson.source_root() + '/VERSION', check: true).stdout().strip(),
+  version : files('VERSION'),
   license : 'GPL-3.0-or-later',
   default_options : ['cpp_std=c++17',],
 )
@@ -16,6 +16,8 @@ inc = include_directories('include')
 
 subdir('include')
 subdir('src')
+
+# Unit Tests
 subdir('tests')
 
 if not use_eups
@@ -31,4 +33,22 @@ if not use_eups
     endif
 endif
 
+# Build package docs (optional)
 subdir('doc')
+
+# Build doxygen docs (done by eupspkg install if use_eups)
+if not use_eups
+    pymod = import('python')
+    python = pymod.find_installation(
+        'python3',
+        required : false,
+        modules: ['lsst.sconsUtils'],
+    )
+    has_py3 = python.found()
+    scons = find_program('scons', required: false)
+    has_scons = scons.found()
+    if has_scons and has_py3
+        message('Running SCons to build docs; see ' + meson.build_root() + '/meson-logs/meson-log.txt for output')
+        run_command('sh', '-c', 'cd $MESON_SOURCE_ROOT && echo $PWD && scons', check: false, capture: true)
+    endif
+endif

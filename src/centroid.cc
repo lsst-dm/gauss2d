@@ -21,13 +21,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef GAUSS2D_CENTROID_H
-#include "centroid.h"
+#ifndef LSST_GAUSS2D_CENTROID_H
 
 #include <memory>
 #include <string>
 
-namespace gauss2d {
+#include "lsst/gauss2d/centroid.h"
+
+namespace lsst::gauss2d {
 
 double CentroidValues::get_x() const { return *_x; }
 std::array<double, 2> CentroidValues::get_xy() const { return {*_x, *_y}; }
@@ -99,6 +100,6 @@ Centroid::Centroid(double x, double y) : _data(std::make_shared<CentroidValues>(
     set_y(y);
 }
 
-}  // namespace gauss2d
+}  // namespace lsst::gauss2d
 
 #endif

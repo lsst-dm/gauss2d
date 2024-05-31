@@ -10,17 +10,17 @@ eups = find_program('eups', required: false)
 use_eups = eups.found()
 
 if use_eups
-	eupsdir = run_command('eups', 'list', '-d', 'gauss2d', check: false)
+    eupsdir = run_command('sh', '-c', 'echo $GAUSS2D_DIR', check: false, capture: true)
 	use_eups = eupsdir.returncode() == 0
 endif
 
 if use_eups
-    eupsdir = eupsdir.stdout().strip() + '/build-release/'
-    message(eupsdir)
+    eupsdir = eupsdir.stdout().strip() / 'build-release/'
+    message('eupsdir=' + eupsdir)
     cpp = meson.get_compiler('cpp')
     gauss2d_dep = declare_dependency(
-        dependencies: [cpp.find_library('gauss2d', dirs: [eupsdir + 'lib64']),],
-        include_directories: eupsdir + 'include',
+        dependencies: [cpp.find_library('gauss2d', dirs: [eupsdir / 'lib64/lsst/gauss2d']),],
+        include_directories: eupsdir / 'include',
     )
 else
     gauss2d_dep = dependency('gauss2d')

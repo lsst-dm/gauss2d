@@ -21,12 +21,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef GAUSS2D_TYPE_NAME_H
-#define GAUSS2D_TYPE_NAME_H
+#ifndef LSST_GAUSS2D_TYPE_NAME_H
+#define LSST_GAUSS2D_TYPE_NAME_H
 
 #include <string_view>
 
-namespace gauss2d {
+namespace lsst::gauss2d {
 
 // https://stackoverflow.com/questions/81870/is-it-possible-to-print-a-variables-type-in-standard-c/64490578#64490578
 template <typename T>
@@ -74,5 +74,5 @@ constexpr std::string_view type_name() {
     return wrapped_name.substr(prefix_length, type_name_length);
 }
 
-}  // namespace gauss2d
+}  // namespace lsst::gauss2d
 #endif

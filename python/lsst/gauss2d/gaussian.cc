@@ -29,10 +29,12 @@
 
 #include "pybind11.h"
 
-#include "gauss2d/gaussian.h"
+#include "lsst/gauss2d/gaussian.h"
 
 namespace py = pybind11;
 using namespace pybind11::literals;
+
+namespace gauss2d = lsst::gauss2d;
 
 void bind_gaussian(py::module &m) {
     m.doc() = "Gauss2D Gaussian Python bindings";

@@ -1,14 +1,16 @@
+subdir_gauss2d = 'gauss2d'
 sources = [
-    'centroid.cc',
-    'coordinatesystem.cc',
-    'ellipse.cc',
-    'gaussian.cc',
-    'image.cc',
-    'object.cc',
-    'pybind11.cc',
+    subdir_gauss2d / 'centroid.cc',
+    subdir_gauss2d / 'coordinatesystem.cc',
+    subdir_gauss2d / 'ellipse.cc',
+    subdir_gauss2d / 'gaussian.cc',
+    subdir_gauss2d / 'image.cc',
+    subdir_gauss2d / 'object.cc',
+    subdir_gauss2d / 'pybind11.cc',
 ]
 
-kwargs = {}
+add_project_arguments('-DVERSION=@0@'.format(meson.project_version()), language : 'cpp')
+
 eups = find_program('eups', required: false)
 use_eups = eups.found()
 
@@ -16,12 +18,13 @@ if use_eups
 	use_eups = run_command('eups', 'list', '-d', 'gauss2d', check: false).returncode() == 0
 endif
 
+kwargs = {}
 if use_eups
     # meson.current_build_dir() would be ideal but it seems to delete the file?
-    kwargs = {'install_dir': meson.build_root() + '/lib/gauss2d'}
+    kwargs = {'install_dir': meson.build_root() + '/lib/lsst'}
 else
     # Folder relative to site-packages to install to
-    kwargs = {'subdir': 'gauss2d'}
+    kwargs = {'subdir': 'lsst' / subdir_gauss2d}
 endif
 
 module = python.extension_module(
@@ -38,18 +41,20 @@ module = python.extension_module(
 )
 
 # Pure Python sources
-python_sources = [
+py_sources = [
     '__init__.py',
-    'utils.py',
+    subdir_gauss2d / '__init__.py',
+    subdir_gauss2d / 'utils.py',
 ]
 
 if use_eups
-    install_data(python_sources, kwargs: kwargs)
+    install_data(py_sources, kwargs: kwargs)
 else
     # Install pure Python
     python.install_sources(
-        python_sources,
+        py_sources,
         pure: false, # Will be installed next to binaries
-        subdir: 'gauss2d'  # Folder relative to site-packages to install to
+        subdir: 'lsst',
+        preserve_path: true,
     )
 endif

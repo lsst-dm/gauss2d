@@ -6,9 +6,9 @@
 #include <memory>
 #include <stdexcept>
 
-#include "coordinatesystem.h"
+#include "lsst/gauss2d/coordinatesystem.h"
 
-namespace g2 = gauss2d;
+namespace g2 = lsst::gauss2d;
 
 TEST_CASE("Centroid") {
     CHECK_THROWS_AS(g2::CoordinateSystem(std::numeric_limits<double>::infinity()), std::invalid_argument);

@@ -1,3 +1,4 @@
+// -*- LSST-C++ -*-
 /*
  * This file is part of gauss2d.
  *
@@ -21,24 +22,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LSST_GAUSS2D_EVALUATE_H
+#ifndef LSST_GAUSS2D_H
+#define LSST_GAUSS2D_H
 
-#include "lsst/gauss2d/evaluate.h"
+#include "gauss2d/centroid.h"
+#include "gauss2d/coordinatesystem.h"
+#include "gauss2d/ellipse.h"
+#include "gauss2d/evaluate.h"
+#include "gauss2d/gaussian.h"
+#include "gauss2d/image.h"
+#include "gauss2d/object.h"
+#include "gauss2d/type_name.h"
+#include "gauss2d/vectorimage.h"
 
-namespace lsst::gauss2d {
-
-Terms terms_from_covar(const double weight, const Ellipse& ell) {
-    double sig_x = ell.get_sigma_x();
-    double sig_y = ell.get_sigma_y();
-    double rho = ell.get_rho();
-
-    const double norm_exp = 1. / (1 - rho * rho);
-    Terms rval = {.weight = weight / (2. * M_PI * sig_x * sig_y) * sqrt(norm_exp),
-                  .xx = norm_exp / (2. * sig_x * sig_x),
-                  .yy = norm_exp / (2. * sig_y * sig_y),
-                  .xy = rho * norm_exp / (sig_x * sig_y)};
-    return rval;
-}
-
-}  // namespace lsst::gauss2d
-#endif
+#endif  // LSST_GAUSS2D_H

@@ -21,8 +21,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef GAUSS2D_IMAGE_H
-#define GAUSS2D_IMAGE_H
+#ifndef LSST_GAUSS2D_IMAGE_H
+#define LSST_GAUSS2D_IMAGE_H
 
 #include <array>
 #include <cstddef>
@@ -38,7 +38,7 @@
 #include "object.h"
 #include "type_name.h"
 
-namespace gauss2d {
+namespace lsst::gauss2d {
 
 template <typename t, class Data, class Indices>
 class GaussianEvaluator;
@@ -275,5 +275,5 @@ public:
     };
 };
 
-}  // namespace gauss2d
-#endif  // GAUSS2D_IMAGE_H
+}  // namespace lsst::gauss2d
+#endif  // LSST_GAUSS2D_IMAGE_H

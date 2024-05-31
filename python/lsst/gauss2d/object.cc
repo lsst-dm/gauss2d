@@ -1,5 +1,5 @@
 /*
- * This file is part of gauss2d.
+ * This file is part of gauss2dfit.
  *
  * Developed for the LSST Data Management System.
  * This product includes software developed by the LSST Project
@@ -21,25 +21,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef GAUSS2D_OBJECT_H
-#define GAUSS2D_OBJECT_H
+#include <pybind11/attr.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
-#include <string>
+#include <memory>
 
-namespace gauss2d {
+#include "pybind11.h"
 
-class Object {
-public:
-    virtual std::string repr(bool name_keywords = false) const = 0;
-    virtual std::string str() const = 0;
+#include "lsst/gauss2d/object.h"
 
-    friend std::ostream &operator<<(std::ostream &out, const Object &obj) {
-        out << obj.str();
-        return out;
-    }
+namespace py = pybind11;
 
-    virtual ~Object() = default;
-};
+namespace gauss2d = lsst::gauss2d;
 
-}  // namespace gauss2d
-#endif
+void bind_object(py::module &m) {
+    py::class_<gauss2d::Object, std::shared_ptr<gauss2d::Object>>(m, "Object");
+}

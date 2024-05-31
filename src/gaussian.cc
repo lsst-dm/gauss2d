@@ -21,13 +21,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef GAUSS2D_GAUSSIAN_H
-#include "gaussian.h"
+#ifndef LSST_GAUSS2D_GAUSSIAN_H
 
 #include <optional>
 #include <stdexcept>
 
-namespace gauss2d {
+#include "lsst/gauss2d/gaussian.h"
+
+namespace lsst::gauss2d {
 std::string GaussianIntegralValue::repr(bool name_keywords) const {
     return std::string("GaussianIntegralValue(") + (name_keywords ? "value=" : "") + std::to_string(*_value)
            + ")";
@@ -270,6 +271,6 @@ ConvolvedGaussians::ConvolvedGaussians(std::vector<std::optional<const Data>> da
         for (const auto& datum : data) i = this->assign(*datum, i);
     }
 }
-}  // namespace gauss2d
+}  // namespace lsst::gauss2d
 
 #endif

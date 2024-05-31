@@ -1,4 +1,3 @@
-#include "image.h"
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 
 #include "doctest.h"
@@ -7,13 +6,12 @@
 #include <memory>
 #include <sstream>
 
-#include "centroid.h"
-#include "ellipse.h"
-#include "evaluate.h"
-#include "gaussian.h"
-#include "vectorimage.h"
+#include "lsst/gauss2d/centroid.h"
+#include "lsst/gauss2d/ellipse.h"
+#include "lsst/gauss2d/evaluate.h"
+#include "lsst/gauss2d/vectorimage.h"
 
-namespace g2 = gauss2d;
+namespace g2 = lsst::gauss2d;
 
 typedef g2::VectorImage<double> Image;
 typedef g2::ImageArray<double, Image> ImageArray;

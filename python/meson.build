@@ -1,8 +1,8 @@
 project(
-    'gauss2d',
+    'gauss2d_py',
     'cpp',
     default_options : ['cpp_std=c++17',],
-    version : run_command('cat', meson.source_root() + '/VERSION', check: true).stdout().strip(),
+    version : files('VERSION'),
 )
 
 add_project_arguments('-DVERSION=@0@'.format(meson.project_version()), language : 'cpp')
@@ -11,16 +11,17 @@ eups = find_program('eups', required: false)
 use_eups = eups.found()
 
 if use_eups
-	eupsdir = run_command('eups', 'list', '-d', 'gauss2d', check: false)
+	eupsdir = run_command('sh', '-c', 'echo $GAUSS2D_DIR', check: false, capture: true)
 	use_eups = eupsdir.returncode() == 0
 endif
 
 if use_eups
-    eupsdir = eupsdir.stdout().strip()
+    eupsdir = eupsdir.stdout().strip() / 'build-release/'
+    message('eupsdir=' + eupsdir)
     cpp = meson.get_compiler('cpp')
     gauss2d_dep = declare_dependency(
-        dependencies: [cpp.find_library('gauss2d', dirs: [eupsdir + '/build-release/lib64']),],
-        include_directories: eupsdir + '/build-release/include',
+        dependencies: [cpp.find_library('gauss2d', dirs: [eupsdir + 'lib64/lsst/gauss2d']),],
+        include_directories: eupsdir / 'include',
     )
     gauss2d_python_dep = declare_dependency(
         # Relative path because it's in a subdir of this file
@@ -37,7 +38,7 @@ python = pymod.find_installation(
     'python3',
     required : true,
 )
-subdir('gauss2d')
+subdir('lsst')
 
 if not use_eups
 	pip_cmd = [
