@@ -5,6 +5,11 @@ build-debug
 build-release
 python/lsst/lsst_gauss2d.egg-info/
 
+# SCons
+config.log
+.sconf_temp
+.sconsign.dblite
+
 # IDE folders and files
 .cache/
 .idea/

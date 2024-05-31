@@ -1,0 +1,3 @@
+# -*- python -*-
+from lsst.sconsUtils import scripts
+scripts.BasicSConscript.doc(projectName="lsst.gauss2d") #, projectNumber="0.1.0")
