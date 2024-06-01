@@ -50,6 +50,12 @@ std::string CentroidValues::str() const {
     return "CentroidValues(x=" + std::to_string(*_x) + ", y=" + std::to_string(*_y) + ")";
 }
 
+bool CentroidValues::operator==(const CentroidValues& other) const {
+    return (this->get_x() == other.get_x()) && (this->get_y() == other.get_y());
+};
+
+bool CentroidValues::operator!=(const CentroidValues& other) const { return !(*this == other); }
+
 CentroidValues::CentroidValues(std::shared_ptr<double> x, std::shared_ptr<double> y)
         : _x(x == nullptr ? std::make_shared<double>(0) : std::move(x)),
           _y(y == nullptr ? std::make_shared<double>(0) : std::move(y)) {}
@@ -90,7 +96,11 @@ std::string Centroid::repr(bool name_keywords) const {
 
 std::string Centroid::str() const { return "Centroid(data=" + _data->str() + ")"; }
 
-bool Centroid::operator==(const Centroid& other) const { return get_data() == other.get_data(); };
+bool Centroid::operator==(const Centroid& other) const {
+    return (this->get_x() == other.get_x()) && (this->get_y() == other.get_y());
+};
+
+bool Centroid::operator!=(const Centroid& other) const { return !(*this == other); }
 
 Centroid::Centroid(std::shared_ptr<CentroidData> data)
         : _data(data == nullptr ? std::make_shared<CentroidValues>() : std::move(data)) {}

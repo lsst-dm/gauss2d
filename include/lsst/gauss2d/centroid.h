@@ -85,6 +85,9 @@ public:
     std::string repr(bool name_keywords = false) const override;
     std::string str() const override;
 
+    bool operator==(const CentroidValues& other) const;
+    bool operator!=(const CentroidValues& other) const;
+
     /**
      * @brief Construct a new Centroid Values object
      *
@@ -149,6 +152,7 @@ public:
     std::string str() const override;
 
     bool operator==(const Centroid& other) const;
+    bool operator!=(const Centroid& other) const;
 
     Centroid(std::shared_ptr<CentroidData> data);
     Centroid(double x = 0, double y = 0);
