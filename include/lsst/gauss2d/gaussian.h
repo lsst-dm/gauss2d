@@ -1,3 +1,4 @@
+// -*- LSST-C++ -*-
 /*
  * This file is part of gauss2d.
  *

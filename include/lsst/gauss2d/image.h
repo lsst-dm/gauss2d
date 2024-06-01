@@ -1,3 +1,4 @@
+// -*- LSST-C++ -*-
 /*
  * This file is part of gauss2d.
  *
@@ -65,7 +66,7 @@ class Image;
  * @return true If images are compatible.
  **/
 template <typename t1, class C1, typename t2, class C2>
-bool images_compatible(const Image<t1, C1>& img1, const Image<t2, C2>& img2, bool compare_coordsys=true,
+bool images_compatible(const Image<t1, C1>& img1, const Image<t2, C2>& img2, bool compare_coordsys = true,
                        std::string* msg = nullptr) {
     bool coordsys_equal = !compare_coordsys || (img1.get_coordsys() == img2.get_coordsys());
     bool return_msg = msg != nullptr;

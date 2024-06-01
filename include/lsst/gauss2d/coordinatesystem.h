@@ -1,3 +1,4 @@
+// -*- LSST-C++ -*-
 /*
  * This file is part of gauss2d.
  *
@@ -65,7 +66,7 @@ public:
     std::string repr(bool name_keywords) const override;
     std::string str() const override;
 
-    CoordinateSystem(double dx1 = 1., double dy2 = 1, double x_min=0, double y_min=0);
+    CoordinateSystem(double dx1 = 1., double dy2 = 1, double x_min = 0, double y_min = 0);
     ~CoordinateSystem();
 };
 

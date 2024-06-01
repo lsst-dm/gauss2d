@@ -1,3 +1,4 @@
+// -*- LSST-C++ -*-
 /*
  * This file is part of gauss2d.
  *
@@ -24,13 +25,13 @@
 #ifndef LSST_GAUSS2D_EVALUATE_H
 #define LSST_GAUSS2D_EVALUATE_H
 
-//#include <iomanip>
+// #include <iomanip>
 #include <iostream>
 #include <memory>
 #include <set>
 #include <stdexcept>
 #include <string>
-//#include <utility>
+// #include <utility>
 #include <vector>
 
 #include "gaussian.h"
@@ -1157,13 +1158,11 @@ Indices& GaussianEvaluator<t, Data, Indices>::INDICES_NULL() const {
 template <typename t, class Data, class Indices>
 std::shared_ptr<Data> make_gaussians_pixel(const std::shared_ptr<const ConvolvedGaussians> gaussians,
                                            std::shared_ptr<Data> output = nullptr,
-                                           const unsigned int n_rows = 0,
-                                           const unsigned int n_cols = 0,
+                                           const unsigned int n_rows = 0, const unsigned int n_cols = 0,
                                            const std::shared_ptr<const CoordinateSystem> coordsys = nullptr,
-                                           bool to_add=false
-                                           ) {
+                                           bool to_add = false) {
     if (output == nullptr) {
-        if(to_add) {
+        if (to_add) {
             throw std::invalid_argument("Cannot set to_add if output is nullptr");
         }
         output = std::make_shared<Data>(n_rows, n_cols, coordsys);
