@@ -127,7 +127,7 @@ void declare_image(py::module &m, std::string typestr) {
             .def(py::self == py::self)
             .def(py::self != py::self)
             .def(py::self += T())
-            .def("__repr__", [](const Class &self) { return self.repr(true); })
+            .def("__repr__", [](const Class &self) { return self.repr(true, self.PY_NAMESPACE_SEPARATOR); })
             .def("__str__", &Class::str);
 }
 
@@ -139,7 +139,7 @@ void declare_image_array(py::module &m, std::string typestr) {
             .def(py::init<const typename Class::Data *>(), "data"_a)
             .def("at", &Class::at, py::return_value_policy::reference)
             .def_property_readonly("size", &Class::size)
-            .def("__repr__", [](const Class &self) { return self.repr(true); })
+            .def("__repr__", [](const Class &self) { return self.repr(true, self.PY_NAMESPACE_SEPARATOR); })
             .def("__str__", &Class::str);
 }
 

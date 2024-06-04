@@ -64,7 +64,7 @@ public:
             _data[row].resize(n_cols);
         }
     }
-    ~VectorImage(){};
+    ~VectorImage() = default;
 };
 #pragma GCC visibility pop
 

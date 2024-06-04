@@ -48,7 +48,10 @@ void bind_centroid(py::module &m) {
             .def_property("xy", &gauss2d::CentroidValues::get_xy, &gauss2d::CentroidValues::set_xy)
             .def(py::self == py::self)
             .def(py::self != py::self)
-            .def("__repr__", [](const gauss2d::CentroidValues &self) { return self.repr(true); })
+            .def("__repr__",
+                 [](const gauss2d::CentroidValues &self) {
+                     return self.repr(true, self.PY_NAMESPACE_SEPARATOR);
+                 })
             .def("__str__", &gauss2d::CentroidValues::str);
     py::class_<gauss2d::Centroid, std::shared_ptr<gauss2d::Centroid>>(m, "Centroid")
             .def(py::init<std::shared_ptr<gauss2d::CentroidData>>(), "data"_a)
@@ -58,6 +61,7 @@ void bind_centroid(py::module &m) {
             .def_property("xy", &gauss2d::Centroid::get_xy, &gauss2d::Centroid::set_xy)
             .def(py::self == py::self)
             .def(py::self != py::self)
-            .def("__repr__", [](const gauss2d::Centroid &self) { return self.repr(true); })
+            .def("__repr__",
+                 [](const gauss2d::Centroid &self) { return self.repr(true, self.PY_NAMESPACE_SEPARATOR); })
             .def("__str__", &gauss2d::Centroid::str);
 }

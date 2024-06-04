@@ -94,7 +94,8 @@ public:
     void set_cov_xy(double cov_xy);
     void set_xyc(const std::array<double, 3>& xyc);
 
-    std::string repr(bool name_keywords = false) const override;
+    std::string repr(bool name_keywords = false, std::string_view namespace_separator
+                                                 = Object::CC_NAMESPACE_SEPARATOR) const override;
     std::string str() const override;
 
     bool operator==(const Covariance& other) const;
@@ -151,7 +152,9 @@ public:
     /// Set sigma_x, sigma_y, rho from an array
     virtual void set_xyr(const std::array<double, 3>& xyr) = 0;
 
-    virtual std::string repr(bool name_keywords = false) const override = 0;
+    virtual std::string repr(bool name_keywords = false, std::string_view namespace_separator
+                                                         = Object::CC_NAMESPACE_SEPARATOR) const override
+            = 0;
     virtual std::string str() const override = 0;
 
     bool operator==(const EllipseData& other) const { return get_xyr() == other.get_xyr(); };
@@ -192,7 +195,8 @@ public:
     void set_hxyr(const std::array<double, 3>& hxyr) override;
     void set_xyr(const std::array<double, 3>& xyr) override;
 
-    std::string repr(bool name_keywords = false) const override;
+    std::string repr(bool name_keywords = false, std::string_view namespace_separator
+                                                 = Object::CC_NAMESPACE_SEPARATOR) const override;
     std::string str() const override;
 
     /**
@@ -291,7 +295,8 @@ public:
     void set_hxyr(const std::array<double, 3>& hxyr);
     void set_xyr(const std::array<double, 3>& xyr);
 
-    std::string repr(bool name_keywords = false) const override;
+    std::string repr(bool name_keywords = false, std::string_view namespace_separator
+                                                 = Object::CC_NAMESPACE_SEPARATOR) const override;
     std::string str() const override;
 
     bool operator==(const Ellipse& other) const;
@@ -357,7 +362,8 @@ public:
     void set_degrees(bool degrees);
     void set_rqa(const std::array<double, 3>& rqa);
 
-    std::string repr(bool name_keywords = false) const override;
+    std::string repr(bool name_keywords = false, std::string_view namespace_separator
+                                                 = Object::CC_NAMESPACE_SEPARATOR) const override;
     std::string str() const override;
 
     bool operator==(const EllipseMajor& other) const;

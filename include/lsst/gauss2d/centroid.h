@@ -57,7 +57,9 @@ public:
         return (get_x() == other.get_x()) && (get_y() == other.get_y());
     };
 
-    virtual std::string repr(bool name_keywords = false) const override = 0;
+    virtual std::string repr(bool name_keywords = false, std::string_view namespace_separator
+                                                         = Object::CC_NAMESPACE_SEPARATOR) const override
+            = 0;
     virtual std::string str() const override = 0;
     virtual ~CentroidData() = default;
 };
@@ -83,7 +85,7 @@ public:
     void set_xy(const std::array<double, 2>& xy) override;
     void set_y(double y) override;
 
-    std::string repr(bool name_keywords = false) const override;
+    std::string repr(bool name_keywords, std::string_view namespace_separator) const override;
     std::string str() const override;
 
     bool operator==(const CentroidValues& other) const;
@@ -149,7 +151,7 @@ public:
     void set_xy(const std::array<double, 2>& xy);
     void set_y(double y);
 
-    std::string repr(bool name_keywords = false) const override;
+    std::string repr(bool name_keywords, std::string_view namespace_separator) const override;
     std::string str() const override;
 
     bool operator==(const Centroid& other) const;

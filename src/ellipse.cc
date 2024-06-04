@@ -28,6 +28,7 @@
 #include <string>
 
 #include "lsst/gauss2d/ellipse.h"
+#include "lsst/gauss2d/type_name.h"
 
 namespace lsst::gauss2d {
 template <class S>
@@ -117,14 +118,15 @@ void Covariance::set_cov_xy(double cov_xy) {
 
 void Covariance::set_xyc(const std::array<double, 3>& xyc) { this->set(xyc[0], xyc[1], xyc[2]); }
 
-std::string Covariance::repr(bool name_keywords) const {
-    return std::string("Covariance(") + (name_keywords ? "sigma_x_sq=" : "") + std::to_string(_sigma_x_sq)
-           + ", " + (name_keywords ? "sigma_y_sq=" : "") + std::to_string(_sigma_y_sq) + ", "
-           + (name_keywords ? "cov_xy=" : "") + std::to_string(_cov_xy) + ")";
+std::string Covariance::repr(bool name_keywords, std::string_view namespace_separator) const {
+    return type_name_str<Covariance>(false, namespace_separator) + "(" + (name_keywords ? "sigma_x_sq=" : "")
+           + std::to_string(_sigma_x_sq) + ", " + (name_keywords ? "sigma_y_sq=" : "")
+           + std::to_string(_sigma_y_sq) + ", " + (name_keywords ? "cov_xy=" : "") + std::to_string(_cov_xy)
+           + ")";
 }
 
 std::string Covariance::str() const {
-    return "Covariance(sigma_x_sq=" + std::to_string(_sigma_x_sq)
+    return type_name_str<Covariance>(true) + "(sigma_x_sq=" + std::to_string(_sigma_x_sq)
            + ", sigma_y_sq=" + std::to_string(_sigma_y_sq) + ", cov_xy=" + std::to_string(_cov_xy) + ")";
 }
 
@@ -176,16 +178,17 @@ void EllipseValues::set_hxyr(const std::array<double, 3>& hxyr) { this->set_h(hx
 
 void EllipseValues::set_xyr(const std::array<double, 3>& xyr) { this->set(xyr[0], xyr[1], xyr[2]); }
 
-std::string EllipseValues::repr(bool name_keywords) const {
-    return std::string("EllipseValues(") + (name_keywords ? "sigma_x=" : "")
+std::string EllipseValues::repr(bool name_keywords, std::string_view namespace_separator) const {
+    return type_name_str<EllipseValues>(false, namespace_separator) + "(" + (name_keywords ? "sigma_x=" : "")
            + std::to_string(this->get_sigma_x()) + ", " + (name_keywords ? "sigma_y=" : "")
            + std::to_string(this->get_sigma_y()) + ", " + (name_keywords ? "rho=" : "")
            + std::to_string(this->get_rho()) + ")";
 }
 
 std::string EllipseValues::str() const {
-    return "EllipseValues(sigma_x=" + std::to_string(this->get_sigma_x()) + ", sigma_y="
-           + std::to_string(this->get_sigma_y()) + ", rho=" + std::to_string(this->get_rho()) + ")";
+    return type_name_str<EllipseValues>(true) + "(sigma_x=" + std::to_string(this->get_sigma_x())
+           + ", sigma_y=" + std::to_string(this->get_sigma_y()) + ", rho=" + std::to_string(this->get_rho())
+           + ")";
 }
 
 void Ellipse::convolve(const Ellipse& ell) {
@@ -278,11 +281,12 @@ void Ellipse::set_hxyr(const std::array<double, 3>& hxyr) { this->set_h(hxyr[0],
 
 void Ellipse::set_xyr(const std::array<double, 3>& xyr) { this->set(xyr[0], xyr[1], xyr[2]); }
 
-std::string Ellipse::repr(bool name_keywords) const {
-    return std::string("Ellipse(") + (name_keywords ? "data=" : "") + _data->repr(name_keywords) + ")";
+std::string Ellipse::repr(bool name_keywords, std::string_view namespace_separator) const {
+    return type_name_str<Ellipse>(false, namespace_separator) + "(" + (name_keywords ? "data=" : "")
+           + _data->repr(name_keywords) + ")";
 }
 
-std::string Ellipse::str() const { return "Ellipse(data=" + _data->str() + ")"; }
+std::string Ellipse::str() const { return type_name_str<Ellipse>(true) + "(data=" + _data->str() + ")"; }
 
 bool Ellipse::operator==(const Ellipse& other) const { return get_data() == other.get_data(); };
 
@@ -313,7 +317,7 @@ std::pair<double, double> get_x_pm(double sigma_x_sq, double sigma_y_sq, double 
                  - 2 * (sigma_x_sq * sigma_y_sq - 2 * cov_xy * cov_xy));
     // Return zero if the result is negative
     // TODO: Consider checking if < -machine_eps?
-    pm = (pm > 0) ? sqrt(pm)/2 : 0;
+    pm = (pm > 0) ? sqrt(pm) / 2 : 0;
     return {x, pm};
 }
 
@@ -382,16 +386,17 @@ void EllipseMajor::set_degrees(bool degrees) {
 
 void EllipseMajor::set_rqa(const std::array<double, 3>& rqa) { this->set(rqa[0], rqa[1], rqa[2]); }
 
-std::string EllipseMajor::repr(bool name_keywords) const {
-    return std::string("EllipseMajor(") + (name_keywords ? "r_major=" : "") + std::to_string(_r_major) + ", "
-           + (name_keywords ? "axrat=" : "") + std::to_string(_axrat) + ", " + (name_keywords ? "angle=" : "")
-           + std::to_string(_angle) + ", " + (name_keywords ? "degrees=" : "") + std::to_string(_degrees)
-           + ")";
+std::string EllipseMajor::repr(bool name_keywords, std::string_view namespace_separator) const {
+    return type_name_str<EllipseMajor>(false, namespace_separator) + "(" + (name_keywords ? "r_major=" : "")
+           + std::to_string(_r_major) + ", " + (name_keywords ? "axrat=" : "") + std::to_string(_axrat) + ", "
+           + (name_keywords ? "angle=" : "") + std::to_string(_angle) + ", "
+           + (name_keywords ? "degrees=" : "") + std::to_string(_degrees) + ")";
 }
 
 std::string EllipseMajor::str() const {
-    return "EllipseMajor(r_major=" + std::to_string(_r_major) + ", axrat=" + std::to_string(_axrat)
-           + ", angle=" + std::to_string(_angle) + ", degrees=" + std::to_string(_degrees) + ")";
+    return type_name_str<EllipseMajor>(true) + "(r_major=" + std::to_string(_r_major)
+           + ", axrat=" + std::to_string(_axrat) + ", angle=" + std::to_string(_angle)
+           + ", degrees=" + std::to_string(_degrees) + ")";
 }
 
 bool EllipseMajor::operator==(const EllipseMajor& other) const {

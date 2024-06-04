@@ -49,7 +49,9 @@ public:
     virtual double get_value() const = 0;
     virtual void set_value(double value) = 0;
 
-    virtual std::string repr(bool name_keywords = false) const override = 0;
+    virtual std::string repr(bool name_keywords = false, std::string_view namespace_separator
+                                                         = Object::CC_NAMESPACE_SEPARATOR) const override
+            = 0;
     virtual std::string str() const override = 0;
 
     virtual bool operator==(const GaussianIntegral& other) const {
@@ -77,7 +79,8 @@ public:
     double get_value() const override { return *_value; }
     void set_value(double value) override { *_value = value; }
 
-    std::string repr(bool name_keywords = false) const override;
+    std::string repr(bool name_keywords = false, std::string_view namespace_separator
+                                                 = Object::CC_NAMESPACE_SEPARATOR) const override;
     std::string str() const override;
 
     GaussianIntegralValue(double value = 1.);
@@ -140,7 +143,8 @@ public:
     void set_ellipse_ptr(std::shared_ptr<Ellipse> ellipse);
     void set_integral_ptr(std::shared_ptr<GaussianIntegral> integral);
 
-    std::string repr(bool name_keywords = false) const override;
+    std::string repr(bool name_keywords = false, std::string_view namespace_separator
+                                                 = Object::CC_NAMESPACE_SEPARATOR) const override;
     std::string str() const override;
 
     bool operator==(const Gaussian& other) const;
@@ -198,7 +202,8 @@ public:
 
     size_t size() const;
 
-    std::string repr(bool name_keywords = false) const override;
+    std::string repr(bool name_keywords = false, std::string_view namespace_separator
+                                                 = Object::CC_NAMESPACE_SEPARATOR) const override;
     std::string str() const override;
 
     // These constructors explicitly copy inputs rather than moving
@@ -221,7 +226,8 @@ public:
 
     std::unique_ptr<Gaussian> make_convolution() const;
 
-    std::string repr(bool name_keywords = false) const override;
+    std::string repr(bool name_keywords = false, std::string_view namespace_separator
+                                                 = Object::CC_NAMESPACE_SEPARATOR) const override;
     std::string str() const override;
 
     ConvolvedGaussian(std::shared_ptr<const Gaussian> source = nullptr,
@@ -264,7 +270,8 @@ public:
 
     size_t size() const;
 
-    std::string repr(bool name_keywords = false) const override;
+    std::string repr(bool name_keywords = false, std::string_view namespace_separator
+                                                 = Object::CC_NAMESPACE_SEPARATOR) const override;
     std::string str() const override;
 
     ConvolvedGaussian& operator[](size_t i);

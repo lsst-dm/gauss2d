@@ -158,9 +158,9 @@ public:
 
     size_t size() const { return this->get_n_rows() * this->get_n_cols(); };
 
-    std::string repr(bool name_keywords) const override {
+    std::string repr(bool name_keywords, std::string_view namespace_separator) const override {
         return std::string(type_name<C>()) + "(" + (name_keywords ? "coordsys=" : "")
-               + _coordsys.repr(name_keywords) + ", " + (name_keywords ? "n_rows=" : "")
+               + _coordsys.repr(name_keywords, namespace_separator) + ", " + (name_keywords ? "n_rows=" : "")
                + std::to_string(this->get_n_rows()) + ", " + (name_keywords ? "n_cols=" : "")
                + std::to_string(this->get_n_cols()) + ")";
     }
@@ -245,10 +245,10 @@ public:
 
     size_t size() const { return _images.size(); }
 
-    std::string repr(bool name_keywords) const {
-        std::string str = std::string(type_name<C>()) + "(" + (name_keywords ? "data=[" : "[");
-        for (auto img = this->cbegin(); img != this->cend(); ++img) str += (*img)->repr(name_keywords) + ",";
-        return str + "])";
+    std::string repr(bool name_keywords, std::string_view namespace_separator) const override {
+        std::string str = std::string(type_name<C>()) + "(" + (name_keywords ? "data=" : "");
+        str += repr_iter_ptr(_images);
+        return str + ")";
     }
 
     std::string str() const override {

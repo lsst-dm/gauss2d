@@ -63,7 +63,8 @@ public:
     bool operator==(const CoordinateSystem& other) const;
     bool operator!=(const CoordinateSystem& other) const;
 
-    std::string repr(bool name_keywords) const override;
+    std::string repr(bool name_keywords = false, std::string_view namespace_separator
+                                                 = Object::CC_NAMESPACE_SEPARATOR) const override;
     std::string str() const override;
 
     CoordinateSystem(double dx1 = 1., double dy2 = 1, double x_min = 0, double y_min = 0);

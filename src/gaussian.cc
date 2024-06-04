@@ -27,14 +27,15 @@
 #include <stdexcept>
 
 #include "lsst/gauss2d/gaussian.h"
+#include "lsst/gauss2d/type_name.h"
 
 namespace lsst::gauss2d {
-std::string GaussianIntegralValue::repr(bool name_keywords) const {
-    return std::string("GaussianIntegralValue(") + (name_keywords ? "value=" : "") + std::to_string(*_value)
-           + ")";
+std::string GaussianIntegralValue::repr(bool name_keywords, std::string_view namespace_separator) const {
+    return type_name_str<GaussianIntegralValue>(false, namespace_separator) + "("
+           + (name_keywords ? "value=" : "") + std::to_string(*_value) + ")";
 }
 std::string GaussianIntegralValue::str() const {
-    return "GaussianIntegralValue(value=" + std::to_string(*_value) + ")";
+    return type_name_str<GaussianIntegralValue>(true) + "(value=" + std::to_string(*_value) + ")";
 }
 
 GaussianIntegralValue::GaussianIntegralValue(double value) : _value(std::make_shared<double>(value)){};
@@ -71,14 +72,14 @@ void Gaussian::set_integral_ptr(std::shared_ptr<GaussianIntegral> integral) {
     _integral = this->_check_not_nullptr<GaussianIntegral>(integral, "integral");
 }
 
-std::string Gaussian::repr(bool name_keywords) const {
-    return std::string("Gaussian(") + (name_keywords ? "centroid=" : "") + _centroid->str() + ", "
-           + (name_keywords ? "ellipse=" : "") + _ellipse->str() + ", " + (name_keywords ? "integral=" : "")
-           + _integral->str() + ")";
+std::string Gaussian::repr(bool name_keywords, std::string_view namespace_separator) const {
+    return type_name_str<Gaussian>(false, namespace_separator) + "(" + (name_keywords ? "centroid=" : "")
+           + _centroid->str() + ", " + (name_keywords ? "ellipse=" : "") + _ellipse->str() + ", "
+           + (name_keywords ? "integral=" : "") + _integral->str() + ")";
 }
 
 std::string Gaussian::str() const {
-    return "Gaussian(centroid=" + _centroid->str() + ", ellipse=" + _ellipse->str()
+    return type_name_str<Gaussian>(true) + "(centroid=" + _centroid->str() + ", ellipse=" + _ellipse->str()
            + ", integral=" + _integral->str() + ")";
 }
 
@@ -135,16 +136,17 @@ Gaussians::Data Gaussians::get_data() const { return _data; }
 
 size_t Gaussians::size() const { return _data.size(); }
 
-std::string Gaussians::repr(bool name_keywords) const {
-    std::string s = std::string("Gaussians(") + (name_keywords ? "data=[" : "[");
-    for (const auto& g : _data) s += (g == nullptr ? "null" : g->repr(name_keywords)) + ", ";
-    return s + "])";
+std::string Gaussians::repr(bool name_keywords, std::string_view namespace_separator) const {
+    std::string str
+            = type_name_str<Gaussians>(false, namespace_separator) + "(" + (name_keywords ? "data=" : "");
+    str += repr_iter_ptr(_data, name_keywords, namespace_separator);
+    return str + ")";
 }
 
 std::string Gaussians::str() const {
-    std::string s = "Gaussians(data=[";
-    for (const auto& g : _data) s += (g == nullptr ? "null" : g->str()) + ",";
-    return s + "])";
+    std::string str = type_name_str<Gaussians>(true) + "(data=";
+    str += str_iter_ptr(_data);
+    return str + ")";
 }
 
 Gaussians::Gaussians(std::optional<const Data> data) {
@@ -179,13 +181,15 @@ std::unique_ptr<Gaussian> ConvolvedGaussian::make_convolution() const {
                                                     + _kernel->get_integral_value()));
 }
 
-std::string ConvolvedGaussian::repr(bool name_keywords) const {
-    return std::string("ConvolvedGaussian(") + (name_keywords ? "source=" : "") + _source->repr(name_keywords)
-           + ", " + (name_keywords ? "kernel=" : "") + _kernel->repr(name_keywords) + ")";
+std::string ConvolvedGaussian::repr(bool name_keywords, std::string_view namespace_separator) const {
+    return type_name_str<ConvolvedGaussian>(false, namespace_separator) + "("
+           + (name_keywords ? "source=" : "") + _source->repr(name_keywords, namespace_separator) + ", "
+           + (name_keywords ? "kernel=" : "") + _kernel->repr(name_keywords, namespace_separator) + ")";
 }
 
 std::string ConvolvedGaussian::str() const {
-    return "ConvolvedGaussian(source=" + _source->str() + ", kernel=" + _kernel->str() + ")";
+    return type_name_str<ConvolvedGaussian>(true) + "(source=" + _source->str() + ", kernel=" + _kernel->str()
+           + ")";
 }
 
 static const std::shared_ptr<const Gaussian> GAUSS_ZERO = std::make_shared<const Gaussian>();
@@ -236,16 +240,17 @@ ConvolvedGaussians::Data ConvolvedGaussians::get_data() const { return _data; }
 
 size_t ConvolvedGaussians::size() const { return _data.size(); }
 
-std::string ConvolvedGaussians::repr(bool name_keywords) const {
-    std::string s = std::string("ConvolvedGaussians(") + (name_keywords ? "data=[" : "[");
-    for (const auto& g : _data) s += (g == nullptr ? "null" : g->repr(name_keywords)) + ", ";
-    return s + "])";
+std::string ConvolvedGaussians::repr(bool name_keywords, std::string_view namespace_separator) const {
+    std::string str = type_name_str<ConvolvedGaussians>(false, namespace_separator) + "("
+                      + (name_keywords ? "data=" : "");
+    str += repr_iter_ptr(_data, name_keywords, namespace_separator);
+    return str + ")";
 }
 
 std::string ConvolvedGaussians::str() const {
-    std::string s = "ConvolvedGaussians([";
-    for (const auto& g : _data) s += (g == nullptr ? "null" : g->str()) + ",";
-    return s + "])";
+    std::string str = type_name_str<ConvolvedGaussians>(true) + "(data=";
+    str += str_iter_ptr(_data);
+    return str + ")";
 }
 
 ConvolvedGaussian& ConvolvedGaussians::operator[](size_t i) { return *(_data[i]); }

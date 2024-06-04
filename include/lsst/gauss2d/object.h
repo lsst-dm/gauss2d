@@ -29,9 +29,44 @@
 
 namespace lsst::gauss2d {
 
+/**
+ * A generic object from the gauss2d library.
+ *
+ * Objects have string representations that are guaranteed to be valid in C++
+ * and should also be valid in Python bindings, if implemented correctly.
+ * The interface may be expanded in the future.
+ */
 class Object {
 public:
-    virtual std::string repr(bool name_keywords = false) const = 0;
+    /// The C++ namespace separator
+    static constexpr std::string_view CC_NAMESPACE_SEPARATOR = "::";
+    static constexpr std::string_view NULL_STR_GENERAL = "None";
+    static constexpr std::string_view PY_NAMESPACE_SEPARATOR = ".";
+
+    static std::string_view null_str(const std::string_view &namespace_separator) {
+        return namespace_separator == CC_NAMESPACE_SEPARATOR ? "nullptr" : NULL_STR_GENERAL;
+    }
+
+    /**
+     * Return a full, callable string representation of this.
+     *
+     * @param name_keywords Whether to prefix arguments with "{name}=",
+     *      where name is the arg name in the header (as with keyword
+     *      arguments in Python).
+     * @param namespace_separator The string to use to delimit namespaces,
+     *      i.e. :: in C++ and . in Python.
+     * @return
+     *      A callable string representation of this, which should return an
+     *      an identical object to this.
+     *
+     * @note The representation with name_keywords=false must be callable
+     * in C++. The representation with name_keywords=true should be callable
+     * in Python, if there are any bindings.
+     */
+    virtual std::string repr(bool name_keywords = false,
+                             std::string_view namespace_separator = CC_NAMESPACE_SEPARATOR) const
+            = 0;
+    /// Return a brief, human-readable string representation of this.
     virtual std::string str() const = 0;
 
     friend std::ostream &operator<<(std::ostream &out, const Object &obj) {
@@ -41,6 +76,53 @@ public:
 
     virtual ~Object() = default;
 };
+
+template <typename T>
+std::string repr_ptr(T ptr, bool name_keywords, std::string_view namespace_separator) {
+    return ptr ? ptr->repr(name_keywords, namespace_separator)
+               : std::string(Object::null_str(namespace_separator));
+}
+
+template <typename T>
+std::string repr_iter_ptr(const T &container, bool name_keywords = false,
+                          std::string_view namespace_separator = Object::CC_NAMESPACE_SEPARATOR) {
+    std::string str = "[";
+    for (auto &obj : container) {
+        str += repr_ptr(obj, name_keywords, namespace_separator) + ", ";
+    }
+    return str.substr(0, str.size() - 1) + "]";
+}
+
+template <typename T, bool is_wrapper>
+std::string repr_iter_ref(const T &container, bool name_keywords = false,
+                          std::string_view namespace_separator = Object::CC_NAMESPACE_SEPARATOR) {
+    std::string str = "[";
+    for (const auto &obj : container) {
+        str += (is_wrapper ? obj.get() : obj).repr(name_keywords, namespace_separator) + ", ";
+    }
+    return str.substr(0, str.size() - 1) + "]";
+}
+
+template <typename T>
+std::string str_ptr(T ptr) {
+    return ptr ? ptr->str() : std::string(Object::NULL_STR_GENERAL);
+}
+
+template <typename T>
+std::string str_iter_ptr(const T &container) {
+    std::string str = "[";
+    for (const auto &obj : container) {
+        str += str_ptr(obj) + ",";
+    }
+    return str.substr(0, str.size() - 1) + "]";
+}
+
+template <typename T, bool is_wrapper>
+std::string str_iter_ref(const T &container) {
+    std::string str = "[";
+    for (const auto &obj : container) str += (is_wrapper ? obj.get() : obj).str() + ",";
+    return str.substr(0, str.size() - 1) + "]";
+}
 
 }  // namespace lsst::gauss2d
 #endif

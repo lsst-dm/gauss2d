@@ -9,6 +9,7 @@ gauss2d_headers = [
     prefix_gauss2d + 'gaussian.h',
     prefix_gauss2d + 'image.h',
     prefix_gauss2d + 'object.h',
+    prefix_gauss2d + 'to_string.h',
     prefix_gauss2d + 'type_name.h',
     prefix_gauss2d + 'vectorimage.h',
 ]

@@ -25,17 +25,17 @@
 #ifndef LSST_GAUSS2D_EVALUATE_H
 #define LSST_GAUSS2D_EVALUATE_H
 
-// #include <iomanip>
 #include <iostream>
 #include <memory>
 #include <set>
 #include <stdexcept>
 #include <string>
-// #include <utility>
+
 #include <vector>
 
 #include "gaussian.h"
 #include "image.h"
+#include "to_string.h"
 
 namespace lsst::gauss2d {
 
@@ -336,7 +336,7 @@ public:
 typedef std::vector<TermsGradient> TermsGradientVec;
 
 template <typename t, class Data, class Indices>
-class GradientsExtra {
+class GradientsExtra : public Object {
 private:
     const Image<idx_type, Indices>& _param_map;
     const Image<t, Data>& _param_factor;
@@ -371,11 +371,9 @@ public:
 
     GradientsExtra() = delete;
 
-    const inline void add_index_to_set(size_t g, std::set<size_t>& set) {
-        set.insert(_param_map.get_value(g, 1));
-    }
+    inline void add_index_to_set(size_t g, std::set<size_t>& set) { set.insert(_param_map.get_value(g, 1)); }
 
-    const inline void add(size_t g, size_t dim1, size_t dim2, const ValuesGauss& gradients) {
+    inline void add(size_t g, size_t dim1, size_t dim2, const ValuesGauss& gradients) {
         // Reset g_check to zero once g rolls back to zero itself
         _g_check *= (g != 0);
         const bool to_add = g == _param_map.get_value(_g_check, 0);
@@ -385,6 +383,29 @@ public:
                        + gradients.sigma_y * _param_factor.get_value(g, 2);
         _output[idx].add_value_unchecked(dim1, dim2, value);
         _g_check += to_add;
+    }
+
+    std::string repr(bool name_keywords = false,
+                     std::string_view namespace_separator = Object::CC_NAMESPACE_SEPARATOR) const override {
+        bool is_kw = name_keywords;
+        std::string rval = (  //
+                type_name_str<GradientsExtra<t, Data, Indices>>(false, namespace_separator) + "("
+                + (is_kw ? "param_map=" : "") + _param_map.repr(is_kw, namespace_separator) + ", "
+                + (is_kw ? "param_factor=" : "") + _param_factor.repr(is_kw, namespace_separator) + ", "
+                + (is_kw ? "output=" : "") + _output.repr(is_kw, namespace_separator) + ", "
+                + (is_kw ? "n_gauss=" : "") + std::to_string(_param_map.get_n_rows()) + ")"  //
+        );
+        return rval;
+    }
+    std::string str() const override {
+        std::string rval = (                                                  //
+                type_name_str<GradientsExtra<t, Data, Indices>>(true) + "("   //
+                + "param_map=" + _param_map.str() + ", "                      //
+                + "param_factor=" + _param_factor.str() + ", "                //
+                + "output=" + _output.str() + ", "                            //
+                + "n_gauss=" + std::to_string(_param_map.get_n_rows()) + ")"  //
+        );
+        return rval;
     }
 };
 
@@ -649,7 +670,7 @@ const std::shared_ptr<const Data> _param_factor_default(size_t n_gaussians,
  * @tparam Indices The index array class (usually a size_t array)
  */
 template <typename t, class Data, class Indices>
-class GaussianEvaluator {
+class GaussianEvaluator : public Object {
 private:
     typedef Image<t, Data> DataT;
     typedef ImageArray<t, Data> ImageArrayT;
@@ -1120,6 +1141,61 @@ public:
                        : (output_type == OutputType::add
                                   ? loglike_gaussians_pixel_output<OutputType::add>()
                                   : loglike_gaussians_pixel_output<OutputType::none>());
+    }
+
+    std::string repr(bool name_keywords = false,
+                     std::string_view namespace_separator = Object::CC_NAMESPACE_SEPARATOR) const override {
+        std::string null = namespace_separator == Object::CC_NAMESPACE_SEPARATOR ? "nullptr" : "None";
+        // These are sadly just to keep formatting aligned nicely
+        auto is_kw = name_keywords;
+        auto name_sep = namespace_separator;
+        std::string c = ", ";
+        std::string rval = (  // I really want this on a separate line; I'd also prefer single indent, but...
+                type_name_str<GaussianEvaluator>(false, name_sep) + "("  // make clang-format align nicely
+                + (is_kw ? "gaussians=" : "") + repr_ptr(_gaussians_ptr, is_kw, name_sep) + ", "
+                + (is_kw ? "coordsys=" : "") + repr_ptr(_coordsys_ptr, is_kw, name_sep) + ", "
+                + (is_kw ? "data=" : "") + repr_ptr(_data, is_kw, name_sep) + ", "
+                + (is_kw ? "sigma_inv=" : "") + repr_ptr(_sigma_inv, is_kw, name_sep) + ", "
+                + (is_kw ? "output=" : "") + repr_ptr(_output, is_kw, name_sep) + ", "
+                + (is_kw ? "residual=" : "") + repr_ptr(_residual, is_kw, name_sep) + ", "
+                + (is_kw ? "grads=" : "") + repr_ptr(_grads, is_kw, name_sep) + ", "
+                + (is_kw ? "grad_param_map=" : "") + repr_ptr(_grad_param_map, is_kw, name_sep) + ", "
+                + (is_kw ? "grad_param_factor=" : "") + repr_ptr(_grad_param_factor, is_kw, name_sep) + c
+                + (is_kw ? "extra_param_map=" : "") + repr_ptr(_extra_param_map, is_kw, name_sep) + ", "
+                + (is_kw ? "extra_param_factor=" : "") + repr_ptr(_extra_param_factor, is_kw, name_sep) + c
+                + (is_kw ? "background=" : "") + repr_ptr(_background, is_kw, name_sep) + ")");
+        return rval;
+    }
+    std::string str() const override {
+        std::string c = ", ";
+        // The comments force clang-format to keep to a more readable one var per line
+        std::string rval = (                                                                 //
+                type_name_str<GaussianEvaluator>(true) + "("                                 //
+                + "gaussians=" + str_ptr(_gaussians_ptr) + c                                 //
+                + "coordsys=" + str_ptr(_coordsys_ptr) + c                                   //
+                + "do_extra=" + std::to_string(_do_extra) + c                                //
+                + "do_output=" + std::to_string(_do_output) + c                              //
+                + "do_residual=" + std::to_string(_do_residual) + c                          //
+                + "has_background=" + std::to_string(_has_background) + c                    //
+                + "is_sigma_image=" + std::to_string(_is_sigma_image) + c                    //
+                + "backgroundtype=" + std::to_string(static_cast<int>(_backgroundtype)) + c  //
+                + "get_likelihood=" + std::to_string(_get_likelihood) + c                    //
+                + "data=" + str_ptr(_data) + c                                               //
+                + "sigma_inv=" + str_ptr(_sigma_inv) + c                                     //
+                + "output=" + str_ptr(_output) + c                                           //
+                + "residual=" + str_ptr(_residual) + c                                       //
+                + "grads=" + str_ptr(_grads) + c                                             //
+                + "grad_param_map=" + str_ptr(_grad_param_map) + c                           //
+                + "grad_param_factor=" + str_ptr(_grad_param_factor) + c                     //
+                + "extra_param_map=" + str_ptr(_extra_param_map) + c                         //
+                + "extra_param_factor=" + str_ptr(_extra_param_factor) + c                   //
+                + "grad_extra=" + str_ptr(_grad_extra ? _grad_extra.get() : nullptr) + c     //
+                + "grad_param_idx=" + to_string_iter(_grad_param_idx) + c                    //
+                + "n_cols=" + std::to_string(_n_cols) + c                                    //
+                + "n_rows=" + std::to_string(_n_rows) + c                                    //
+                + ")"                                                                        //
+        );
+        return rval;
     }
 };
 
