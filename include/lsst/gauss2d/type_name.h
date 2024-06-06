@@ -28,6 +28,8 @@
 #include <string>
 #include <string_view>
 
+#include "string_utils.h"
+
 namespace lsst::gauss2d {
 
 template <typename T>
@@ -67,7 +69,6 @@ constexpr std::size_t wrapped_type_name_suffix_length() {
 }
 
 constexpr std::string_view NAMESPACE_SEPARATOR = "::";
-constexpr auto NAMESPACE_SEPARATOR_LEN = NAMESPACE_SEPARATOR.size();
 
 }  // namespace detail
 
@@ -104,15 +105,11 @@ std::string type_name_str(bool strip_namespace = false,
                           std::string_view namespace_str = detail::NAMESPACE_SEPARATOR) {
     std::string name = std::string(type_name<T>());
     if (strip_namespace) {
-        return name.substr(name.find_last_of(':') + 1, std::string::npos);
+        // Find the first template specifier (if any), then find the last colon
+        auto prefix = name.substr(0, name.find_first_of('<'));
+        return name.substr(prefix.find_last_of(':') + 1, std::string::npos);
     } else if (namespace_str != detail::NAMESPACE_SEPARATOR) {
-        auto pos = name.find(detail::NAMESPACE_SEPARATOR, 0);
-        const auto n_replace = namespace_str.size();
-        while (pos != std::string::npos) {
-            name.replace(pos, detail::NAMESPACE_SEPARATOR_LEN, namespace_str);
-            pos += n_replace;
-            pos = name.find(detail::NAMESPACE_SEPARATOR, pos);
-        }
+        name = replace_all(name, detail::NAMESPACE_SEPARATOR, namespace_str);
     }
     return name;
 }

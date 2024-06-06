@@ -22,6 +22,7 @@
  */
 
 #include <pybind11/pybind11.h>
+#include <pybind11/operators.h>
 #include <pybind11/stl.h>
 
 #include <memory>
@@ -54,6 +55,8 @@ void bind_ellipse(py::module &m) {
                           &gauss2d::Covariance::set_sigma_y_sq)
             .def_property("cov_xy", &gauss2d::Covariance::get_cov_xy, &gauss2d::Covariance::set_cov_xy)
             .def_property("xyc", &gauss2d::Covariance::get_xyc, &gauss2d::Covariance::set_xyc)
+            .def(py::self == py::self)
+            .def(py::self != py::self)
             .def("__repr__",
                  [](const gauss2d::Covariance &self) { return self.repr(true, self.PY_NAMESPACE_SEPARATOR); })
             .def("__str__", &gauss2d::Covariance::str);
@@ -61,8 +64,8 @@ void bind_ellipse(py::module &m) {
     py::class_<gauss2d::EllipseValues, std::shared_ptr<gauss2d::EllipseValues>, gauss2d::EllipseData>(
             m, "EllipseValues")
             .def(py::init<double, double, double>(), "sigma_x"_a = 0, "sigma_y"_a = 0, "rho"_a = 0)
-            .def("set", &gauss2d::EllipseValues::set)
-            .def("set_h", &gauss2d::EllipseValues::set_h)
+            .def("set", &gauss2d::EllipseValues::set, "sigma_x"_a, "sigma_y"_a, "rho"_a)
+            .def("set_h", &gauss2d::EllipseValues::set_h, "hwhm_x"_a, "hwhm_y"_a, "rho"_a)
             .def_property("rho", &gauss2d::EllipseValues::get_rho, &gauss2d::EllipseValues::set_rho)
             .def_property("hwhm_x", &gauss2d::EllipseValues::get_hwhm_x, &gauss2d::EllipseValues::set_hwhm_x)
             .def_property("hwhm_y", &gauss2d::EllipseValues::get_hwhm_y, &gauss2d::EllipseValues::set_hwhm_y)
@@ -72,6 +75,8 @@ void bind_ellipse(py::module &m) {
                           &gauss2d::EllipseValues::set_sigma_y)
             .def_property("hxyr", &gauss2d::EllipseValues::get_hxyr, &gauss2d::EllipseValues::set_hxyr)
             .def_property("xyr", &gauss2d::EllipseValues::get_xyr, &gauss2d::EllipseValues::set_xyr)
+            .def(py::self == py::self)
+            .def(py::self != py::self)
             .def("__repr__",
                  [](const gauss2d::EllipseValues &self) {
                      return self.repr(true, self.PY_NAMESPACE_SEPARATOR);
@@ -88,12 +93,16 @@ void bind_ellipse(py::module &m) {
             .def("get_radius_trace", &gauss2d::Ellipse::get_radius_trace)
             .def("make_convolution", &gauss2d::Ellipse::make_convolution)
             .def("set",
-                 static_cast<void (gauss2d::Ellipse::*)(double, double, double)>(&gauss2d::Ellipse::set))
+                 static_cast<void (gauss2d::Ellipse::*)(double, double, double)>(&gauss2d::Ellipse::set),
+                 "sigma_x"_a, "sigma_y"_a, "rho"_a)
             .def("set",
-                 static_cast<void (gauss2d::Ellipse::*)(const gauss2d::Covariance &)>(&gauss2d::Ellipse::set))
-            .def("set", static_cast<void (gauss2d::Ellipse::*)(const gauss2d::EllipseMajor &)>(
-                                &gauss2d::Ellipse::set))
-            .def("set_h", &gauss2d::Ellipse::set_h)
+                 static_cast<void (gauss2d::Ellipse::*)(const gauss2d::Covariance &)>(&gauss2d::Ellipse::set),
+                 "ellipse"_a)
+            .def("set",
+                 static_cast<void (gauss2d::Ellipse::*)(const gauss2d::EllipseMajor &)>(
+                         &gauss2d::Ellipse::set),
+                 "ellipse_major"_a)
+            .def("set_h", &gauss2d::Ellipse::set_h, "hwhm_x"_a = 0, "hwhm_y"_a = 0, "rho"_a = 0)
             .def_property("rho", &gauss2d::Ellipse::get_rho, &gauss2d::Ellipse::set_rho)
             .def_property("hwhm_x", &gauss2d::Ellipse::get_hwhm_x, &gauss2d::Ellipse::set_hwhm_x)
             .def_property("hwhm_y", &gauss2d::Ellipse::get_hwhm_y, &gauss2d::Ellipse::set_hwhm_y)
@@ -101,6 +110,8 @@ void bind_ellipse(py::module &m) {
             .def_property("sigma_y", &gauss2d::Ellipse::get_sigma_y, &gauss2d::Ellipse::set_sigma_y)
             .def_property("hxyr", &gauss2d::Ellipse::get_hxyr, &gauss2d::Ellipse::set_hxyr)
             .def_property("xyr", &gauss2d::Ellipse::get_xyr, &gauss2d::Ellipse::set_xyr)
+            .def(py::self == py::self)
+            .def(py::self != py::self)
             .def("__repr__",
                  [](const gauss2d::Ellipse &self) { return self.repr(true, self.PY_NAMESPACE_SEPARATOR); })
             .def("__str__", &gauss2d::Ellipse::str);
@@ -117,6 +128,8 @@ void bind_ellipse(py::module &m) {
             .def_property("angle", &gauss2d::EllipseMajor::get_angle, &gauss2d::EllipseMajor::set_angle)
             .def_property("degrees", &gauss2d::EllipseMajor::is_degrees, &gauss2d::EllipseMajor::set_degrees)
             .def_property("rqa", &gauss2d::EllipseMajor::get_rqa, &gauss2d::EllipseMajor::set_rqa)
+            .def(py::self == py::self)
+            .def(py::self != py::self)
             .def("__repr__",
                  [](const gauss2d::EllipseMajor &self) {
                      return self.repr(true, self.PY_NAMESPACE_SEPARATOR);

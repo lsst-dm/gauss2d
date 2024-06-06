@@ -7,11 +7,11 @@
 #include "lsst/gauss2d/image.h"
 #include "lsst/gauss2d/vectorimage.h"
 
-namespace g2 = lsst::gauss2d;
+namespace g2d = lsst::gauss2d;
 
-typedef g2::VectorImage<double> Image;
-typedef g2::ImageArray<double, Image> ImageArray;
-typedef g2::VectorImage<bool> Mask;
+typedef g2d::VectorImage<double> Image;
+typedef g2d::ImageArray<double, Image> ImageArray;
+typedef g2d::VectorImage<bool> Mask;
 
 TEST_CASE("VectorImage") {
     size_t n_rows = 3, n_cols = 2;
@@ -21,8 +21,8 @@ TEST_CASE("VectorImage") {
 
     CHECK(x);
 
-    CHECK_EQ(image->get_coordsys(), g2::COORDS_DEFAULT);
-    CHECK_EQ(&(image->get_coordsys()), &(g2::COORDS_DEFAULT));
+    CHECK_EQ(image->get_coordsys(), g2d::COORDS_DEFAULT);
+    CHECK_EQ(&(image->get_coordsys()), &(g2d::COORDS_DEFAULT));
 
     CHECK_EQ(image->get_n_cols(), n_cols);
     CHECK_EQ(image->get_n_rows(), n_rows);
@@ -58,5 +58,5 @@ TEST_CASE("VectorMask") {
     CHECK_EQ(mask.get_value_unchecked(0, 0), false);
     mask._get_value_unchecked(1, 1) = true;
     CHECK_EQ(mask.get_value_unchecked(1, 1), true);
-    CHECK_EQ(g2::images_compatible<double, Image, bool, Mask>(image, mask), true);
+    CHECK_EQ(g2d::images_compatible<double, Image, bool, Mask>(image, mask), true);
 }

@@ -90,7 +90,9 @@ std::string repr_iter_ptr(const T &container, bool name_keywords = false,
     for (auto &obj : container) {
         str += repr_ptr(obj, name_keywords, namespace_separator) + ", ";
     }
-    return str.substr(0, str.size() - 1) + "]";
+    auto size_str = str.size();
+    if (size_str > 1) str = str.substr(0, size_str - 2);
+    return str + "]";
 }
 
 template <typename T, bool is_wrapper>
@@ -100,7 +102,9 @@ std::string repr_iter_ref(const T &container, bool name_keywords = false,
     for (const auto &obj : container) {
         str += (is_wrapper ? obj.get() : obj).repr(name_keywords, namespace_separator) + ", ";
     }
-    return str.substr(0, str.size() - 1) + "]";
+    auto size_str = str.size();
+    if (size_str > 1) str = str.substr(0, size_str - 2);
+    return str + "]";
 }
 
 template <typename T>
@@ -112,16 +116,22 @@ template <typename T>
 std::string str_iter_ptr(const T &container) {
     std::string str = "[";
     for (const auto &obj : container) {
-        str += str_ptr(obj) + ",";
+        str += str_ptr(obj) + ", ";
     }
-    return str.substr(0, str.size() - 1) + "]";
+    auto size_str = str.size();
+    if (size_str > 1) str = str.substr(0, size_str - 2);
+    return str + "]";
 }
 
 template <typename T, bool is_wrapper>
 std::string str_iter_ref(const T &container) {
     std::string str = "[";
-    for (const auto &obj : container) str += (is_wrapper ? obj.get() : obj).str() + ",";
-    return str.substr(0, str.size() - 1) + "]";
+    for (const auto &obj : container) {
+        str += (is_wrapper ? obj.get() : obj).str() + ", ";
+    }
+    auto size_str = str.size();
+    if (size_str > 1) str = str.substr(0, size_str - 2);
+    return str + "]";
 }
 
 }  // namespace lsst::gauss2d

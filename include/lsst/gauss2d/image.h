@@ -41,14 +41,14 @@
 
 namespace lsst::gauss2d {
 
-template <typename t, class Data, class Indices>
+template <typename T, class Data, class Indices>
 class GaussianEvaluator;
 
-template <typename t, class C>
+template <typename T, class C>
 class Image;
 
 // TODO: Check if this can/should be a static method in Image
-// Consider that t1/t2 might be reversed in two interchangeable functions.
+// Consider that T1/T2 might be reversed in two interchangeable functions.
 
 /**
  * @brief Return if two images are compatible.
@@ -56,17 +56,17 @@ class Image;
  * Compatible means that they have the same dimensions in both axes and
  * equivalent coordinate systems.
  *
- * @tparam t1
- * @tparam C1
- * @tparam t2
- * @tparam C2
- * @param img1
- * @param img2
- * @param msg
+ * @tparam T1 The data type of C1.
+ * @tparam C1 The class of the first Image.
+ * @tparam T2 The data type of C2.
+ * @tparam C2 The class of the second Image.
+ * @param img1 The first image.
+ * @param img2 The second image.
+ * @param msg A string to append error messages to, if not null.
  * @return true If images are compatible.
  **/
-template <typename t1, class C1, typename t2, class C2>
-bool images_compatible(const Image<t1, C1>& img1, const Image<t2, C2>& img2, bool compare_coordsys = true,
+template <typename T1, class C1, typename T2, class C2>
+bool images_compatible(const Image<T1, C1>& img1, const Image<T2, C2>& img2, bool compare_coordsys = true,
                        std::string* msg = nullptr) {
     bool coordsys_equal = !compare_coordsys || (img1.get_coordsys() == img2.get_coordsys());
     bool return_msg = msg != nullptr;
@@ -98,23 +98,23 @@ bool images_compatible(const Image<t1, C1>& img1, const Image<t2, C2>& img2, boo
  * should override any and all if the default implementations are not
  * efficient enough.
  *
- * @tparam t The numeric type.
+ * @tparam T The numeric type.
  * @tparam C The specialized class.
  *
  **/
-template <typename t, class C>
+template <typename T, class C>
 class Image : public Object {
 private:
-    friend GaussianEvaluator<t, class Data, class Indices>;
+    friend GaussianEvaluator<T, class Data, class Indices>;
     const std::shared_ptr<const CoordinateSystem> _coordsys_ptr;
     const gauss2d::CoordinateSystem& _coordsys;
 
 public:
-    t& _get_value(size_t row, size_t col) {
+    T& _get_value(size_t row, size_t col) {
         _check_row_col(row, col);
         return this->_get_value_unchecked(row, col);
     }
-    virtual inline t& _get_value_unchecked(size_t row, size_t col) = 0;
+    virtual inline T& _get_value_unchecked(size_t row, size_t col) = 0;
 
     void _check_row_col(size_t row, size_t col) const {
         if (!((row < this->get_n_rows()) && (col < this->get_n_cols()))) {
@@ -131,11 +131,11 @@ public:
     virtual size_t get_n_cols() const = 0;
     virtual size_t get_n_rows() const = 0;
 
-    void add_value(size_t row, size_t col, t value) { this->_get_value(row, col) += value; }
-    void add_value_unchecked(size_t row, size_t col, t value) {
+    void add_value(size_t row, size_t col, T value) { this->_get_value(row, col) += value; }
+    void add_value_unchecked(size_t row, size_t col, T value) {
         static_cast<C&>(*this)._get_value_unchecked(row, col) += value;
     }
-    virtual void fill(t value) {
+    virtual void fill(T value) {
         const size_t n_rows = get_n_rows();
         const size_t n_cols = get_n_cols();
         for (size_t row = 0; row < n_rows; ++row) {
@@ -144,13 +144,13 @@ public:
             }
         }
     }
-    inline t get_value(size_t row, size_t col) const {
+    inline T get_value(size_t row, size_t col) const {
         _check_row_col(row, col);
         return static_cast<const C&>(*this).get_value_unchecked(row, col);
     }
-    virtual const inline t get_value_unchecked(size_t row, size_t col) const = 0;
-    inline void set_value(size_t row, size_t col, t value) { _get_value(row, col) = value; }
-    inline void set_value_unchecked(size_t row, size_t col, t value) {
+    virtual const inline T get_value_unchecked(size_t row, size_t col) const = 0;
+    inline void set_value(size_t row, size_t col, T value) { _get_value(row, col) = value; }
+    inline void set_value_unchecked(size_t row, size_t col, T value) {
         static_cast<C&>(*this)._get_value_unchecked(row, col) = value;
     }
 
@@ -159,18 +159,18 @@ public:
     size_t size() const { return this->get_n_rows() * this->get_n_cols(); };
 
     std::string repr(bool name_keywords, std::string_view namespace_separator) const override {
-        return std::string(type_name<C>()) + "(" + (name_keywords ? "coordsys=" : "")
+        return type_name_str<C>(false, namespace_separator) + "(" + (name_keywords ? "coordsys=" : "")
                + _coordsys.repr(name_keywords, namespace_separator) + ", " + (name_keywords ? "n_rows=" : "")
                + std::to_string(this->get_n_rows()) + ", " + (name_keywords ? "n_cols=" : "")
                + std::to_string(this->get_n_cols()) + ")";
     }
 
     std::string str() const override {
-        return std::string(type_name<C>()) + "(coordsys=" + _coordsys.str() + ", n_rows="
+        return type_name_str<C>(true) + "(coordsys=" + _coordsys.str() + ", n_rows="
                + std::to_string(this->get_n_rows()) + ", n_cols=" + std::to_string(this->get_n_cols()) + ")";
     }
 
-    virtual void operator+=(t value) {
+    virtual Image<T, C>& operator+=(T value) {
         const size_t n_rows = get_n_rows();
         const size_t n_cols = get_n_cols();
         for (size_t row = 0; row < n_rows; ++row) {
@@ -178,13 +178,30 @@ public:
                 this->add_value_unchecked(row, col, value);
             }
         }
+        return *this;
+    }
+
+    virtual Image<T, C>& operator*=(T value) {
+        const size_t n_rows = get_n_rows();
+        const size_t n_cols = get_n_cols();
+        for (size_t row = 0; row < n_rows; ++row) {
+            for (size_t col = 0; col < n_cols; ++col) {
+                // Avoid annoying warning for bool case
+                if constexpr (std::is_same_v<T, bool>) {
+                    this->set_value_unchecked(row, col, value && this->get_value_unchecked(row, col));
+                } else {
+                    this->set_value_unchecked(row, col, value * this->get_value_unchecked(row, col));
+                }
+            }
+        }
+        return *this;
     }
 
     // TODO: Implement if deemed worthwhile
     // virtual void operator+=(t value);
 
     bool operator==(const Image& other) const {
-        if (images_compatible<t, C, t, C>(*this, other)) {
+        if (images_compatible<T, C, T, C>(*this, other)) {
             const size_t n_rows = get_n_rows();
             const size_t n_cols = get_n_cols();
             for (size_t row = 0; row < n_rows; ++row) {
@@ -216,13 +233,13 @@ public:
  *
  * See images_compatible() for the definition of compatibility.
  *
- * @tparam t The numeric type.
+ * @tparam T The numeric type.
  * @tparam C The specialized class.
  */
-template <typename t, class C>
+template <typename T, class C>
 class ImageArray : public Object {
 public:
-    typedef Image<t, C> ImageT;
+    typedef Image<T, C> ImageT;
     typedef std::vector<std::shared_ptr<C>> Data;
 
 private:
@@ -246,15 +263,15 @@ public:
     size_t size() const { return _images.size(); }
 
     std::string repr(bool name_keywords, std::string_view namespace_separator) const override {
-        std::string str = std::string(type_name<C>()) + "(" + (name_keywords ? "data=" : "");
-        str += repr_iter_ptr(_images);
-        return str + ")";
+        std::string str = type_name_str<ImageArray<T, C>>(false, namespace_separator) + "("
+                          + (name_keywords ? "data=" : "")
+                          + repr_iter_ptr(_images, name_keywords, namespace_separator) + ")";
+        return str;
     }
 
     std::string str() const override {
-        std::string str = std::string(type_name<C>()) + "(data=[";
-        for (auto img = this->cbegin(); img != this->cend(); ++img) str += (*img)->str() + ",";
-        return str + "])";
+        std::string str = type_name_str<ImageArray<T, C>>(true) + "(data=" + str_iter_ptr(_images) + ")";
+        return str;
     }
 
     ImageArray(const Data* data_in) {
@@ -265,10 +282,11 @@ public:
                 _images.resize(n_data);
                 for (size_t i = 0; i < n_data; ++i) {
                     if (data[i] == nullptr)
-                        throw std::runtime_error("ImageArray data[" + std::to_string(i) + "] can't be null");
-                    if (!images_compatible<t, C, t, C>(*data[i], *data[0]))
-                        throw std::runtime_error("ImageArray data[" + std::to_string(i)
-                                                 + "] must be compatible with data[0] (and all others)");
+                        throw std::invalid_argument("ImageArray data[" + std::to_string(i)
+                                                    + "] can't be null");
+                    if (!images_compatible<T, C, T, C>(*data[i], *data[0]))
+                        throw std::invalid_argument("ImageArray data[" + std::to_string(i)
+                                                    + "] must be compatible with data[0] (and all others)");
                     _images[i] = data[i];
                 }
             }

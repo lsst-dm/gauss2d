@@ -27,15 +27,16 @@
 #include <stdexcept>
 
 #include "lsst/gauss2d/gaussian.h"
+#include "lsst/gauss2d/to_string.h"
 #include "lsst/gauss2d/type_name.h"
 
 namespace lsst::gauss2d {
 std::string GaussianIntegralValue::repr(bool name_keywords, std::string_view namespace_separator) const {
     return type_name_str<GaussianIntegralValue>(false, namespace_separator) + "("
-           + (name_keywords ? "value=" : "") + std::to_string(*_value) + ")";
+           + (name_keywords ? "value=" : "") + to_string_float(*_value) + ")";
 }
 std::string GaussianIntegralValue::str() const {
-    return type_name_str<GaussianIntegralValue>(true) + "(value=" + std::to_string(*_value) + ")";
+    return type_name_str<GaussianIntegralValue>(true) + "(value=" + to_string_float(*_value) + ")";
 }
 
 GaussianIntegralValue::GaussianIntegralValue(double value) : _value(std::make_shared<double>(value)){};
@@ -74,8 +75,9 @@ void Gaussian::set_integral_ptr(std::shared_ptr<GaussianIntegral> integral) {
 
 std::string Gaussian::repr(bool name_keywords, std::string_view namespace_separator) const {
     return type_name_str<Gaussian>(false, namespace_separator) + "(" + (name_keywords ? "centroid=" : "")
-           + _centroid->str() + ", " + (name_keywords ? "ellipse=" : "") + _ellipse->str() + ", "
-           + (name_keywords ? "integral=" : "") + _integral->str() + ")";
+           + _centroid->repr(name_keywords, namespace_separator) + ", " + (name_keywords ? "ellipse=" : "")
+           + _ellipse->repr(name_keywords, namespace_separator) + ", " + (name_keywords ? "integral=" : "")
+           + _integral->repr(name_keywords, namespace_separator) + ")";
 }
 
 std::string Gaussian::str() const {
@@ -191,6 +193,12 @@ std::string ConvolvedGaussian::str() const {
     return type_name_str<ConvolvedGaussian>(true) + "(source=" + _source->str() + ", kernel=" + _kernel->str()
            + ")";
 }
+
+bool ConvolvedGaussian::operator==(const ConvolvedGaussian& other) const {
+    return (this->get_source() == other.get_source()) && (this->get_kernel() == other.get_kernel());
+}
+
+bool ConvolvedGaussian::operator!=(const ConvolvedGaussian& other) const { return !(*this == other); }
 
 static const std::shared_ptr<const Gaussian> GAUSS_ZERO = std::make_shared<const Gaussian>();
 

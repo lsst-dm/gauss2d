@@ -32,6 +32,8 @@
 #include "gauss2d/gaussian.h"
 #include "gauss2d/image.h"
 #include "gauss2d/object.h"
+#include "gauss2d/string_utils.h"
+#include "gauss2d/to_string.h"
 #include "gauss2d/type_name.h"
 #include "gauss2d/vectorimage.h"
 

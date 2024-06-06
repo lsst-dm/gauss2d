@@ -28,6 +28,7 @@
 #include <string>
 
 #include "lsst/gauss2d/ellipse.h"
+#include "lsst/gauss2d/to_string.h"
 #include "lsst/gauss2d/type_name.h"
 
 namespace lsst::gauss2d {
@@ -48,9 +49,9 @@ void Covariance::check(double sigma_x_sq, double sigma_y_sq, double cov_xy) {
     // This enforces cov_xy == 0 if sigma_x_sq == sigma_y_sq == 0
     double rho = offdiag_max > 0 ? cov_xy / offdiag_max : (cov_xy > 0) - (cov_xy < 0);
     if (!(sigma_x_sq >= 0) || !(sigma_y_sq >= 0) || !(rho >= -1 && rho <= 1)) {
-        throw std::invalid_argument("Invalid sigma_x_sq, sigma_y_sq, cov_xy=" + std::to_string(sigma_x_sq)
-                                    + "," + std::to_string(sigma_y_sq) + "," + std::to_string(cov_xy)
-                                    + " with implied rho=" + std::to_string(rho)
+        throw std::invalid_argument("Invalid sigma_x_sq, sigma_y_sq, cov_xy=" + to_string_float(sigma_x_sq)
+                                    + "," + to_string_float(sigma_y_sq) + "," + to_string_float(cov_xy)
+                                    + " with implied rho=" + to_string_float(rho)
                                     + "; sigma_x,y_sq >= 0 and -1 < rho < 1 required.");
     }
 }
@@ -88,7 +89,7 @@ void Covariance::set(double sigma_x_sq, double sigma_y_sq, double cov_xy) {
 void Covariance::set_sigma_x_sq(double sigma_x_sq) {
     if (!(sigma_x_sq >= 0)) {
         throw std::invalid_argument(this->str() + " can't set invalid sigma_x_sq="
-                                    + std::to_string(sigma_x_sq) + "; sigma_x_sq >= 0 required.");
+                                    + to_string_float(sigma_x_sq) + "; sigma_x_sq >= 0 required.");
     }
     _sigma_x_sq = sigma_x_sq;
 }
@@ -96,7 +97,7 @@ void Covariance::set_sigma_x_sq(double sigma_x_sq) {
 void Covariance::set_sigma_y_sq(double sigma_y_sq) {
     if (!(sigma_y_sq >= 0)) {
         throw std::invalid_argument(this->str() + " can't set invalid sigma_y_sq="
-                                    + std::to_string(sigma_y_sq) + "; sigma_y_sq >= 0 required.");
+                                    + to_string_float(sigma_y_sq) + "; sigma_y_sq >= 0 required.");
     }
     _sigma_y_sq = sigma_y_sq;
 }
@@ -107,11 +108,11 @@ void Covariance::set_cov_xy(double cov_xy) {
     // If offdiag_max is zero, we can only accept cov_xy exactly zero
     double rho = offdiag_max > 0 ? cov_xy / offdiag_max : -!(cov_xy >= 0) + !(cov_xy <= 0);
     if (!(rho > -1 && rho < 1)) {
-        throw std::invalid_argument(this->str() + "can't set invalid cov_xy=" + std::to_string(cov_xy)
-                                    + " (>0=" + std::to_string(cov_xy > 0)
-                                    + ", <0=" + std::to_string(cov_xy < 0) + ", offdiag_max="
-                                    + std::to_string(offdiag_max) + " with implied rho=" + std::to_string(rho)
-                                    + "; -1 < rho < 1 required.");
+        throw std::invalid_argument(this->str() + "can't set invalid cov_xy=" + to_string_float(cov_xy)
+                                    + " (>0=" + to_string_float(cov_xy > 0)
+                                    + ", <0=" + to_string_float(cov_xy < 0)
+                                    + ", offdiag_max=" + to_string_float(offdiag_max) + " with implied rho="
+                                    + to_string_float(rho) + "; -1 < rho < 1 required.");
     }
     _cov_xy = cov_xy;
 }
@@ -120,17 +121,18 @@ void Covariance::set_xyc(const std::array<double, 3>& xyc) { this->set(xyc[0], x
 
 std::string Covariance::repr(bool name_keywords, std::string_view namespace_separator) const {
     return type_name_str<Covariance>(false, namespace_separator) + "(" + (name_keywords ? "sigma_x_sq=" : "")
-           + std::to_string(_sigma_x_sq) + ", " + (name_keywords ? "sigma_y_sq=" : "")
-           + std::to_string(_sigma_y_sq) + ", " + (name_keywords ? "cov_xy=" : "") + std::to_string(_cov_xy)
+           + to_string_float(_sigma_x_sq) + ", " + (name_keywords ? "sigma_y_sq=" : "")
+           + to_string_float(_sigma_y_sq) + ", " + (name_keywords ? "cov_xy=" : "") + to_string_float(_cov_xy)
            + ")";
 }
 
 std::string Covariance::str() const {
-    return type_name_str<Covariance>(true) + "(sigma_x_sq=" + std::to_string(_sigma_x_sq)
-           + ", sigma_y_sq=" + std::to_string(_sigma_y_sq) + ", cov_xy=" + std::to_string(_cov_xy) + ")";
+    return type_name_str<Covariance>(true) + "(sigma_x_sq=" + to_string_float(_sigma_x_sq)
+           + ", sigma_y_sq=" + to_string_float(_sigma_y_sq) + ", cov_xy=" + to_string_float(_cov_xy) + ")";
 }
 
 bool Covariance::operator==(const Covariance& other) const { return get_xyc() == other.get_xyc(); }
+bool Covariance::operator!=(const Covariance& other) const { return !(*this == other); }
 
 std::ostream& operator<<(std::ostream& out, const Covariance& obj) {
     out << obj.str();
@@ -139,7 +141,7 @@ std::ostream& operator<<(std::ostream& out, const Covariance& obj) {
 
 void EllipseValues::set_sigma_x(double sigma_x) {
     if (!(_sigma_x >= 0)) {
-        throw std::invalid_argument("Invalid sigma_x=" + std::to_string(sigma_x)
+        throw std::invalid_argument("Invalid sigma_x=" + to_string_float(sigma_x)
                                     + "; sigma_y >= 0 required.");
     }
     *_sigma_x = sigma_x;
@@ -147,7 +149,7 @@ void EllipseValues::set_sigma_x(double sigma_x) {
 
 void EllipseValues::set_sigma_y(double sigma_y) {
     if (!(sigma_y >= 0)) {
-        throw std::invalid_argument("Invalid sigma_y=" + std::to_string(sigma_y)
+        throw std::invalid_argument("Invalid sigma_y=" + to_string_float(sigma_y)
                                     + "; sigma_y >= 0 required.");
     }
     *_sigma_y = sigma_y;
@@ -155,7 +157,7 @@ void EllipseValues::set_sigma_y(double sigma_y) {
 
 void EllipseValues::set_rho(double rho) {
     if (!(rho > -1 && rho < 1)) {
-        throw std::invalid_argument("Invalid rho=" + std::to_string(rho) + "; -1 < rho < 1 required.");
+        throw std::invalid_argument("Invalid rho=" + to_string_float(rho) + "; -1 < rho < 1 required.");
     }
     *_rho = rho;
 }
@@ -180,14 +182,14 @@ void EllipseValues::set_xyr(const std::array<double, 3>& xyr) { this->set(xyr[0]
 
 std::string EllipseValues::repr(bool name_keywords, std::string_view namespace_separator) const {
     return type_name_str<EllipseValues>(false, namespace_separator) + "(" + (name_keywords ? "sigma_x=" : "")
-           + std::to_string(this->get_sigma_x()) + ", " + (name_keywords ? "sigma_y=" : "")
-           + std::to_string(this->get_sigma_y()) + ", " + (name_keywords ? "rho=" : "")
-           + std::to_string(this->get_rho()) + ")";
+           + to_string_float(this->get_sigma_x()) + ", " + (name_keywords ? "sigma_y=" : "")
+           + to_string_float(this->get_sigma_y()) + ", " + (name_keywords ? "rho=" : "")
+           + to_string_float(this->get_rho()) + ")";
 }
 
 std::string EllipseValues::str() const {
-    return type_name_str<EllipseValues>(true) + "(sigma_x=" + std::to_string(this->get_sigma_x())
-           + ", sigma_y=" + std::to_string(this->get_sigma_y()) + ", rho=" + std::to_string(this->get_rho())
+    return type_name_str<EllipseValues>(true) + "(sigma_x=" + to_string_float(this->get_sigma_x())
+           + ", sigma_y=" + to_string_float(this->get_sigma_y()) + ", rho=" + to_string_float(this->get_rho())
            + ")";
 }
 
@@ -237,7 +239,6 @@ void Ellipse::set(double sigma_x, double sigma_y, double rho) { _data->set(sigma
 void Ellipse::set(const Covariance& covar) {
     double sigma_x = covar.get_sigma_x_sq();
     double sigma_y = covar.get_sigma_y_sq();
-    if (sigma_x == 0 && sigma_y == 0) return;
     sigma_x = sqrt(sigma_x);
     sigma_y = sqrt(sigma_y);
     double rho = (sigma_x == 0 || sigma_y == 0) ? 0 : covar.get_cov_xy() / (sigma_x * sigma_y);
@@ -246,11 +247,13 @@ void Ellipse::set(const Covariance& covar) {
 
 void Ellipse::set(const EllipseMajor& ellipse) {
     const double r_major = ellipse.get_r_major();
-    if (r_major == 0) return;
+    if (r_major == 0) {
+        this->set(0, 0, 0);
+        return;
+    }
     const double axrat = ellipse.get_axrat();
     if (axrat == 1) {
-        this->set_sigma_x(r_major);
-        this->set_sigma_y(r_major);
+        this->set(r_major, r_major, 0);
         return;
     }
     const auto [sin_th, cos_th] = sincos(ellipse.get_angle_radians());
@@ -283,12 +286,13 @@ void Ellipse::set_xyr(const std::array<double, 3>& xyr) { this->set(xyr[0], xyr[
 
 std::string Ellipse::repr(bool name_keywords, std::string_view namespace_separator) const {
     return type_name_str<Ellipse>(false, namespace_separator) + "(" + (name_keywords ? "data=" : "")
-           + _data->repr(name_keywords) + ")";
+           + _data->repr(name_keywords, namespace_separator) + ")";
 }
 
 std::string Ellipse::str() const { return type_name_str<Ellipse>(true) + "(data=" + _data->str() + ")"; }
 
 bool Ellipse::operator==(const Ellipse& other) const { return get_data() == other.get_data(); };
+bool Ellipse::operator!=(const Ellipse& other) const { return !(*this == other); }
 
 Ellipse::Ellipse(std::shared_ptr<EllipseData> data)
         : _data(data == nullptr ? std::make_shared<EllipseValues>() : std::move(data)){};
@@ -359,7 +363,7 @@ void EllipseMajor::set(double r_major, double axrat, double angle) {
 
 void EllipseMajor::set_r_major(double r_major) {
     if (!(r_major >= 0)) {
-        throw std::invalid_argument("Invalid r_major=" + std::to_string(r_major)
+        throw std::invalid_argument("Invalid r_major=" + to_string_float(r_major)
                                     + "; r_major >= 0 required.");
     }
     _r_major = r_major;
@@ -367,7 +371,8 @@ void EllipseMajor::set_r_major(double r_major) {
 
 void EllipseMajor::set_axrat(double axrat) {
     if (!(axrat >= 0 && axrat <= 1)) {
-        throw std::invalid_argument("Invalid axrat=" + std::to_string(axrat) + "; 1 >= axrat >= 0 required.");
+        throw std::invalid_argument("Invalid axrat=" + to_string_float(axrat)
+                                    + "; 1 >= axrat >= 0 required.");
     }
     _axrat = axrat;
 }
@@ -388,21 +393,23 @@ void EllipseMajor::set_rqa(const std::array<double, 3>& rqa) { this->set(rqa[0],
 
 std::string EllipseMajor::repr(bool name_keywords, std::string_view namespace_separator) const {
     return type_name_str<EllipseMajor>(false, namespace_separator) + "(" + (name_keywords ? "r_major=" : "")
-           + std::to_string(_r_major) + ", " + (name_keywords ? "axrat=" : "") + std::to_string(_axrat) + ", "
-           + (name_keywords ? "angle=" : "") + std::to_string(_angle) + ", "
-           + (name_keywords ? "degrees=" : "") + std::to_string(_degrees) + ")";
+           + to_string_float(_r_major) + ", " + (name_keywords ? "axrat=" : "") + to_string_float(_axrat)
+           + ", " + (name_keywords ? "angle=" : "") + to_string_float(_angle) + ", "
+           + (name_keywords ? "degrees=" : "") + to_string_float(_degrees) + ")";
 }
 
 std::string EllipseMajor::str() const {
-    return type_name_str<EllipseMajor>(true) + "(r_major=" + std::to_string(_r_major)
-           + ", axrat=" + std::to_string(_axrat) + ", angle=" + std::to_string(_angle)
-           + ", degrees=" + std::to_string(_degrees) + ")";
+    return type_name_str<EllipseMajor>(true) + "(r_major=" + to_string_float(_r_major)
+           + ", axrat=" + to_string_float(_axrat) + ", angle=" + to_string_float(_angle)
+           + ", degrees=" + to_string_float(_degrees) + ")";
 }
 
 bool EllipseMajor::operator==(const EllipseMajor& other) const {
     return (get_r_major() == other.get_r_major()) && (get_axrat() == other.get_axrat())
            && (get_angle_degrees() == other.get_angle_degrees());
 }
+
+bool EllipseMajor::operator!=(const EllipseMajor& other) const { return !(*this == other); }
 
 }  // namespace lsst::gauss2d
 

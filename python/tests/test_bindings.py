@@ -1,12 +1,12 @@
-import lsst.gauss2d as g2
+import lsst.gauss2d as g2d
 
 
 def test_bindings():
     errors = []
     bad_args_msg = "incompatible function arguments"
 
-    for name_class in dir(g2):
-        klass = getattr(g2, name_class)
+    for name_class in dir(g2d):
+        klass = getattr(g2d, name_class)
 
         if callable(klass):
             try:

@@ -5,6 +5,9 @@ test_names = [
     'evaluate',
     'gaussian',
     'image',
+    'string_utils',
+    'to_string',
+    'type_name',
 ]
 foreach test_name : test_names
     test = executable(

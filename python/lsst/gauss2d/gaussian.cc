@@ -22,6 +22,7 @@
  */
 
 #include <pybind11/pybind11.h>
+#include <pybind11/operators.h>
 #include <pybind11/stl.h>
 
 #include <memory>
@@ -49,7 +50,12 @@ void bind_gaussian(py::module &m) {
             .def(py::init<double>(), "value"_a = 1)
             .def_property("value", &gauss2d::GaussianIntegralValue::get_value,
                           &gauss2d::GaussianIntegralValue::set_value)
-            .def("__repr__", [](const gauss2d::GaussianIntegralValue &self) { return self.repr(true, self.PY_NAMESPACE_SEPARATOR); })
+            .def(py::self == py::self)
+            .def(py::self != py::self)
+            .def("__repr__",
+                 [](const gauss2d::GaussianIntegralValue &self) {
+                     return self.repr(true, self.PY_NAMESPACE_SEPARATOR);
+                 })
             .def("__str__", &gauss2d::GaussianIntegralValue::str);
 
     py::class_<gauss2d::Gaussian, std::shared_ptr<gauss2d::Gaussian>>(m, "Gaussian")
@@ -63,14 +69,19 @@ void bind_gaussian(py::module &m) {
                           &gauss2d::Gaussian::set_const_normal)
             .def_property("integral_value", &gauss2d::Gaussian::get_integral_value,
                           &gauss2d::Gaussian::set_integral_value)
-            .def("__repr__", [](const gauss2d::Gaussian &self) { return self.repr(true, self.PY_NAMESPACE_SEPARATOR); })
+            .def(py::self == py::self)
+            .def(py::self != py::self)
+            .def("__repr__",
+                 [](const gauss2d::Gaussian &self) { return self.repr(true, self.PY_NAMESPACE_SEPARATOR); })
             .def("__str__", &gauss2d::Gaussian::str);
     py::class_<gauss2d::Gaussians, std::shared_ptr<gauss2d::Gaussians>>(m, "Gaussians")
             .def(py::init<std::optional<const gauss2d::Gaussians::Data>>(), "gaussians"_a)
-            .def("at", &gauss2d::Gaussians::at)
+            .def("at", &gauss2d::Gaussians::at, py::return_value_policy::reference)
             .def_property_readonly("size", &gauss2d::Gaussians::size)
+            .def("__getitem__", &gauss2d::Gaussians::at, py::return_value_policy::reference)
             .def("__len__", &gauss2d::Gaussians::size)
-            .def("__repr__", [](const gauss2d::Gaussians &self) { return self.repr(true, self.PY_NAMESPACE_SEPARATOR); })
+            .def("__repr__",
+                 [](const gauss2d::Gaussians &self) { return self.repr(true, self.PY_NAMESPACE_SEPARATOR); })
             .def("__str__", &gauss2d::Gaussians::str);
     py::class_<gauss2d::ConvolvedGaussian, std::shared_ptr<gauss2d::ConvolvedGaussian>>(m,
                                                                                         "ConvolvedGaussian")
@@ -78,14 +89,23 @@ void bind_gaussian(py::module &m) {
                  "source"_a = nullptr, "kernel"_a = nullptr)
             .def_property_readonly("kernel", &gauss2d::ConvolvedGaussian::get_kernel)
             .def_property_readonly("source", &gauss2d::ConvolvedGaussian::get_source)
-            .def("__repr__", [](const gauss2d::ConvolvedGaussian &self) { return self.repr(true, self.PY_NAMESPACE_SEPARATOR); })
+            .def(py::self == py::self)
+            .def(py::self != py::self)
+            .def("__repr__",
+                 [](const gauss2d::ConvolvedGaussian &self) {
+                     return self.repr(true, self.PY_NAMESPACE_SEPARATOR);
+                 })
             .def("__str__", &gauss2d::ConvolvedGaussian::str);
     py::class_<gauss2d::ConvolvedGaussians, std::shared_ptr<gauss2d::ConvolvedGaussians>>(
             m, "ConvolvedGaussians")
             .def(py::init<std::optional<const gauss2d::ConvolvedGaussians::Data>>(), "convolvedbgaussians"_a)
-            .def("at", &gauss2d::ConvolvedGaussians::at)
+            .def("at", &gauss2d::ConvolvedGaussians::at, py::return_value_policy::reference)
             .def_property_readonly("size", &gauss2d::ConvolvedGaussians::size)
+            .def("__getitem__", &gauss2d::ConvolvedGaussians::at, py::return_value_policy::reference)
             .def("__len__", &gauss2d::ConvolvedGaussians::size)
-            .def("__repr__", [](const gauss2d::ConvolvedGaussians &self) { return self.repr(true, self.PY_NAMESPACE_SEPARATOR); })
+            .def("__repr__",
+                 [](const gauss2d::ConvolvedGaussians &self) {
+                     return self.repr(true, self.PY_NAMESPACE_SEPARATOR);
+                 })
             .def("__str__", &gauss2d::ConvolvedGaussians::str);
 }

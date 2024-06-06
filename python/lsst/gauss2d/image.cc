@@ -32,29 +32,28 @@
 
 #include "lsst/gauss2d/evaluate.h"
 #include "lsst/gauss2d/image.h"
-#include "lsst/gauss2d/python/pyimage.h"
+#include "lsst/gauss2d/python/image.h"
 
 namespace py = pybind11;
 using namespace pybind11::literals;
 
-namespace gauss2d = lsst::gauss2d;
-using namespace gauss2d::python;
+namespace g2d = lsst::gauss2d;
 
 void bind_image(py::module &m) {
-    declare_image<bool>(m, "B");
-    declare_image<float>(m, "F");
-    declare_image<double>(m, "D");
-    declare_image<int>(m, "I");
-    declare_image<unsigned int>(m, "U");
-    declare_image<size_t>(m, "S");
-    declare_image_array<bool>(m, "B");
-    declare_image_array<float>(m, "F");
-    declare_image_array<double>(m, "D");
-    declare_image_array<int>(m, "I");
-    declare_image_array<unsigned int>(m, "U");
-    declare_image_array<size_t>(m, "S");
-    declare_evaluator<float>(m, "F");
-    declare_evaluator<double>(m, "D");
-    declare_maker<float, PyImage<float>, PyImage<size_t>>(m, "F");
-    declare_maker<double, PyImage<double>, PyImage<size_t>>(m, "D");
+    g2d::python::declare_image<bool>(m, "B");
+    g2d::python::declare_image<float>(m, "F");
+    g2d::python::declare_image<double>(m, "D");
+    g2d::python::declare_image<int>(m, "I");
+    g2d::python::declare_image<unsigned int>(m, "U");
+    g2d::python::declare_image<size_t>(m, "S");
+    g2d::python::declare_image_array<bool>(m, "B");
+    g2d::python::declare_image_array<float>(m, "F");
+    g2d::python::declare_image_array<double>(m, "D");
+    g2d::python::declare_image_array<int>(m, "I");
+    g2d::python::declare_image_array<unsigned int>(m, "U");
+    g2d::python::declare_image_array<size_t>(m, "S");
+    g2d::python::declare_evaluator<float>(m, "F");
+    g2d::python::declare_evaluator<double>(m, "D");
+    g2d::python::declare_maker<float, g2d::python::Image<float>, g2d::python::Image<size_t>>(m, "F");
+    g2d::python::declare_maker<double, g2d::python::Image<double>, g2d::python::Image<size_t>>(m, "D");
 }

@@ -94,11 +94,12 @@ public:
     void set_cov_xy(double cov_xy);
     void set_xyc(const std::array<double, 3>& xyc);
 
-    std::string repr(bool name_keywords = false, std::string_view namespace_separator
-                                                 = Object::CC_NAMESPACE_SEPARATOR) const override;
+    std::string repr(bool name_keywords = false,
+                     std::string_view namespace_separator = Object::CC_NAMESPACE_SEPARATOR) const override;
     std::string str() const override;
 
     bool operator==(const Covariance& other) const;
+    bool operator!=(const Covariance& other) const;
 
     friend std::ostream& operator<<(std::ostream& out, const Covariance& obj);
 
@@ -119,6 +120,7 @@ public:
  *
  * This is an abstract class designed to store data for an Ellipse to
  * retrieve. No additional restrictions are placed on implementations.
+ * Some default implementations are provided.
  *
  **/
 class EllipseData : public Object {
@@ -158,6 +160,7 @@ public:
     virtual std::string str() const override = 0;
 
     bool operator==(const EllipseData& other) const { return get_xyr() == other.get_xyr(); };
+    bool operator!=(const EllipseData& other) const { return !(*this == other); };
 
     friend std::ostream& operator<<(std::ostream& out, const EllipseData& obj) {
         out << obj.str();
@@ -195,8 +198,8 @@ public:
     void set_hxyr(const std::array<double, 3>& hxyr) override;
     void set_xyr(const std::array<double, 3>& xyr) override;
 
-    std::string repr(bool name_keywords = false, std::string_view namespace_separator
-                                                 = Object::CC_NAMESPACE_SEPARATOR) const override;
+    std::string repr(bool name_keywords = false,
+                     std::string_view namespace_separator = Object::CC_NAMESPACE_SEPARATOR) const override;
     std::string str() const override;
 
     /**
@@ -295,11 +298,12 @@ public:
     void set_hxyr(const std::array<double, 3>& hxyr);
     void set_xyr(const std::array<double, 3>& xyr);
 
-    std::string repr(bool name_keywords = false, std::string_view namespace_separator
-                                                 = Object::CC_NAMESPACE_SEPARATOR) const override;
+    std::string repr(bool name_keywords = false,
+                     std::string_view namespace_separator = Object::CC_NAMESPACE_SEPARATOR) const override;
     std::string str() const override;
 
     bool operator==(const Ellipse& other) const;
+    bool operator!=(const Ellipse& other) const;
 
     Ellipse(std::shared_ptr<EllipseData> data);
     /**
@@ -362,11 +366,12 @@ public:
     void set_degrees(bool degrees);
     void set_rqa(const std::array<double, 3>& rqa);
 
-    std::string repr(bool name_keywords = false, std::string_view namespace_separator
-                                                 = Object::CC_NAMESPACE_SEPARATOR) const override;
+    std::string repr(bool name_keywords = false,
+                     std::string_view namespace_separator = Object::CC_NAMESPACE_SEPARATOR) const override;
     std::string str() const override;
 
     bool operator==(const EllipseMajor& other) const;
+    bool operator!=(const EllipseMajor& other) const;
 
     /**
      * @brief Construct a new EllipseMajor object with default float values.

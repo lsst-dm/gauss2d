@@ -11,12 +11,12 @@
 #include "lsst/gauss2d/evaluate.h"
 #include "lsst/gauss2d/vectorimage.h"
 
-namespace g2 = lsst::gauss2d;
+namespace g2d = lsst::gauss2d;
 
-typedef g2::VectorImage<double> Image;
-typedef g2::ImageArray<double, Image> ImageArray;
-typedef g2::VectorImage<size_t> Indices;
-typedef g2::GaussianEvaluator<double, Image, Indices> Evaluator;
+typedef g2d::VectorImage<double> Image;
+typedef g2d::ImageArray<double, Image> ImageArray;
+typedef g2d::VectorImage<size_t> Indices;
+typedef g2d::GaussianEvaluator<double, Image, Indices> Evaluator;
 
 typedef std::shared_ptr<double> Value;
 
@@ -24,10 +24,10 @@ TEST_CASE("Evaluator") {
     const size_t n_rows = 5, n_cols = 4, n_comp = 2;
     auto image = std::make_shared<Image>(n_rows, n_cols);
 
-    g2::ConvolvedGaussians::Data data{};
+    g2d::ConvolvedGaussians::Data data{};
 
     std::vector<Value> values;
-    values.reserve(n_comp * g2::N_PARAMS_GAUSS2D);
+    values.reserve(n_comp * g2d::N_PARAMS_GAUSS2D);
 
     for (size_t i = 0; i < n_comp; ++i) {
         auto x = std::make_shared<double>(n_cols / 2);
@@ -45,21 +45,21 @@ TEST_CASE("Evaluator") {
         values.push_back(sigma_y);
         values.push_back(rho);
 
-        data.emplace_back(std::make_shared<g2::ConvolvedGaussian>(
-                std::make_shared<const g2::Gaussian>(
-                        std::make_shared<g2::Centroid>(
-                                std::make_shared<g2::CentroidValues>(std::move(x), std::move(y))),
-                        std::make_shared<g2::Ellipse>(std::make_shared<g2::EllipseValues>(
+        data.emplace_back(std::make_shared<g2d::ConvolvedGaussian>(
+                std::make_shared<const g2d::Gaussian>(
+                        std::make_shared<g2d::Centroid>(
+                                std::make_shared<g2d::CentroidValues>(std::move(x), std::move(y))),
+                        std::make_shared<g2d::Ellipse>(std::make_shared<g2d::EllipseValues>(
                                 std::move(sigma_x), std::move(sigma_y), std::move(rho))),
-                        std::make_shared<g2::GaussianIntegralValue>(std::move(integral))),
-                std::make_shared<const g2::Gaussian>(std::make_shared<g2::Centroid>(0, 0),
-                                                     std::make_shared<g2::Ellipse>(0, 0, 0),
-                                                     std::make_shared<g2::GaussianIntegralValue>())));
+                        std::make_shared<g2d::GaussianIntegralValue>(std::move(integral))),
+                std::make_shared<const g2d::Gaussian>(std::make_shared<g2d::Centroid>(0, 0),
+                                                      std::make_shared<g2d::Ellipse>(0, 0, 0),
+                                                      std::make_shared<g2d::GaussianIntegralValue>())));
     }
     const size_t n_params = values.size();
-    CHECK_EQ(n_params, n_comp * g2::N_PARAMS_GAUSS2D);
+    CHECK_EQ(n_params, n_comp * g2d::N_PARAMS_GAUSS2D);
 
-    auto gaussians = std::make_shared<const g2::ConvolvedGaussians>(data);
+    auto gaussians = std::make_shared<const g2d::ConvolvedGaussians>(data);
     auto sigma_inv = std::make_shared<Image>(n_rows, n_cols);
     const double err = 1e-5;
     sigma_inv->fill(1 / err);
@@ -77,7 +77,7 @@ TEST_CASE("Evaluator") {
     auto image2 = std::make_shared<Image>(n_rows, n_cols);
     double x_min = 2.0;
     double y_min = 1.0;
-    auto coordsys2 = std::make_shared<g2::CoordinateSystem>(1., 1., x_min, y_min);
+    auto coordsys2 = std::make_shared<g2d::CoordinateSystem>(1., 1., x_min, y_min);
     auto eval_offset = std::make_shared<Evaluator>(gaussians, coordsys2, nullptr, nullptr, image2);
 
     eval_offset->loglike_pixel();

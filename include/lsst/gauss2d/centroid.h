@@ -151,7 +151,8 @@ public:
     void set_xy(const std::array<double, 2>& xy);
     void set_y(double y);
 
-    std::string repr(bool name_keywords, std::string_view namespace_separator) const override;
+    std::string repr(bool name_keywords = false,
+                     std::string_view namespace_separator = Object::CC_NAMESPACE_SEPARATOR) const override;
     std::string str() const override;
 
     bool operator==(const Centroid& other) const;
