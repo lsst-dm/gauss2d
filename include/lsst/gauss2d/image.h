@@ -41,6 +41,8 @@
 
 namespace lsst::gauss2d {
 
+typedef size_t idx_type;
+
 template <typename T, class Data, class Indices>
 class GaussianEvaluator;
 
@@ -148,7 +150,7 @@ public:
         _check_row_col(row, col);
         return static_cast<const C&>(*this).get_value_unchecked(row, col);
     }
-    virtual const inline T get_value_unchecked(size_t row, size_t col) const = 0;
+    virtual inline T get_value_unchecked(size_t row, size_t col) const = 0;
     inline void set_value(size_t row, size_t col, T value) { _get_value(row, col) = value; }
     inline void set_value_unchecked(size_t row, size_t col, T value) {
         static_cast<C&>(*this)._get_value_unchecked(row, col) = value;
@@ -198,7 +200,7 @@ public:
     }
 
     // TODO: Implement if deemed worthwhile
-    // virtual void operator+=(t value);
+    // virtual void operator+=(T value);
 
     bool operator==(const Image& other) const {
         if (images_compatible<T, C, T, C>(*this, other)) {
@@ -222,7 +224,7 @@ public:
     Image(size_t n_rows, size_t n_cols, const std::shared_ptr<const CoordinateSystem> coordsys = nullptr)
             = delete;
 
-    Image(const std::shared_ptr<const CoordinateSystem> coordsys = nullptr)
+    explicit Image(const std::shared_ptr<const CoordinateSystem> coordsys = nullptr)
             : _coordsys_ptr(coordsys == nullptr ? nullptr : std::move(coordsys)),
               _coordsys(coordsys == nullptr ? COORDS_DEFAULT : *_coordsys_ptr) {}
     virtual ~Image() = default;
@@ -274,7 +276,7 @@ public:
         return str;
     }
 
-    ImageArray(const Data* data_in) {
+    explicit ImageArray(const Data* data_in) {
         if (data_in != nullptr) {
             const Data& data = *data_in;
             size_t n_data = data.size();

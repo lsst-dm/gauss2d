@@ -32,7 +32,6 @@
 
 namespace lsst::gauss2d {
 
-#pragma GCC visibility push(hidden)
 /*
     A basic Image class using a vector of deques.
 
@@ -40,25 +39,25 @@ namespace lsst::gauss2d {
     It almost certainly does not perform well and should not be used
     in production.
 */
-template <typename t>
-class VectorImage : public gauss2d::Image<t, VectorImage<t>> {
+template <typename T>
+class VectorImage : public gauss2d::Image<T, VectorImage<T>> {
 private:
     const size_t _n_rows;
     const size_t _n_cols;
 
     // This is a workaround for the C++98 specialization of vector<bool>
-    std::vector<std::deque<t>> _data;
+    std::vector<std::deque<T>> _data;
 
 public:
-    inline t& _get_value_unchecked(size_t row, size_t col) { return this->_data[row][col]; };
-    const inline t get_value_unchecked(size_t row, size_t col) const { return this->_data[row][col]; };
+    inline T& _get_value_unchecked(size_t row, size_t col) { return this->_data[row][col]; };
+    inline T get_value_unchecked(size_t row, size_t col) const { return this->_data[row][col]; };
 
     size_t get_n_cols() const { return _n_cols; };
     size_t get_n_rows() const { return _n_rows; };
 
-    VectorImage(size_t n_rows, size_t n_cols,
-                const std::shared_ptr<const gauss2d::CoordinateSystem> coordsys = nullptr)
-            : gauss2d::Image<t, VectorImage<t>>(coordsys), _n_rows(n_rows), _n_cols(n_cols) {
+    explicit VectorImage(size_t n_rows, size_t n_cols,
+                         const std::shared_ptr<const gauss2d::CoordinateSystem> coordsys = nullptr)
+            : gauss2d::Image<T, VectorImage<T>>(coordsys), _n_rows(n_rows), _n_cols(n_cols) {
         _data.resize(n_rows);
         for (size_t row = 0; row < n_rows; row++) {
             _data[row].resize(n_cols);
@@ -66,7 +65,6 @@ public:
     }
     ~VectorImage() = default;
 };
-#pragma GCC visibility pop
 
 }  // namespace lsst::gauss2d
 #endif

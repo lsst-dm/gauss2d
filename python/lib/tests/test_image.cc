@@ -5,21 +5,21 @@
 #include <memory>
 
 #include "lsst/gauss2d/image.h"
-#include "lsst/gauss2d/python/pyimage.h"
+#include "lsst/gauss2d/python/image.h"
 
 #include <pybind11/embed.h>
 
-namespace g2 = lsst::gauss2d;
+namespace g2d = lsst::gauss2d;
 
-typedef g2::python::PyImage<double> Image;
-typedef g2::ImageArray<double, Image> ImageArray;
-typedef g2::python::PyImage<bool> Mask;
+typedef g2d::python::Image<double> Image;
+typedef g2d::ImageArray<double, Image> ImageArray;
+typedef g2d::python::Image<bool> Mask;
 
 // Import numpy, otherwise all Image calls will segfault
 py::scoped_interpreter guard{};
 py::module_ numpy = py::module_::import("numpy");
 
-TEST_CASE("PyImage") {
+TEST_CASE("Image") {
     size_t n_rows = 3, n_cols = 2;
     std::shared_ptr<Image> image = std::make_shared<Image>(n_rows, n_cols);
     Image zeros{n_rows, n_cols};
@@ -30,8 +30,8 @@ TEST_CASE("PyImage") {
         }
     }
     CHECK(*image == zeros);
-    CHECK(image->get_coordsys() == g2::COORDS_DEFAULT);
-    CHECK(&(image->get_coordsys()) == &(g2::COORDS_DEFAULT));
+    CHECK(image->get_coordsys() == g2d::COORDS_DEFAULT);
+    CHECK(&(image->get_coordsys()) == &(g2d::COORDS_DEFAULT));
     CHECK(image->get_n_cols() == n_cols);
     CHECK(image->get_n_rows() == n_rows);
     CHECK(image->size() == n_cols * n_rows);
@@ -68,5 +68,5 @@ TEST_CASE("VectorMask") {
     CHECK(mask.get_value_unchecked(0, 0) == false);
     mask._get_value_unchecked(1, 1) = true;
     CHECK(mask.get_value_unchecked(1, 1) == true);
-    CHECK(g2::images_compatible<double, Image, bool, Mask>(image, mask));
+    CHECK(g2d::images_compatible<double, Image, bool, Mask>(image, mask));
 }

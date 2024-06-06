@@ -61,7 +61,6 @@ const size_t N_EXTRA_FACTOR = 3;
 const size_t N_PARAMS_GAUSS2D = 6;
 
 namespace detail {
-typedef size_t idx_type;
 
 typedef std::vector<double> vecd;
 typedef std::unique_ptr<vecd> vecdptr;
@@ -667,7 +666,7 @@ class GaussianEvaluator : public Object {
 private:
     typedef Image<T, Data> DataT;
     typedef ImageArray<T, Data> ImageArrayT;
-    typedef Image<detail::idx_type, Indices> IndicesT;
+    typedef Image<idx_type, Indices> IndicesT;
 
     Data& IMAGE_NULL() const;
     ImageArrayT& IMAGEARRAY_NULL() const;
@@ -947,9 +946,9 @@ public:
                       const std::shared_ptr<Image<T, Data>> output = nullptr,
                       const std::shared_ptr<Image<T, Data>> residual = nullptr,
                       const std::shared_ptr<ImageArrayT> grads = nullptr,
-                      const std::shared_ptr<const Image<detail::idx_type, Indices>> grad_param_map = nullptr,
+                      const std::shared_ptr<const Image<idx_type, Indices>> grad_param_map = nullptr,
                       const std::shared_ptr<const Image<T, Data>> grad_param_factor = nullptr,
-                      const std::shared_ptr<const Image<detail::idx_type, Indices>> extra_param_map = nullptr,
+                      const std::shared_ptr<const Image<idx_type, Indices>> extra_param_map = nullptr,
                       const std::shared_ptr<const Image<T, Data>> extra_param_factor = nullptr,
                       const std::shared_ptr<const Image<T, Data>> background = nullptr)
             : _gaussians(gaussians == nullptr ? GAUSSIANS_NULL : *gaussians),

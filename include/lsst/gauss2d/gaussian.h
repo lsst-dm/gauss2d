@@ -84,8 +84,8 @@ public:
                      std::string_view namespace_separator = Object::CC_NAMESPACE_SEPARATOR) const override;
     std::string str() const override;
 
-    GaussianIntegralValue(double value = 1.);
-    GaussianIntegralValue(std::shared_ptr<double> value);
+    explicit GaussianIntegralValue(double value = 1.);
+    explicit GaussianIntegralValue(std::shared_ptr<double> value);
 
     ~GaussianIntegralValue(){};
 };
@@ -158,8 +158,9 @@ public:
      * @param ellipse The ellipse. Defaults to a new, default Ellipse.
      * @param integral The integral. Defaults to a new, default GaussianIntegralValue.
      */
-    Gaussian(std::shared_ptr<Centroid> centroid = nullptr, std::shared_ptr<Ellipse> ellipse = nullptr,
-             std::shared_ptr<GaussianIntegral> integral = nullptr);
+    explicit Gaussian(std::shared_ptr<Centroid> centroid = nullptr,
+                      std::shared_ptr<Ellipse> ellipse = nullptr,
+                      std::shared_ptr<GaussianIntegral> integral = nullptr);
     ~Gaussian();
 };
 
@@ -208,8 +209,8 @@ public:
     std::string str() const override;
 
     // These constructors explicitly copy inputs rather than moving
-    Gaussians(std::optional<const Data> data);
-    Gaussians(std::vector<std::optional<const Data>> data);
+    explicit Gaussians(std::optional<const Data> data);
+    explicit Gaussians(std::vector<std::optional<const Data>> data);
 };
 
 /**
@@ -234,8 +235,8 @@ public:
     bool operator==(const ConvolvedGaussian& other) const;
     bool operator!=(const ConvolvedGaussian& other) const;
 
-    ConvolvedGaussian(std::shared_ptr<const Gaussian> source = nullptr,
-                      std::shared_ptr<const Gaussian> kernel = nullptr);
+    explicit ConvolvedGaussian(std::shared_ptr<const Gaussian> source = nullptr,
+                               std::shared_ptr<const Gaussian> kernel = nullptr);
 };
 
 /**
@@ -282,8 +283,8 @@ public:
     const ConvolvedGaussian& operator[](size_t i) const;
 
     // These constructors explicitly copy inputs rather than moving
-    ConvolvedGaussians(std::optional<const Data> data);
-    ConvolvedGaussians(std::vector<std::optional<const Data>> data);
+    explicit ConvolvedGaussians(std::optional<const Data> data);
+    explicit ConvolvedGaussians(std::vector<std::optional<const Data>> data);
 };
 
 }  // namespace lsst::gauss2d

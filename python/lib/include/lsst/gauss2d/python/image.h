@@ -21,8 +21,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LSST_GAUSS2D_PYTHON_PYIMAGE_H
-#define LSST_GAUSS2D_PYTHON_PYIMAGE_H
+#ifndef LSST_GAUSS2D_PYTHON_IMAGE_H
+#define LSST_GAUSS2D_PYTHON_IMAGE_H
 
 #include <memory>
 #include <stdexcept>
@@ -56,7 +56,22 @@ std::string replace_type(std::string target, std::string replacement) {
 
 std::string_view STR_NONE = "";
 
+/*
+ * This suppresses warnings of the form:
+ *
+ *   warning: 'lsst::gauss2d::python::Image<double>' declared
+ *   with greater visibility than the type of its field
+ *   'lsst::gauss2d::python::Image<double>::_data'
+ *
+ * This may be a pybind11 issue, see:
+ * https://github.com/pybind/pybind11/discussions/4862
+ */
 #pragma GCC visibility push(hidden)
+/**
+ * @brief A Python image using numpy arrrays for storage.
+ *
+ * @tparam T
+ */
 template <typename T>
 class Image : public lsst::gauss2d::Image<T, Image<T>> {
 private:
@@ -88,7 +103,7 @@ public:
     // void add_value_unchecked(size_t row, size_t col, t value) {
     //     _get_value_unchecked(row, col) += value;
     // }
-    const inline T get_value_unchecked(size_t row, size_t col) const { return this->_data_ref(row, col); };
+    inline T get_value_unchecked(size_t row, size_t col) const { return this->_data_ref(row, col); };
     void set_value_unchecked(size_t row, size_t col, T value) { this->_data_ref(row, col) = value; }
     // void set_value_unchecked(size_t row, size_t col, t value) { _get_value_unchecked(row, col) = value;};
 
@@ -101,6 +116,15 @@ public:
               _data_ref(this->get_data().template mutable_unchecked<2>()) {
         _validate();
     }
+    /**
+     * Construct an image from a numpy array.
+     *
+     * @param data The numpy array to storage the image data.
+     * @param coordsys The coordinate system.
+     *
+     * @note Using this constructor will allow leave memory management on the
+     * Python side.
+     */
     Image(py::array_t<T> data, const std::shared_ptr<const gauss2d::CoordinateSystem> coordsys = nullptr)
             : gauss2d::Image<T, Image<T>>(coordsys),
               _n_rows(data.shape(0)),
@@ -227,4 +251,4 @@ void declare_maker(py::module &m, std::string str_type) {
 
 }  // namespace lsst::gauss2d::python
 
-#endif  // LSST_GAUSS2D_PYTHON_PYIMAGE_H
+#endif  // LSST_GAUSS2D_PYTHON_IMAGE_H
