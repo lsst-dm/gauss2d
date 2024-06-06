@@ -75,9 +75,6 @@ std::string_view STR_NONE = "";
 template <typename T>
 class Image : public lsst::gauss2d::Image<T, Image<T>> {
 private:
-    const size_t _n_rows;
-    const size_t _n_cols;
-
     std::unique_ptr<py::array_t<T>> _ptr_own = nullptr;
     py::array_t<T> _data;
     py::detail::unchecked_mutable_reference<T, 2> _data_ref;
@@ -96,8 +93,8 @@ public:
         return rv;
     }
 
-    size_t get_n_cols() const { return _n_cols; };
-    size_t get_n_rows() const { return _n_rows; };
+    size_t get_n_cols() const { return _data.shape(1); };
+    size_t get_n_rows() const { return _data.shape(0); };
 
     // void add_value(size_t row, size_t col, t value) { this->_get_value(row, col) += value;}
     // void add_value_unchecked(size_t row, size_t col, t value) {
@@ -110,8 +107,6 @@ public:
     Image(size_t n_rows, size_t n_cols,
           const std::shared_ptr<const gauss2d::CoordinateSystem> coordsys = nullptr)
             : gauss2d::Image<T, Image<T>>(coordsys),
-              _n_rows(n_rows),
-              _n_cols(n_cols),
               _ptr_own(std::make_unique<py::array_t<T>>(py::array::ShapeContainer({n_rows, n_cols}))),
               _data_ref(this->get_data().template mutable_unchecked<2>()) {
         _validate();
@@ -127,8 +122,6 @@ public:
      */
     Image(py::array_t<T> data, const std::shared_ptr<const gauss2d::CoordinateSystem> coordsys = nullptr)
             : gauss2d::Image<T, Image<T>>(coordsys),
-              _n_rows(data.shape(0)),
-              _n_cols(data.shape(1)),
               _data(data),
               _data_ref(this->get_data().template mutable_unchecked<2>()) {
         _validate();
