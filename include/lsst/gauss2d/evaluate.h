@@ -41,11 +41,30 @@ namespace lsst::gauss2d {
 
 static const ConvolvedGaussians GAUSSIANS_NULL{std::nullopt};
 
+enum class BackgroundType : unsigned char {
+    none = 0,
+    constant = 1,
+};
+enum class OutputType : unsigned char {
+    none = 0,
+    overwrite = 1,
+    add = 2,
+};
+enum class GradientType : unsigned char {
+    none = 0,
+    loglike = 1,
+    jacobian = 2,
+};
+
+const size_t N_EXTRA_MAP = 2;
+const size_t N_EXTRA_FACTOR = 3;
+const size_t N_PARAMS_GAUSS2D = 6;
+
+namespace detail {
 typedef size_t idx_type;
 
 typedef std::vector<double> vecd;
 typedef std::unique_ptr<vecd> vecdptr;
-typedef std::vector<vecdptr> vecdptrvec;
 
 struct ValuesGauss {
     double cen_x;
@@ -118,15 +137,8 @@ rho = tan2th/2/(sig_x*sig_y)*(sig_x^2 - sig_y^2)
     = tanth/(1-tan2t)/(sig_x*sig_y)*(sigma_maj^2 - sigma_min^2*)*(1-tan2t)*cos2t
     = tanth/(sig_x*sig_y)*(sigma_maj^2 - sigma_min^2)*cos2t
     = sint*cost/(sig_x*sig_y)*(sigma_maj^2 - sigma_min^2)
-*/
 
-// Conversion constant of ln(2); gaussian FWHM = 2*R_eff
-inline double reff_to_sigma_gauss(double reff) { return reff / 1.1774100225154746635070068805362097918987; }
-
-inline double degrees_to_radians(double degrees) { return degrees * M_PI / 180.; }
-
-/*
-    Derivation of 2D Gaussian function gradients (Jacobian):
+Derivation of 2D Gaussian function gradients (Jacobian):
 
     xmc = x - cen_x
 
@@ -165,25 +177,6 @@ inline double degrees_to_radians(double degrees) { return degrees * M_PI / 180.;
     exp(-((x-m)%5E2*s%5E2+%2B+(y-n)%5E2*t%5E2+-+2*r*(x-m)*(y-n)*s*t)%2F(2*(1-r%5E2)))+wrt+s
 */
 
-// typedef std::array<double, N_PARAMS_GAUSS2D> Weights;
-enum class BackgroundType : unsigned char {
-    none = 0,
-    constant = 1,
-};
-enum class OutputType : unsigned char {
-    none = 0,
-    overwrite = 1,
-    add = 2,
-};
-enum class GradientType : unsigned char {
-    none = 0,
-    loglike = 1,
-    jacobian = 2,
-};
-
-const size_t N_EXTRA_MAP = 2;
-const size_t N_EXTRA_FACTOR = 3;
-const size_t N_PARAMS_GAUSS2D = 6;
 typedef std::array<double, N_PARAMS_GAUSS2D> Weights;
 
 // Various multiplicative terms that appread in a Gaussian PDF
@@ -194,7 +187,7 @@ struct Terms {
     double xy;
 };
 
-Terms terms_from_covar(const double weight, const Ellipse& ell);
+Terms terms_from_covar(double weight, const Ellipse& ell);
 
 /**
  *  Storage for terms common to Gaussians for a single pixel.
@@ -211,9 +204,9 @@ public:
     vecdptr yy_weighted = nullptr;
     // TODO: Give these variables more compelling names
 
-    TermsPixel(double weight_i = 0, double weight_kernel = 0, double xmc_i = 0, double xmc_weighted_i = 0,
-               vecdptr ymc_weighted_i = nullptr, double weight_xx_i = 0, double xmc_sq_norm_i = 0,
-               vecdptr yy_weighted_i = nullptr)
+    explicit TermsPixel(double weight_i = 0, double weight_kernel = 0, double xmc_i = 0,
+                        double xmc_weighted_i = 0, vecdptr ymc_weighted_i = nullptr, double weight_xx_i = 0,
+                        double xmc_sq_norm_i = 0, vecdptr yy_weighted_i = nullptr)
             : weight(weight_i),
               xmc(xmc_i),
               xmc_weighted(xmc_weighted_i),
@@ -223,14 +216,14 @@ public:
               yy_weighted(std::move(yy_weighted_i)) {}
 
     // Set values that are specific to a given gaussian
-    void set(double weight, double weight_kernel, double xmc, double xx, vecdptr ymc_weighted,
-             vecdptr yy_weighted) {
-        this->weight = weight;
-        this->weight_kernel = weight_kernel;
-        this->xmc = xmc;
+    void set(double weight_, double weight_kernel_, double xmc_, double xx, vecdptr ymc_weighted_,
+             vecdptr yy_weighted_) {
+        this->weight = weight_;
+        this->weight_kernel = weight_kernel_;
+        this->xmc = xmc_;
         this->weight_xx = xx;
-        this->ymc_weighted = std::move(ymc_weighted);
-        this->yy_weighted = std::move(yy_weighted);
+        this->ymc_weighted = std::move(ymc_weighted_);
+        this->yy_weighted = std::move(yy_weighted_);
     }
 };
 
@@ -253,11 +246,12 @@ public:
     double drho_c_drho_s = 0;
     double xmc_t_xy_weight = 0;
 
-    TermsGradient(vecdptr ymc_i = nullptr, double xx_weight_i = 0, double xy_weight_i = 0,
-                  double yy_weight_i = 0, double rho_factor_i = 0, double sig_x_inv_i = 0,
-                  double sig_y_inv_i = 0, double rho_xy_factor_i = 0, double sig_x_src_div_conv_i = 0,
-                  double sig_y_src_div_conv_i = 0, double drho_c_dsig_x_src_i = 0,
-                  double drho_c_dsig_y_src_i = 0, double drho_c_drho_s_i = 0, double xmc_t_xy_weight_i = 0)
+    explicit TermsGradient(vecdptr ymc_i = nullptr, double xx_weight_i = 0, double xy_weight_i = 0,
+                           double yy_weight_i = 0, double rho_factor_i = 0, double sig_x_inv_i = 0,
+                           double sig_y_inv_i = 0, double rho_xy_factor_i = 0,
+                           double sig_x_src_div_conv_i = 0, double sig_y_src_div_conv_i = 0,
+                           double drho_c_dsig_x_src_i = 0, double drho_c_dsig_y_src_i = 0,
+                           double drho_c_drho_s_i = 0, double xmc_t_xy_weight_i = 0)
             : ymc(std::move(ymc_i)),
               xx_weight(xx_weight_i),
               xy_weight(xy_weight_i),
@@ -274,12 +268,12 @@ public:
               xmc_t_xy_weight(xmc_t_xy_weight_i) {}
 
     void set(const Terms& terms, const Ellipse& ell_src, const Ellipse& ell_psf, const Ellipse& ell,
-             vecdptr ymc) {
+             vecdptr ymc_) {
         double sig_x = ell.get_sigma_x();
         double sig_y = ell.get_sigma_y();
         double rho = ell.get_rho();
 
-        this->ymc = std::move(ymc);
+        this->ymc = std::move(ymc_);
         const double sig_xy = sig_x * sig_y;
         this->xx_weight = terms.xx;
         this->xy_weight = terms.xy;
@@ -310,23 +304,21 @@ public:
         double sig_y_psf = ell_psf.get_sigma_y();
         double rho_psf = ell_psf.get_rho();
 
-        double sig_x_src_div_conv = sig_x_src / sig_x;
-        double sig_y_src_div_conv = sig_y_src / sig_y;
-        this->sig_x_src_div_conv = sig_x_src_div_conv;
-        this->sig_y_src_div_conv = sig_y_src_div_conv;
+        this->sig_x_src_div_conv = sig_x_src / sig_x;
+        this->sig_y_src_div_conv = sig_y_src / sig_y;
 
         double covar_psf_dsig_xy = rho_psf * sig_x_psf * sig_y_psf / sig_xy;
         double drho = 0;
         if (sig_x_psf > 0) {
             double sig_p_ratio = sig_x_psf / sig_x;
-            drho = rho_src * sig_y_src_div_conv * sig_p_ratio * sig_p_ratio / sig_x
-                   - covar_psf_dsig_xy * sig_x_src_div_conv / sig_x;
+            drho = rho_src * this->sig_y_src_div_conv * sig_p_ratio * sig_p_ratio / sig_x
+                   - covar_psf_dsig_xy * this->sig_x_src_div_conv / sig_x;
         }
         this->drho_c_dsig_x_src = drho;
         if (sig_y_psf > 0) {
             double sig_p_ratio = sig_y_psf / sig_y;
-            drho = rho_src * sig_x_src_div_conv * sig_p_ratio * sig_p_ratio / sig_y
-                   - covar_psf_dsig_xy * sig_y_src_div_conv / sig_y;
+            drho = rho_src * this->sig_x_src_div_conv * sig_p_ratio * sig_p_ratio / sig_y
+                   - covar_psf_dsig_xy * this->sig_y_src_div_conv / sig_y;
         }
         this->drho_c_dsig_y_src = drho;
         this->drho_c_drho_s = sig_x_src * sig_y_src / sig_xy;
@@ -366,7 +358,7 @@ public:
         if (n_extra_fac_cols != N_EXTRA_FACTOR) {
             errmsg += "extra_param_factor n_cols=" + std::to_string(n_extra_fac_cols) + " != 3. ";
         }
-        if (errmsg.size() > 0) throw std::runtime_error(errmsg);
+        if (!errmsg.empty()) throw std::runtime_error(errmsg);
     }
 
     GradientsExtra() = delete;
@@ -594,13 +586,13 @@ inline void gaussians_pixel_add_like_grad(
     }
 }
 
-template <typename t, class Data, class Indices, GradientType gradient_type, bool do_extra>
-inline t gaussian_pixel_add_all(size_t g, size_t j, size_t i, double weight, double sigma_inv,
-                                const TermsPixelVec& terms_pixel_vec, ImageArray<t, Data>& output_jac_ref,
+template <typename T, class Data, class Indices, GradientType gradient_type, bool do_extra>
+inline T gaussian_pixel_add_all(size_t g, size_t j, size_t i, double weight, double sigma_inv,
+                                const TermsPixelVec& terms_pixel_vec, ImageArray<T, Data>& output_jac_ref,
                                 const Image<idx_type, Indices>& grad_param_map,
-                                const Image<t, Data>& grad_param_factor, std::vector<Weights>& gradweights,
+                                const Image<T, Data>& grad_param_factor, std::vector<Weights>& gradweights,
                                 const TermsGradientVec& terms_grad_vec, ValuesGauss& gradients,
-                                GradientsExtra<t, Data, Indices>& grad_extra) {
+                                GradientsExtra<T, Data, Indices>& grad_extra) {
     const TermsPixel& terms_pixel = terms_pixel_vec[g];
     const double xy_norm = terms_pixel.xmc * (*terms_pixel.ymc_weighted)[j];
     const double value_unweight
@@ -615,7 +607,7 @@ inline t gaussian_pixel_add_all(size_t g, size_t j, size_t i, double weight, dou
     } else if constexpr (gradient_type == GradientType::jacobian) {
         gaussian_pixel_get_jacobian_from_terms(gradients, j, terms_pixel, terms_grad_vec[g],
                                                sigma_inv * value, sigma_inv * value_unweight, xy_norm);
-        gaussian_pixel_add_values<t>(
+        gaussian_pixel_add_values<T>(
                 output_jac_ref[grad_param_map.get_value_unchecked(g, 0)]._get_value_unchecked(j, i),
                 output_jac_ref[grad_param_map.get_value_unchecked(g, 1)]._get_value_unchecked(j, i),
                 output_jac_ref[grad_param_map.get_value_unchecked(g, 2)]._get_value_unchecked(j, i),
@@ -658,6 +650,7 @@ const std::shared_ptr<const Data> _param_factor_default(size_t n_gaussians,
     }
     return std::const_pointer_cast<const Data>(param_factor);
 }
+}  // namespace detail
 
 /**
  * @brief A class that evaluates 2D Gaussians and renders them in images.
@@ -665,16 +658,16 @@ const std::shared_ptr<const Data> _param_factor_default(size_t n_gaussians,
  * This class is designed for repeated re-evaluation of Gaussian mixture models
  * by caching references to the inputs and outputs.
  *
- * @tparam t The data type (e.g. float, int)
+ * @tparam T The data type (e.g. float, int)
  * @tparam Data The data array class
  * @tparam Indices The index array class (usually a size_t array)
  */
-template <typename t, class Data, class Indices>
+template <typename T, class Data, class Indices>
 class GaussianEvaluator : public Object {
 private:
-    typedef Image<t, Data> DataT;
-    typedef ImageArray<t, Data> ImageArrayT;
-    typedef Image<idx_type, Indices> IndicesT;
+    typedef Image<T, Data> DataT;
+    typedef ImageArray<T, Data> ImageArrayT;
+    typedef Image<detail::idx_type, Indices> IndicesT;
 
     Data& IMAGE_NULL() const;
     ImageArrayT& IMAGEARRAY_NULL() const;
@@ -703,7 +696,7 @@ private:
     const std::shared_ptr<const DataT> _grad_param_factor;
     const std::shared_ptr<const IndicesT> _extra_param_map;
     const std::shared_ptr<const DataT> _extra_param_factor;
-    const std::unique_ptr<GradientsExtra<t, Data, Indices>> _grad_extra;
+    const std::unique_ptr<detail::GradientsExtra<T, Data, Indices>> _grad_extra;
     const std::shared_ptr<const DataT> _background;
     const std::vector<size_t> _grad_param_idx;
     const size_t _n_cols;
@@ -764,11 +757,11 @@ private:
         const double bin_y = _coordsys.get_dy2();
         const double bin_x_half = bin_x / 2.;
 
-        TermsPixelVec terms_pixel(n_gaussians);
+        detail::TermsPixelVec terms_pixel(n_gaussians);
         // These are to store pre-computed values for gradients and are unused otherwise
         const size_t ngaussgrad = n_gaussians * (do_gradient);
-        TermsGradientVec terms_grad(ngaussgrad);
-        std::vector<Weights> weights_grad(n_gaussians * (gradient_type == GradientType::loglike));
+        detail::TermsGradientVec terms_grad(ngaussgrad);
+        std::vector<detail::Weights> weights_grad(n_gaussians * (gradient_type == GradientType::loglike));
 
         std::vector<double> weights_conv(n_gaussians);
 
@@ -781,19 +774,22 @@ private:
             weights_conv[g] = weight_src * weight_kernel;
             const double cen_x = src.get_centroid_const().get_x();
             const double cen_y = src.get_centroid_const().get_y();
-            const Covariance cov_psf = Covariance(kernel.get_ellipse_const());
-            const Covariance cov_src = Covariance(src.get_ellipse_const());
+            const auto ell_psf = kernel.get_ellipse_const();
+            const auto ell_src = src.get_ellipse_const();
+            const Covariance cov_psf = Covariance(ell_psf);
+            const Covariance cov_src = Covariance(ell_src);
             try {
-                const auto cov = cov_src.make_convolution(cov_psf);
+                const auto cov_conv = cov_src.make_convolution(cov_psf);
+                const auto ell_conv = Ellipse(*cov_conv);
 
                 // Deliberately omit weights for now
-                const Terms terms = terms_from_covar(bin_x * bin_y, Ellipse(*cov));
-                auto yvals = gaussian_pixel_x_xx(cen_y, y_min, bin_y, _n_rows, terms.yy, terms.xy);
+                const detail::Terms terms = detail::terms_from_covar(bin_x * bin_y, ell_conv);
+                auto yvals = detail::gaussian_pixel_x_xx(cen_y, y_min, bin_y, _n_rows, terms.yy, terms.xy);
 
                 terms_pixel[g].set(terms.weight, weight_kernel, x_min - cen_x + bin_x_half, terms.xx,
                                    std::move(yvals.x_norm), std::move(yvals.xx));
                 if (do_gradient) {
-                    terms_grad[g].set(terms, cov_src, cov_psf, *cov, std::move(yvals.x));
+                    terms_grad[g].set(terms, ell_src, ell_psf, ell_conv, std::move(yvals.x));
                 }
             } catch (const std::invalid_argument& err) {
                 throw std::runtime_error("Failed to convolve cov_src=" + cov_src.str() + " with "
@@ -807,7 +803,7 @@ private:
         double data_pix = 0;
         double sigma_inv_pix = 0;
         double chi_pix = 0;
-        ValuesGauss gradients = {0, 0, 0, 0, 0, 0};
+        detail::ValuesGauss gradients = {0, 0, 0, 0, 0, 0};
         // TODO: Consider a version with cached xy, although it doubles memory usage
         for (unsigned int i = 0; i < _n_cols; i++) {
             for (size_t g = 0; g < n_gaussians; ++g) {
@@ -830,7 +826,7 @@ private:
                             = sigma_inv_ref.get_value_unchecked(j * _is_sigma_image, i * _is_sigma_image);
                 }
                 for (size_t g = 0; g < n_gaussians; ++g) {
-                    model += gaussian_pixel_add_all<t, Data, Indices, gradient_type, do_extra>(
+                    model += detail::gaussian_pixel_add_all<T, Data, Indices, gradient_type, do_extra>(
                             g, j, i, weights_conv[g], sigma_inv_pix, terms_pixel, output_jac_ref,
                             grad_param_map_ref, grad_param_factor_ref, weights_grad, terms_grad, gradients,
                             *_grad_extra);
@@ -849,7 +845,7 @@ private:
                     }
                     // gaussians_pixel_add_like_grad adds to the loglike to avoid redundant calculations
                     else if constexpr (gradient_type == GradientType::loglike) {
-                        gaussians_pixel_add_like_grad<t, Data, Indices, do_extra>(
+                        detail::gaussians_pixel_add_like_grad<T, Data, Indices, do_extra>(
                                 outputgradref, grad_param_map_ref, grad_param_factor_ref, n_gaussians,
                                 weights_grad, chi_pix, loglike, model, data_pix, sigma_inv_pix, j, i,
                                 terms_pixel, terms_grad, gradients, _extra_param_map, _extra_param_factor);
@@ -918,7 +914,7 @@ private:
 public:
     const Data& IMAGE_NULL_CONST() const { return this->IMAGE_NULL(); };
     const Indices& INDICES_NULL_CONST() const { return this->INDICES_NULL(); };
-    const ImageArray<t, Data>& IMAGEARRAY_NULL_CONST() const { return this->IMAGEARRAY_NULL(); };
+    const ImageArray<T, Data>& IMAGEARRAY_NULL_CONST() const { return this->IMAGEARRAY_NULL(); };
 
     GaussianEvaluator(int x = 0, const std::shared_ptr<const ConvolvedGaussians> gaussians = nullptr){};
 
@@ -946,21 +942,21 @@ public:
      * @param background A background model image. Only 1x1 (constant level) backgrounds are supported.
      */
     GaussianEvaluator(const std::shared_ptr<const ConvolvedGaussians> gaussians,
-                      const std::shared_ptr<const Image<t, Data>> data = nullptr,
-                      const std::shared_ptr<const Image<t, Data>> sigma_inv = nullptr,
-                      const std::shared_ptr<Image<t, Data>> output = nullptr,
-                      const std::shared_ptr<Image<t, Data>> residual = nullptr,
+                      const std::shared_ptr<const Image<T, Data>> data = nullptr,
+                      const std::shared_ptr<const Image<T, Data>> sigma_inv = nullptr,
+                      const std::shared_ptr<Image<T, Data>> output = nullptr,
+                      const std::shared_ptr<Image<T, Data>> residual = nullptr,
                       const std::shared_ptr<ImageArrayT> grads = nullptr,
-                      const std::shared_ptr<const Image<idx_type, Indices>> grad_param_map = nullptr,
-                      const std::shared_ptr<const Image<t, Data>> grad_param_factor = nullptr,
-                      const std::shared_ptr<const Image<idx_type, Indices>> extra_param_map = nullptr,
-                      const std::shared_ptr<const Image<t, Data>> extra_param_factor = nullptr,
-                      const std::shared_ptr<const Image<t, Data>> background = nullptr)
+                      const std::shared_ptr<const Image<detail::idx_type, Indices>> grad_param_map = nullptr,
+                      const std::shared_ptr<const Image<T, Data>> grad_param_factor = nullptr,
+                      const std::shared_ptr<const Image<detail::idx_type, Indices>> extra_param_map = nullptr,
+                      const std::shared_ptr<const Image<T, Data>> extra_param_factor = nullptr,
+                      const std::shared_ptr<const Image<T, Data>> background = nullptr)
             : _gaussians(gaussians == nullptr ? GAUSSIANS_NULL : *gaussians),
-              _gaussians_ptr(gaussians == nullptr ? nullptr : std::move(gaussians)),
+              _gaussians_ptr(gaussians == nullptr ? nullptr : gaussians),
               _n_gaussians(_gaussians.size()),
               _do_output(output != nullptr),
-              _is_sigma_image(sigma_inv == nullptr ? false : (sigma_inv->size() > 1)),
+              _is_sigma_image((sigma_inv != nullptr) && (sigma_inv->size() > 1)),
               _do_residual(residual != nullptr),
               _has_background(background != nullptr),
               _gradienttype((grads != nullptr && grads->size() > 0)
@@ -989,25 +985,26 @@ public:
                                       ? nullptr
                                       : ((grad_param_map != nullptr)
                                                  ? grad_param_map
-                                                 : _param_map_default<Indices>(_gaussians.size()))),
-              _grad_param_factor((_gradienttype == GradientType::none)
-                                         ? nullptr
-                                         : ((grad_param_factor != nullptr)
-                                                    ? grad_param_factor
-                                                    : _param_factor_default<Data>(_gaussians.size()))),
-              _extra_param_map(
+                                                 : detail::_param_map_default<Indices>(_gaussians.size()))),
+              _grad_param_factor(
                       (_gradienttype == GradientType::none)
                               ? nullptr
-                              : ((extra_param_map != nullptr)
-                                         ? extra_param_map
-                                         : _param_map_default<Indices>(_gaussians.size(), N_EXTRA_MAP, 0))),
+                              : ((grad_param_factor != nullptr)
+                                         ? grad_param_factor
+                                         : detail::_param_factor_default<Data>(_gaussians.size()))),
+              _extra_param_map((_gradienttype == GradientType::none)
+                                       ? nullptr
+                                       : ((extra_param_map != nullptr)
+                                                  ? extra_param_map
+                                                  : detail::_param_map_default<Indices>(_gaussians.size(),
+                                                                                        N_EXTRA_MAP, 0))),
               _extra_param_factor((_gradienttype == GradientType::none)
                                           ? nullptr
                                           : ((extra_param_factor != nullptr)
                                                      ? extra_param_factor
-                                                     : _param_factor_default<Data>(_gaussians.size(),
-                                                                                   N_EXTRA_FACTOR, 0.))),
-              _grad_extra(_do_extra ? std::make_unique<GradientsExtra<t, Data, Indices>>(
+                                                     : detail::_param_factor_default<Data>(
+                                                             _gaussians.size(), N_EXTRA_FACTOR, 0.))),
+              _grad_extra(_do_extra ? std::make_unique<detail::GradientsExtra<T, Data, Indices>>(
                                   *extra_param_map, *extra_param_factor,
                                   grads != nullptr ? *grads : IMAGEARRAY_NULL(), _n_gaussians)
                                     : nullptr),

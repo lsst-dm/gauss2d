@@ -26,7 +26,7 @@
 #include "lsst/gauss2d/evaluate.h"
 
 namespace lsst::gauss2d {
-
+namespace detail {
 Terms terms_from_covar(const double weight, const Ellipse& ell) {
     double sig_x = ell.get_sigma_x();
     double sig_y = ell.get_sigma_y();
@@ -39,6 +39,6 @@ Terms terms_from_covar(const double weight, const Ellipse& ell) {
                   .xy = rho * norm_exp / (sig_x * sig_y)};
     return rval;
 }
-
+}  // namespace detail
 }  // namespace lsst::gauss2d
 #endif

@@ -182,7 +182,7 @@ TEST_CASE("Evaluator") {
     }
 
     std::string errormsg = "";
-    if (errors.size() != 0) {
+    if (!errors.empty()) {
         std::stringstream ss;
         ss << "";
         std::copy(std::begin(errors), std::end(errors), std::experimental::make_ostream_joiner(ss, "\n"));
