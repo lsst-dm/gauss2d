@@ -139,26 +139,66 @@ std::ostream& operator<<(std::ostream& out, const Covariance& obj) {
     return out;
 }
 
+double EllipseData::get_area() const {
+    double rho = this->get_rho();
+    return M_PI * this->get_sigma_xy() * sqrt(1 - rho * rho);
+}
+
+double EllipseData::get_sigma_xy() const { return this->get_sigma_x() * this->get_sigma_y(); }
+
+void EllipseData::convolve(const Ellipse& ell) {
+    double sigma_x_ell = ell.get_sigma_x();
+    double sigma_y_ell = ell.get_sigma_y();
+    double sigma_x = this->get_sigma_x();
+    sigma_x = sqrt(sigma_x * sigma_x + sigma_x_ell * sigma_x_ell);
+    double sigma_y = this->get_sigma_y();
+    sigma_y = sqrt(sigma_y * sigma_y + sigma_y_ell * sigma_y_ell);
+    double rho = (this->get_cov_xy() + ell.get_cov_xy()) / (sigma_x * sigma_y);
+    this->set(sigma_x, sigma_y, rho);
+}
+
+double EllipseData::get_cov_xy() const { return this->get_sigma_x() * this->get_sigma_y() * this->get_rho(); }
+
+double EllipseData::get_hwhm_x() const { return M_SIGMA_HWHM * this->get_sigma_x(); };
+
+double EllipseData::get_hwhm_y() const { return M_SIGMA_HWHM * this->get_sigma_y(); };
+
+std::array<double, 3> EllipseData::get_hxyr() const {
+    return {this->get_hwhm_x(), this->get_hwhm_y(), this->get_rho()};
+}
+std::array<double, 3> EllipseData::get_xyr() const {
+    return {this->get_sigma_x(), this->get_sigma_y(), this->get_rho()};
+}
+
+double EllipseData::get_radius_trace() const { return sqrt(this->get_sigma_x_sq() + this->get_sigma_y_sq()); }
+
+double EllipseData::get_sigma_x_sq() const {
+    double sigma = this->get_sigma_x();
+    return sigma * sigma;
+}
+
+double EllipseData::get_sigma_y_sq() const {
+    double sigma = this->get_sigma_y();
+    return sigma * sigma;
+}
+
+double EllipseValues::get_sigma_x() const { return *_sigma_x; }
+double EllipseValues::get_sigma_y() const { return *_sigma_y; }
+double EllipseValues::get_rho() const { return *_rho; }
+std::array<double, 3> EllipseValues::get_xyr() const { return {*_sigma_x, *_sigma_y, *_rho}; }
+
 void EllipseValues::set_sigma_x(double sigma_x) {
-    if (!(_sigma_x >= 0)) {
-        throw std::invalid_argument("Invalid sigma_x=" + to_string_float(sigma_x)
-                                    + "; sigma_y >= 0 required.");
-    }
+    EllipseData::check_size(sigma_x, "(size=sigma_x)");
     *_sigma_x = sigma_x;
 }
 
 void EllipseValues::set_sigma_y(double sigma_y) {
-    if (!(sigma_y >= 0)) {
-        throw std::invalid_argument("Invalid sigma_y=" + to_string_float(sigma_y)
-                                    + "; sigma_y >= 0 required.");
-    }
+    EllipseData::check_size(sigma_y, "(size=sigma_y)");
     *_sigma_y = sigma_y;
 }
 
 void EllipseValues::set_rho(double rho) {
-    if (!(rho > -1 && rho < 1)) {
-        throw std::invalid_argument("Invalid rho=" + to_string_float(rho) + "; -1 < rho < 1 required.");
-    }
+    EllipseData::check_rho(rho);
     *_rho = rho;
 }
 
@@ -176,10 +216,6 @@ void EllipseValues::set_h(double hwhm_x, double hwhm_y, double rho) {
     *_rho = rho;
 }
 
-void EllipseValues::set_hxyr(const std::array<double, 3>& hxyr) { this->set_h(hxyr[0], hxyr[1], hxyr[2]); }
-
-void EllipseValues::set_xyr(const std::array<double, 3>& xyr) { this->set(xyr[0], xyr[1], xyr[2]); }
-
 std::string EllipseValues::repr(bool name_keywords, std::string_view namespace_separator) const {
     return type_name_str<EllipseValues>(false, namespace_separator) + "(" + (name_keywords ? "sigma_x=" : "")
            + to_string_float(this->get_sigma_x()) + ", " + (name_keywords ? "sigma_y=" : "")
@@ -193,36 +229,6 @@ std::string EllipseValues::str() const {
            + ")";
 }
 
-void Ellipse::convolve(const Ellipse& ell) {
-    double sigma_x_ell = ell.get_sigma_x();
-    double sigma_y_ell = ell.get_sigma_y();
-    double sigma_x = this->get_sigma_x();
-    sigma_x = sqrt(sigma_x * sigma_x + sigma_x_ell * sigma_x_ell);
-    double sigma_y = this->get_sigma_y();
-    sigma_y = sqrt(sigma_y * sigma_y + sigma_y_ell * sigma_y_ell);
-    double rho = (this->get_cov_xy() + ell.get_cov_xy()) / (sigma_x * sigma_y);
-    this->set(sigma_x, sigma_y, rho);
-}
-
-double Ellipse::get_area() const {
-    double rho = this->get_rho();
-    return M_PI * this->get_sigma_xy() * sqrt(1 - rho * rho);
-}
-
-double Ellipse::get_cov_xy() const { return this->get_sigma_x() * this->get_sigma_y() * this->get_rho(); }
-
-double Ellipse::get_radius_trace() const { return sqrt(this->get_sigma_x_sq() + this->get_sigma_y_sq()); }
-
-double Ellipse::get_sigma_x_sq() const {
-    double sigma = this->get_sigma_x();
-    return sigma * sigma;
-}
-
-double Ellipse::get_sigma_y_sq() const {
-    double sigma = this->get_sigma_y();
-    return sigma * sigma;
-}
-
 std::shared_ptr<Ellipse> Ellipse::make_convolution(const Ellipse& ell) const {
     return this->make_convolution_uniq(ell);
 }
@@ -234,9 +240,14 @@ std::unique_ptr<Ellipse> Ellipse::make_convolution_uniq(const Ellipse& ell) cons
     return ell_ret;
 }
 
-void Ellipse::set(double sigma_x, double sigma_y, double rho) { _data->set(sigma_x, sigma_y, rho); }
+void EllipseData::set(double sigma_x, double sigma_y, double rho) {
+    this->check(sigma_x, sigma_y, rho);
+    this->set_sigma_x(sigma_x);
+    this->set_sigma_y(sigma_y);
+    this->set_rho(rho);
+}
 
-void Ellipse::set(const Covariance& covar) {
+void EllipseData::set(const Covariance& covar) {
     double sigma_x = covar.get_sigma_x_sq();
     double sigma_y = covar.get_sigma_y_sq();
     sigma_x = sqrt(sigma_x);
@@ -245,7 +256,7 @@ void Ellipse::set(const Covariance& covar) {
     this->set(sigma_x, sigma_y, rho);
 }
 
-void Ellipse::set(const EllipseMajor& ellipse) {
+void EllipseData::set(const EllipseMajor& ellipse) {
     const double r_major = ellipse.get_r_major();
     if (r_major == 0) {
         this->set(0, 0, 0);
@@ -270,19 +281,16 @@ void Ellipse::set(const EllipseMajor& ellipse) {
     this->set(sigma_x, sigma_y, rho);
 }
 
-void Ellipse::set_h(double hwhm_x, double hwhm_y, double rho) { _data->set_h(hwhm_x, hwhm_y, rho); }
-void Ellipse::set_hwhm_x(double hwhm_x) { _data->set_hwhm_x(hwhm_x); }
-void Ellipse::set_hwhm_y(double hwhm_y) { _data->set_hwhm_y(hwhm_y); }
-
-void Ellipse::set_rho(double rho) { _data->set_rho(rho); }
-
-void Ellipse::set_sigma_x(double sigma_x) { _data->set_sigma_x(sigma_x); }
-
-void Ellipse::set_sigma_y(double sigma_y) { _data->set_sigma_y(sigma_y); }
-
-void Ellipse::set_hxyr(const std::array<double, 3>& hxyr) { this->set_h(hxyr[0], hxyr[1], hxyr[2]); }
-
-void Ellipse::set_xyr(const std::array<double, 3>& xyr) { this->set(xyr[0], xyr[1], xyr[2]); }
+void EllipseData::set_h(double hwhm_x, double hwhm_y, double rho) {
+    EllipseData::check(hwhm_x, hwhm_y, rho);
+    this->set_hwhm_x(hwhm_x);
+    this->set_hwhm_y(hwhm_y);
+    this->set_rho(rho);
+}
+void EllipseData::set_hwhm_x(double hwhm_x) { this->set_sigma_x(M_HWHM_SIGMA * hwhm_x); }
+void EllipseData::set_hwhm_y(double hwhm_y) { this->set_sigma_y(M_HWHM_SIGMA * hwhm_y); }
+void EllipseData::set_hxyr(const std::array<double, 3>& hxyr) { this->set_h(hxyr[0], hxyr[1], hxyr[2]); }
+void EllipseData::set_xyr(const std::array<double, 3>& xyr) { this->set(xyr[0], xyr[1], xyr[2]); }
 
 std::string Ellipse::repr(bool name_keywords, std::string_view namespace_separator) const {
     return type_name_str<Ellipse>(false, namespace_separator) + "(" + (name_keywords ? "data=" : "")
@@ -306,6 +314,15 @@ Ellipse::Ellipse(const Covariance& covar) : _data(std::make_shared<EllipseValues
 Ellipse::Ellipse(const EllipseMajor& ellipse) : _data(std::make_shared<EllipseValues>()) {
     this->set(ellipse);
 }
+
+const EllipseData& Ellipse::get_data() const { return *this->_data; }
+double Ellipse::get_rho() const { return this->_data->get_rho(); }
+double Ellipse::get_sigma_x() const { return this->_data->get_sigma_x(); }
+double Ellipse::get_sigma_y() const { return this->_data->get_sigma_y(); }
+
+void Ellipse::set_rho(double rho) { this->_data->set_rho(rho); }
+void Ellipse::set_sigma_x(double sigma_x) { this->_data->set_sigma_x(sigma_x); }
+void Ellipse::set_sigma_y(double sigma_y) { this->_data->set_sigma_y(sigma_y); }
 
 std::pair<double, double> get_x_pm(double sigma_x_sq, double sigma_y_sq, double cov_xy) {
     double apc = sigma_x_sq + sigma_y_sq;

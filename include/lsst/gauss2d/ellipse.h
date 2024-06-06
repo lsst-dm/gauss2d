@@ -31,6 +31,7 @@
 #include <stdexcept>
 
 #include "object.h"
+#include "to_string.h"
 
 namespace lsst::gauss2d {
 
@@ -88,10 +89,15 @@ public:
 
     /// Set values from an ellipse instance
     void set(const Ellipse& ellipse);
+    /// Set all values at once
     void set(double sigma_x_sq = 0, double sigma_y_sq = 0, double cov_xy = 0);
+    /// Set the square of sigma_x
     void set_sigma_x_sq(double sigma_x_sq);
+    /// Set the square of sigma_y
     void set_sigma_y_sq(double sigma_y_sq);
+    /// Set the off-diagonal (covariance) term
     void set_cov_xy(double cov_xy);
+    /// Set sigma_x_sq, sigma_y_sq and cov_xy from an array ref
     void set_xyc(const std::array<double, 3>& xyc);
 
     std::string repr(bool name_keywords = false,
@@ -110,9 +116,9 @@ public:
      * @param sigma_y_sq The value of sigma_y^2
      * @param cov_xy The value of the covariance
      */
-    Covariance(double sigma_x_sq = 0, double sigma_y_sq = 0, double cov_xy = 0);
+    explicit Covariance(double sigma_x_sq = 0, double sigma_y_sq = 0, double cov_xy = 0);
     /// Construct a covariance using values from an ellipse instance.
-    Covariance(const Ellipse& ell);
+    explicit Covariance(const Ellipse& ell);
 };
 
 /**
@@ -125,34 +131,80 @@ public:
  **/
 class EllipseData : public Object {
 public:
+    /// Check whether Ellipse parameter values are valid, throwing if not.
+    static void check(double size_x, double size_y, double rho, std::string_view error_suffix = "") {
+        if (!(size_x >= 0) || !(size_y >= 0) || !(rho >= -1 && rho <= 1)) {
+            throw std::invalid_argument("Invalid size_x, size_y, rho=" + to_string_float(size_x) + ","
+                                        + to_string_float(size_y) + "," + to_string_float(rho)
+                                        + "; sigma_x,y >= 0 and 1 >= rho >= -1 required."
+                                        + std::string(error_suffix));
+        }
+    }
+    /// Check whether an x- or x-yaxis size value is valid
+    static void check_size(double size, std::string_view error_suffix = "") {
+        if (!(size >= 0)) {
+            throw std::invalid_argument("Invalid size=" + to_string_float(size) + "; size >= 0 required."
+                                        + std::string(error_suffix));
+        }
+    }
+    /// Check whether a rho value is valid
+    static void check_rho(double rho, std::string_view error_suffix = "") {
+        if (!(rho >= -1 && rho <= 1)) {
+            throw std::invalid_argument("Invalid rho=" + to_string_float(rho) + "; 1 >= rho >= -1 required."
+                                        + std::string(error_suffix));
+        }
+    }
+    /// Convolve this ellipse with another
+    virtual void convolve(const Ellipse& ell);
+    /// Return the area of this ellipse, equal to pi*sigma_major*sigma_minor
+    virtual double get_area() const;
+    /// Return the covariance, equal to sigma_x*sigma_y*rho
+    virtual double get_cov_xy() const;
     /// Get the x-axis half-width at half-maximum
-    virtual double get_hwhm_x() const { return M_SIGMA_HWHM * get_sigma_x(); };
+    virtual double get_hwhm_x() const;
     /// Get the y-axis half-width at half-maximum
-    virtual double get_hwhm_y() const { return M_SIGMA_HWHM * get_sigma_y(); };
+    virtual double get_hwhm_y() const;
+    /// Return the trace radius, equal to sqrt(sigma_x^2 + sigma_y^2)
+    virtual double get_radius_trace() const;
     /// Get sigma_x
     virtual double get_sigma_x() const = 0;
     /// Get sigma_y
     virtual double get_sigma_y() const = 0;
     /// Get rho
     virtual double get_rho() const = 0;
+    /// Get the square of sigma_x
+    virtual double get_sigma_x_sq() const;
+    /// Get the square of sigma_y
+    virtual double get_sigma_y_sq() const;
+    /// Return sigma_x*sigma_y
+    virtual double get_sigma_xy() const;
     /// Get hwhm_x, hwhm_y, rho
-    virtual std::array<double, 3> get_hxyr() const { return {get_hwhm_x(), get_hwhm_y(), get_rho()}; }
+    virtual std::array<double, 3> get_hxyr() const;
     /// Get sigma_x, sigma_y, rho
-    virtual std::array<double, 3> get_xyr() const { return {get_sigma_x(), get_sigma_y(), get_rho()}; }
+    virtual std::array<double, 3> get_xyr() const;
 
     /// Set sigma_x, sigma_y, rho
-    virtual void set(double sigma_x, double sigma_y, double rho) = 0;
-    /// Set hwhm_x, hwhm_y, rho
-    virtual void set_h(double hwhm_x, double hwhm_y, double rho) = 0;
-    virtual void set_hwhm_x(double hwhm_x) { this->set_sigma_x(M_HWHM_SIGMA * hwhm_x); }
-    virtual void set_hwhm_y(double hwhm_y) { this->set_sigma_y(M_HWHM_SIGMA * hwhm_y); }
+    virtual void set(double sigma_x, double sigma_y, double rho);
+    /// Set values from a Covariance object
+    virtual void set(const Covariance& covar);
+    /// Set values from an EllipseMajor object
+    virtual void set(const EllipseMajor& ellipse);
+    /// Set hwhm_x, hwhm_y, rho (half-width at half-max)
+    virtual void set_h(double hwhm_x, double hwhm_y, double rho);
+    /// Set the x-axis half-width at half-max (FWHM/2)
+    virtual void set_hwhm_x(double hwhm_x);
+    /// Set the y-axis half-width at half-max (FWHM/2)
+    virtual void set_hwhm_y(double hwhm_y);
+    /// Set the x-axis dispersion (sigma)
     virtual void set_sigma_x(double sigma_x) = 0;
+    /// Set the y-axis dispersion (sigma)
     virtual void set_sigma_y(double sigma_y) = 0;
+    /// Set the correlation parameter (rho)
     virtual void set_rho(double rho) = 0;
     /// Set hwhm_x, hwhm_y, rho from an array
-    virtual void set_hxyr(const std::array<double, 3>& hxyr) = 0;
+    virtual void set_hxyr(const std::array<double, 3>& hxyr);
     /// Set sigma_x, sigma_y, rho from an array
-    virtual void set_xyr(const std::array<double, 3>& xyr) = 0;
+    virtual void set_xyr(const std::array<double, 3>& xyr);
 
     virtual std::string repr(bool name_keywords = false, std::string_view namespace_separator
                                                          = Object::CC_NAMESPACE_SEPARATOR) const override
@@ -184,19 +236,16 @@ private:
     std::shared_ptr<double> _rho;
 
 public:
-    double get_sigma_x() const override { return *_sigma_x; }
-    double get_sigma_y() const override { return *_sigma_y; }
-    double get_rho() const override { return *_rho; }
-    std::array<double, 3> get_hxyr() const override { return {get_hwhm_x(), get_hwhm_y(), *_rho}; }
-    std::array<double, 3> get_xyr() const override { return {*_sigma_x, *_sigma_y, *_rho}; }
+    double get_sigma_x() const override;
+    double get_sigma_y() const override;
+    double get_rho() const override;
+    std::array<double, 3> get_xyr() const override;
 
     void set(double sigma_x, double sigma_y, double rho) override;
-    void set_h(double hwhm_x, double hwhm_y, double rho) override;
+    void set_h(double hwhm_x, double hwhm_y, double rho);
     void set_sigma_x(double sigma_x) override;
     void set_sigma_y(double sigma_y) override;
     void set_rho(double rho) override;
-    void set_hxyr(const std::array<double, 3>& hxyr) override;
-    void set_xyr(const std::array<double, 3>& xyr) override;
 
     std::string repr(bool name_keywords = false,
                      std::string_view namespace_separator = Object::CC_NAMESPACE_SEPARATOR) const override;
@@ -209,13 +258,13 @@ public:
      * @param sigma_y The sigma_y shared_ptr
      * @param rho The rho shared_ptr, defaulting to a new zero-valued double
      */
-    EllipseValues(std::shared_ptr<double> sigma_x, std::shared_ptr<double> sigma_y,
-                  std::shared_ptr<double> rho = nullptr)
+    explicit EllipseValues(std::shared_ptr<double> sigma_x, std::shared_ptr<double> sigma_y,
+                           std::shared_ptr<double> rho = nullptr)
             : _sigma_x(sigma_x == nullptr ? std::make_shared<double>(0) : std::move(sigma_x)),
               _sigma_y(sigma_y == nullptr ? std::make_shared<double>(0) : std::move(sigma_y)),
               _rho(rho == nullptr ? std::make_shared<double>(0) : std::move(rho)){};
     /// Construct a new EllipseValues object, creating new pointers for every value
-    EllipseValues(double sigma_x = 0, double sigma_y = 0, double rho = 0)
+    explicit EllipseValues(double sigma_x = 0, double sigma_y = 0, double rho = 0)
             : _sigma_x(std::make_shared<double>(sigma_x)),
               _sigma_y(std::make_shared<double>(sigma_y)),
               _rho(std::make_shared<double>(rho)){};
@@ -231,48 +280,16 @@ public:
  * with sigma_x and sigma_y on the diagonal, and the other two values
  * set to rho.
  */
-class Ellipse : public Object {
+class Ellipse : public EllipseData {
 private:
     std::shared_ptr<EllipseData> _data;
 
 public:
-    /// Check whether the supplied values are valid, throwing if not.
-    static void check(double sigma_x, double sigma_y, double rho) {
-        if (!(sigma_x >= 0) || !(sigma_y >= 0) || !(rho >= -1 && rho <= 1)) {
-            throw std::invalid_argument("Invalid sigma_x, sigma_y, rho=" + std::to_string(sigma_x) + ","
-                                        + std::to_string(sigma_y) + "," + std::to_string(rho)
-                                        + "; sigma_x,y >= 0 and 1 >= rho >= -1 required.");
-        }
-    }
-    /// Convolve this ellipse with another
-    void convolve(const Ellipse& ell);
-
-    /// Return the area of this ellipse, equal to pi*sigma_major*sigma_minor
-    double get_area() const;
-    /// Return the covariance, equal to sigma_x*sigma_y*rho
-    double get_cov_xy() const;
-    /// Return a ref to this ellipse's data
-    const EllipseData& get_data() const { return *_data; }
-    /// Return the x-axis half-width at half-maximum
-    double get_hwhm_x() const { return _data->get_hwhm_x(); }
-    /// Return the y-axis half-width at half-maximum
-    double get_hwhm_y() const { return _data->get_hwhm_y(); }
-    /// Return the trace radius, equal to sqrt(sigma_x^2 + sigma_y^2)
-    double get_radius_trace() const;
-    /// Return sigma_x^2
-    double get_sigma_x_sq() const;
-    /// Return sigma_y^2
-    double get_sigma_y_sq() const;
-    double get_rho() const { return _data->get_rho(); }
-    double get_sigma_x() const { return _data->get_sigma_x(); }
-    double get_sigma_y() const { return _data->get_sigma_y(); }
-    /// Return sigma_x*sigma_y
-    double get_sigma_xy() const { return _data->get_sigma_x() * _data->get_sigma_y(); }
-    /// Get hwhm_x, hwhm_y, rho
-    std::array<double, 3> get_hxyr() const { return _data->get_hxyr(); }
-    /// Get sigma_x, sigma_y, rho
-    std::array<double, 3> get_xyr() const { return _data->get_xyr(); }
-
+    /// Return a const ref to this ellipse's data
+    const EllipseData& get_data() const;
+    double get_rho() const override;
+    double get_sigma_x() const override;
+    double get_sigma_y() const override;
     /**
      * @brief Return the convolution of this with another ellipse.
      *
@@ -286,17 +303,9 @@ public:
     /// Same as make_convolution(), but returning a unique_ptr
     std::unique_ptr<Ellipse> make_convolution_uniq(const Ellipse& ell) const;
 
-    void set(double sigma_x, double sigma_y, double rho);
-    void set(const Covariance& covar);
-    void set(const EllipseMajor& ellipse);
-    void set_h(double hwhm_x, double hwhm_y, double rho);
-    void set_hwhm_x(double hwhm_x);
-    void set_hwhm_y(double hwhm_y);
-    void set_rho(double rho);
-    void set_sigma_x(double sigma_x);
-    void set_sigma_y(double sigma_y);
-    void set_hxyr(const std::array<double, 3>& hxyr);
-    void set_xyr(const std::array<double, 3>& xyr);
+    void set_rho(double rho) override;
+    void set_sigma_x(double sigma_x) override;
+    void set_sigma_y(double sigma_y) override;
 
     std::string repr(bool name_keywords = false,
                      std::string_view namespace_separator = Object::CC_NAMESPACE_SEPARATOR) const override;
@@ -305,7 +314,7 @@ public:
     bool operator==(const Ellipse& other) const;
     bool operator!=(const Ellipse& other) const;
 
-    Ellipse(std::shared_ptr<EllipseData> data);
+    explicit Ellipse(std::shared_ptr<EllipseData> data);
     /**
      * @brief Construct a new Ellipse object with default float values.
      *
@@ -313,9 +322,9 @@ public:
      * @param sigma_y The initial sigma_y value (default 0)
      * @param rho The intial rho value (default 0)
      */
-    Ellipse(double sigma_x = 0, double sigma_y = 0, double rho = 0);
-    Ellipse(const Covariance& covar);
-    Ellipse(const EllipseMajor& ellipse);
+    explicit Ellipse(double sigma_x = 0, double sigma_y = 0, double rho = 0);
+    explicit Ellipse(const Covariance& covar);
+    explicit Ellipse(const EllipseMajor& ellipse);
     ~Ellipse(){};
 };
 
@@ -381,9 +390,9 @@ public:
      * @param angle The intial angle value
      * @param degrees Whether the angle unit is degrees (true) or radians (false)
      */
-    EllipseMajor(double r_major, double axrat, double angle, bool degrees = false);
-    EllipseMajor(const Covariance& covar, bool degrees = false);
-    EllipseMajor(const Ellipse& ellipse, bool degrees = false);
+    explicit EllipseMajor(double r_major, double axrat, double angle, bool degrees = false);
+    explicit EllipseMajor(const Covariance& covar, bool degrees = false);
+    explicit EllipseMajor(const Ellipse& ellipse, bool degrees = false);
 };
 
 }  // namespace lsst::gauss2d
