@@ -189,7 +189,6 @@ void declare_evaluator(py::module &m, std::string str_type) {
     std::string pyclass_name = std::string("GaussianEvaluator") + str_type;
     py::class_<Class, std::shared_ptr<Class>>(m, pyclass_name.c_str())
             .def(py::init<const std::shared_ptr<const gauss2d::ConvolvedGaussians>,
-                          const std::shared_ptr<const gauss2d::CoordinateSystem>,
                           const std::shared_ptr<const Image<T>>, const std::shared_ptr<const Image<T>>,
                           const std::shared_ptr<Image<T>>, const std::shared_ptr<Image<T>>,
                           const std::shared_ptr<gauss2d::ImageArray<T, Image<T>>>,
@@ -197,9 +196,9 @@ void declare_evaluator(py::module &m, std::string str_type) {
                           const std::shared_ptr<const Image<T>>,
                           const std::shared_ptr<const Image<gauss2d::idx_type>>,
                           const std::shared_ptr<const Image<T>>, const std::shared_ptr<const Image<T>>>(),
-                 "gaussians"_a, "coordsys"_a = nullptr, "data"_a = nullptr, "sigma_inv"_a = nullptr,
-                 "output"_a = nullptr, "residual"_a = nullptr, "grads"_a = nullptr,
-                 "grad_param_map"_a = nullptr, "grad_param_factor"_a = nullptr, "extra_param_map"_a = nullptr,
+                 "gaussians"_a, "data"_a = nullptr, "sigma_inv"_a = nullptr, "output"_a = nullptr,
+                 "residual"_a = nullptr, "grads"_a = nullptr, "grad_param_map"_a = nullptr,
+                 "grad_param_factor"_a = nullptr, "extra_param_map"_a = nullptr,
                  "extra_param_factor"_a = nullptr, "background"_a = nullptr)
             .def("loglike_pixel", &Class::loglike_pixel, "to_add"_a = false)
             .def_property_readonly("n_cols", &Class::get_n_cols)

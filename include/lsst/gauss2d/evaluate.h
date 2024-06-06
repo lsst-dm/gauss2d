@@ -679,20 +679,17 @@ private:
     Data& IMAGE_NULL() const;
     ImageArrayT& IMAGEARRAY_NULL() const;
     Indices& INDICES_NULL() const;
-    // const ImageArray<Indices> INDICESARRAY_NULL{};
 
     const ConvolvedGaussians& _gaussians;
     const std::shared_ptr<const ConvolvedGaussians> _gaussians_ptr;
     const size_t _n_gaussians;
-    const CoordinateSystem& _coordsys;
-    const std::shared_ptr<const CoordinateSystem> _coordsys_ptr;
 
     const bool _do_output;
     const bool _is_sigma_image;
-    int _junk = 0;
     const bool _do_residual;
     const bool _has_background;
     const GradientType _gradienttype;
+    const CoordinateSystem& _coordsys;
     const bool _do_extra;
     const BackgroundType _backgroundtype;
     const bool _get_likelihood;
@@ -949,7 +946,6 @@ public:
      * @param background A background model image. Only 1x1 (constant level) backgrounds are supported.
      */
     GaussianEvaluator(const std::shared_ptr<const ConvolvedGaussians> gaussians,
-                      const std::shared_ptr<const CoordinateSystem> coordsys = nullptr,
                       const std::shared_ptr<const Image<t, Data>> data = nullptr,
                       const std::shared_ptr<const Image<t, Data>> sigma_inv = nullptr,
                       const std::shared_ptr<Image<t, Data>> output = nullptr,
@@ -963,8 +959,6 @@ public:
             : _gaussians(gaussians == nullptr ? GAUSSIANS_NULL : *gaussians),
               _gaussians_ptr(gaussians == nullptr ? nullptr : std::move(gaussians)),
               _n_gaussians(_gaussians.size()),
-              _coordsys(coordsys == nullptr ? COORDS_DEFAULT : *coordsys),
-              _coordsys_ptr(coordsys == nullptr ? nullptr : std::move(coordsys)),
               _do_output(output != nullptr),
               _is_sigma_image(sigma_inv == nullptr ? false : (sigma_inv->size() > 1)),
               _do_residual(residual != nullptr),
@@ -974,6 +968,11 @@ public:
                                                ? GradientType::loglike
                                                : GradientType::jacobian)
                                     : GradientType::none),
+              _coordsys(data == nullptr ? (output == nullptr ? (_gradienttype == GradientType::jacobian
+                                                                        ? (*grads)[0].get_coordsys()
+                                                                        : COORDS_DEFAULT)
+                                                             : output->get_coordsys())
+                                        : data->get_coordsys()),
               _do_extra(
                       extra_param_map != nullptr && extra_param_factor != nullptr
                       && (_gradienttype == GradientType::loglike || _gradienttype == GradientType::jacobian)),
@@ -1037,17 +1036,23 @@ public:
         }
         if (_get_likelihood) {
             // The case of constant variance per pixel
-            if (_is_sigma_image
-                && (_n_cols != _sigma_inv->get_n_cols() || _n_rows != _sigma_inv->get_n_rows())) {
-                throw std::runtime_error("Data matrix dimensions [" + std::to_string(_n_cols) + ','
-                                         + std::to_string(_n_rows)
-                                         + "] don't match inverse variance dimensions ["
-                                         + std::to_string(_sigma_inv->get_n_cols()) + ','
-                                         + std::to_string(_sigma_inv->get_n_rows()) + ']');
+            if (_is_sigma_image) {
+                if (_n_cols != _sigma_inv->get_n_cols() || _n_rows != _sigma_inv->get_n_rows()) {
+                    throw std::runtime_error("Data matrix dimensions [" + std::to_string(_n_cols) + ','
+                                             + std::to_string(_n_rows)
+                                             + "] don't match inverse variance dimensions ["
+                                             + std::to_string(_sigma_inv->get_n_cols()) + ','
+                                             + std::to_string(_sigma_inv->get_n_rows()) + ']');
+                }
+                if (_sigma_inv->get_coordsys() != _data->get_coordsys()) {
+                    throw std::runtime_error("sigma_inv coordsys=" + _sigma_inv->get_coordsys().str()
+                                             + "!= coordsys=" + _coordsys.str());
+                }
             }
         } else if ((data != nullptr) || (sigma_inv != nullptr)) {
             throw std::runtime_error("Passed only one non-null data/sigma_inv");
         }
+        // TODO: Add more coordsys compatibility checks
         if (_gradienttype != GradientType::none) {
             const size_t n_gpm = _grad_param_map->get_n_rows();
             const size_t n_gpf = _grad_param_factor->get_n_rows();
@@ -1152,13 +1157,13 @@ public:
         std::string c = ", ";
         std::string rval = (  // I really want this on a separate line; I'd also prefer single indent, but...
                 type_name_str<GaussianEvaluator>(false, name_sep) + "("  // make clang-format align nicely
-                + (is_kw ? "gaussians=" : "") + repr_ptr(_gaussians_ptr, is_kw, name_sep) + ", "
-                + (is_kw ? "coordsys=" : "") + repr_ptr(_coordsys_ptr, is_kw, name_sep) + ", "
-                + (is_kw ? "data=" : "") + repr_ptr(_data, is_kw, name_sep) + ", "
-                + (is_kw ? "sigma_inv=" : "") + repr_ptr(_sigma_inv, is_kw, name_sep) + ", "
-                + (is_kw ? "output=" : "") + repr_ptr(_output, is_kw, name_sep) + ", "
-                + (is_kw ? "residual=" : "") + repr_ptr(_residual, is_kw, name_sep) + ", "
-                + (is_kw ? "grads=" : "") + repr_ptr(_grads, is_kw, name_sep) + ", "
+                + (is_kw ? "gaussians=" : "") + repr_ptr(_gaussians_ptr, is_kw, name_sep) + ", "  //
+                + (is_kw ? "coordsys=" : "") + _coordsys.repr(is_kw, name_sep) + ", "             //
+                + (is_kw ? "data=" : "") + repr_ptr(_data, is_kw, name_sep) + ", "                //
+                + (is_kw ? "sigma_inv=" : "") + repr_ptr(_sigma_inv, is_kw, name_sep) + ", "      //
+                + (is_kw ? "output=" : "") + repr_ptr(_output, is_kw, name_sep) + ", "            //
+                + (is_kw ? "residual=" : "") + repr_ptr(_residual, is_kw, name_sep) + ", "        //
+                + (is_kw ? "grads=" : "") + repr_ptr(_grads, is_kw, name_sep) + ", "              //
                 + (is_kw ? "grad_param_map=" : "") + repr_ptr(_grad_param_map, is_kw, name_sep) + ", "
                 + (is_kw ? "grad_param_factor=" : "") + repr_ptr(_grad_param_factor, is_kw, name_sep) + c
                 + (is_kw ? "extra_param_map=" : "") + repr_ptr(_extra_param_map, is_kw, name_sep) + ", "
@@ -1172,7 +1177,7 @@ public:
         std::string rval = (                                                                 //
                 type_name_str<GaussianEvaluator>(true) + "("                                 //
                 + "gaussians=" + str_ptr(_gaussians_ptr) + c                                 //
-                + "coordsys=" + str_ptr(_coordsys_ptr) + c                                   //
+                + "coordsys=" + _coordsys.str() + c                                          //
                 + "do_extra=" + std::to_string(_do_extra) + c                                //
                 + "do_output=" + std::to_string(_do_output) + c                              //
                 + "do_residual=" + std::to_string(_do_residual) + c                          //
@@ -1243,8 +1248,8 @@ std::shared_ptr<Data> make_gaussians_pixel(const std::shared_ptr<const Convolved
         }
         output = std::make_shared<Data>(n_rows, n_cols, coordsys);
     }
-    auto evaluator = std::make_shared<GaussianEvaluator<t, Data, Indices>>(gaussians, coordsys, nullptr,
-                                                                           nullptr, output);
+    auto evaluator
+            = std::make_shared<GaussianEvaluator<t, Data, Indices>>(gaussians, nullptr, nullptr, output);
     evaluator->loglike_pixel(to_add);
     return output;
 }

@@ -64,7 +64,7 @@ TEST_CASE("Evaluator") {
     const double err = 1e-5;
     sigma_inv->fill(1 / err);
 
-    auto eval_img = std::make_shared<Evaluator>(gaussians, nullptr, nullptr, nullptr, image);
+    auto eval_img = std::make_shared<Evaluator>(gaussians, nullptr, nullptr, image);
 
     CHECK_NE(image, nullptr);
     CHECK_EQ(eval_img->get_n_cols(), n_cols);
@@ -74,11 +74,11 @@ TEST_CASE("Evaluator") {
     double loglike_img = eval_img->loglike_pixel();
     CHECK_EQ(loglike_img, 0);
 
-    auto image2 = std::make_shared<Image>(n_rows, n_cols);
     double x_min = 2.0;
     double y_min = 1.0;
     auto coordsys2 = std::make_shared<g2d::CoordinateSystem>(1., 1., x_min, y_min);
-    auto eval_offset = std::make_shared<Evaluator>(gaussians, coordsys2, nullptr, nullptr, image2);
+    auto image2 = std::make_shared<Image>(n_rows, n_cols, coordsys2);
+    auto eval_offset = std::make_shared<Evaluator>(gaussians, nullptr, nullptr, image2);
 
     eval_offset->loglike_pixel();
     CHECK_EQ(image2->get_value(0, 0), image->get_value(y_min, x_min));
@@ -86,7 +86,7 @@ TEST_CASE("Evaluator") {
     // Add a small offset so the chi is not zero everywhere
     *image += err;
 
-    auto eval_like = std::make_shared<Evaluator>(gaussians, nullptr, image, sigma_inv);
+    auto eval_like = std::make_shared<Evaluator>(gaussians, image, sigma_inv);
 
     CHECK_NE(sigma_inv, nullptr);
 
@@ -96,7 +96,7 @@ TEST_CASE("Evaluator") {
     auto img_loglike_grads = std::make_shared<Image>(1, n_params);
     ImageArray::Data data_loglike_grads = {img_loglike_grads};
 
-    Evaluator eval_loglike_grad(gaussians, nullptr, image, sigma_inv, nullptr,
+    Evaluator eval_loglike_grad(gaussians, image, sigma_inv, nullptr,
                                 nullptr,  // residual,
                                 std::make_shared<ImageArray>(&data_loglike_grads));
     eval_loglike_grad.loglike_pixel();
@@ -123,7 +123,7 @@ TEST_CASE("Evaluator") {
 
     auto jacs = std::make_shared<ImageArray>(&data_jacs);
 
-    Evaluator eval_jacob(gaussians, nullptr, image, sigma_inv, nullptr,
+    Evaluator eval_jacob(gaussians, image, sigma_inv, nullptr,
                          nullptr,  // residual,
                          jacs
                          /*      map_grad_in,
@@ -143,7 +143,7 @@ TEST_CASE("Evaluator") {
     *image += -err;
 
     auto image_param = std::make_shared<Image>(n_rows, n_cols);
-    auto eval_img_new = std::make_shared<Evaluator>(gaussians, nullptr, nullptr, nullptr, image_param);
+    auto eval_img_new = std::make_shared<Evaluator>(gaussians, nullptr, nullptr, image_param);
 
     const double eps = 1e-6;
     const double atol = 1e-4;
