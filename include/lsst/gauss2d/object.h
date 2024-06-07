@@ -26,6 +26,7 @@
 #define LSST_GAUSS2D_OBJECT_H
 
 #include <string>
+#include <sstream>
 
 namespace lsst::gauss2d {
 
@@ -95,16 +96,36 @@ std::string repr_iter_ptr(const T &container, bool name_keywords = false,
     return str + "]";
 }
 
-template <typename T, bool is_wrapper>
+// Putting is_wrapper first allows automatic substitution of the type
+template <bool is_wrapper, typename T>
 std::string repr_iter_ref(const T &container, bool name_keywords = false,
                           std::string_view namespace_separator = Object::CC_NAMESPACE_SEPARATOR) {
     std::string str = "[";
     for (const auto &obj : container) {
-        str += (is_wrapper ? obj.get() : obj).repr(name_keywords, namespace_separator) + ", ";
+        if constexpr (is_wrapper) {
+            str += obj.get().repr(name_keywords, namespace_separator);
+        } else {
+            str += obj.repr(name_keywords, namespace_separator);
+        }
+        str += ", ";
     }
     auto size_str = str.size();
     if (size_str > 1) str = str.substr(0, size_str - 2);
     return str + "]";
+}
+
+template <bool is_wrapper, typename T>
+std::string repr_map_ref(const T &container, bool name_keywords = false,
+                         std::string_view namespace_separator = Object::CC_NAMESPACE_SEPARATOR) {
+    std::string str = "{";
+    for (const auto &[obj, value] : container) {
+        if constexpr (is_wrapper) {
+            str += obj.get().repr(name_keywords, namespace_separator) + ": " + std::to_string(value) + ", ";
+        } else {
+            str += obj.repr(name_keywords, namespace_separator) + ": " + std::to_string(value) + ", ";
+        }
+    }
+    return str.substr(0, str.size() - 2 * (container.size() > 0)) + "}";
 }
 
 template <typename T>
@@ -123,15 +144,40 @@ std::string str_iter_ptr(const T &container) {
     return str + "]";
 }
 
-template <typename T, bool is_wrapper>
+template <bool is_wrapper, typename T>
 std::string str_iter_ref(const T &container) {
     std::string str = "[";
     for (const auto &obj : container) {
-        str += (is_wrapper ? obj.get() : obj).str() + ", ";
+        if constexpr (is_wrapper) {
+            str += obj.get().str();
+        } else {
+            str += obj.str();
+        }
+        str += ", ";
     }
     auto size_str = str.size();
     if (size_str > 1) str = str.substr(0, size_str - 2);
     return str + "]";
+}
+
+template <bool is_wrapper, typename T>
+std::string str_map_ref(const T &container) {
+    std::string str = "{";
+    for (const auto &[obj, value] : container) {
+        if constexpr (is_wrapper) {
+            str += obj.get().str() + ": " + std::to_string(value) + ", ";
+        } else {
+            str += obj.str() + ": " + std::to_string(value) + ", ";
+        }
+    }
+    return str.substr(0, str.size() - 2 * (container.size() > 0)) + "}";
+}
+
+template <typename T>
+void stream_iter_ref(const T &container, std::ostream &stream) {
+    stream << "[";
+    for (const auto &obj : container) stream << obj << ",";
+    stream << "]";
 }
 
 }  // namespace lsst::gauss2d
