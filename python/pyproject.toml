@@ -5,19 +5,33 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "lsst-gauss2d"
 authors = [
-    {name="Dan Taranu", email="dan.s.taranu@gmail.com"},
+    {name="Rubin Observatory Data Management", email="dm-admin@lists.lsst.org"},
 ]
 description = "Python (pybind11) bindings for gauss2d"
 requires-python = ">=3.8"
 classifiers = [
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
     "numpy",
     "pybind11",
-    "pytest",
 ]
 dynamic = ["version"]
+
+[project.urls]
+"Homepage" = "https://github.com/lsst-dm/gauss2d"
+
+[project.optional-dependencies]
+test = [
+    "pytest >= 3.2",
+]
 
 [tool.setuptools]
 py-modules = []
