@@ -36,6 +36,10 @@ TEST_CASE("VectorImage") {
     double& value = image->_get_value_unchecked(1, 1);
     value = -1;
     CHECK_EQ(image->get_value_unchecked(1, 1), -1);
+
+    auto coordsys2 = std::make_shared<g2d::CoordinateSystem>(1., 1., 2., 1.);
+    auto image2 = std::make_shared<Image>(n_rows, n_cols, Image::_value_default_ptr(), coordsys2);
+    CHECK_EQ(*coordsys2, image2->get_coordsys());
 }
 
 TEST_CASE("VectorImageArray") {
@@ -56,7 +60,7 @@ TEST_CASE("VectorMask") {
     auto image = Image(2, 2);
     auto mask = Mask(2, 2);
     CHECK_EQ(mask.get_value_unchecked(0, 0), false);
-    mask._get_value_unchecked(1, 1) = true;
+    mask.set_value_unchecked(1, 1, true);
     CHECK_EQ(mask.get_value_unchecked(1, 1), true);
     CHECK_EQ(g2d::images_compatible<double, Image, bool, Mask>(image, mask), true);
 }

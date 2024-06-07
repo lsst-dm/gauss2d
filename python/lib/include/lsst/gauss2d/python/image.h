@@ -91,20 +91,15 @@ private:
     }
 
 public:
-    inline T &_get_value_unchecked(size_t row, size_t col) { return this->_data_ref(row, col); };
+    inline T &_get_value_unchecked_impl(size_t row, size_t col) { return this->_data_ref(row, col); };
 
     py::array_t<T> &get_data() { return this->_data; }
 
-    size_t get_n_cols() const { return _data.shape(1); };
-    size_t get_n_rows() const { return _data.shape(0); };
+    size_t get_n_cols_impl() const { return _data.shape(1); };
+    size_t get_n_rows_impl() const { return _data.shape(0); };
 
-    // void add_value(size_t row, size_t col, t value) { this->_get_value(row, col) += value;}
-    // void add_value_unchecked(size_t row, size_t col, t value) {
-    //     _get_value_unchecked(row, col) += value;
-    // }
-    inline T get_value_unchecked(size_t row, size_t col) const { return this->_data_ref(row, col); };
-    void set_value_unchecked(size_t row, size_t col, T value) { this->_data_ref(row, col) = value; }
-    // void set_value_unchecked(size_t row, size_t col, t value) { _get_value_unchecked(row, col) = value;};
+    inline T get_value_unchecked_impl(size_t row, size_t col) const { return this->_data_ref(row, col); };
+    void set_value_unchecked_impl(size_t row, size_t col, T value) { this->_data_ref(row, col) = value; }
 
     explicit Image(size_t n_rows, size_t n_cols,
                    const std::shared_ptr<const lsst::gauss2d::CoordinateSystem> coordsys = nullptr)

@@ -681,7 +681,6 @@ private:
     const bool _do_residual;
     const bool _has_background;
     const GradientType _gradienttype;
-    const CoordinateSystem& _coordsys;
     const bool _do_extra;
     const BackgroundType _backgroundtype;
     const bool _get_likelihood;
@@ -750,10 +749,10 @@ private:
             }
         }
 
-        const double x_min = _coordsys.get_x_min();
-        const double y_min = _coordsys.get_y_min();
-        const double bin_x = _coordsys.get_dx1();
-        const double bin_y = _coordsys.get_dy2();
+        const double x_min = coordsys.get_x_min();
+        const double y_min = coordsys.get_y_min();
+        const double bin_x = coordsys.get_dx1();
+        const double bin_y = coordsys.get_dy2();
         const double bin_x_half = bin_x / 2.;
 
         detail::TermsPixelVec terms_pixel(n_gaussians);
@@ -911,6 +910,8 @@ private:
     }
 
 public:
+    const CoordinateSystem& coordsys;
+
     const Data& IMAGE_NULL_CONST() const { return this->IMAGE_NULL(); };
     const Indices& INDICES_NULL_CONST() const { return this->INDICES_NULL(); };
     const ImageArray<T, Data>& IMAGEARRAY_NULL_CONST() const { return this->IMAGEARRAY_NULL(); };
@@ -963,11 +964,6 @@ public:
                                                ? GradientType::loglike
                                                : GradientType::jacobian)
                                     : GradientType::none),
-              _coordsys(data == nullptr ? (output == nullptr ? (_gradienttype == GradientType::jacobian
-                                                                        ? (*grads)[0].get_coordsys()
-                                                                        : COORDS_DEFAULT)
-                                                             : output->get_coordsys())
-                                        : data->get_coordsys()),
               _do_extra(
                       extra_param_map != nullptr && extra_param_factor != nullptr
                       && (_gradienttype == GradientType::loglike || _gradienttype == GradientType::jacobian)),
@@ -1018,7 +1014,12 @@ public:
                                                                         : 0)
                                                              : _output->get_n_rows())
                                        : _data->get_n_rows()),
-              _size(_n_cols * _n_rows) {
+              _size(_n_cols * _n_rows),
+              coordsys(_data == nullptr ? (_output == nullptr ? (_gradienttype == GradientType::jacobian
+                                                                         ? (*grads)[0].get_coordsys()
+                                                                         : COORDS_DEFAULT)
+                                                              : _output->get_coordsys())
+                                        : _data->get_coordsys()) {
         if (gaussians == nullptr) throw std::runtime_error("Gaussians can't be null");
         if (_has_background && background->size() > 1)
             throw std::runtime_error("Background model size can't be > 1");
@@ -1042,7 +1043,7 @@ public:
                 }
                 if (_sigma_inv->get_coordsys() != _data->get_coordsys()) {
                     throw std::runtime_error("sigma_inv coordsys=" + _sigma_inv->get_coordsys().str()
-                                             + "!= coordsys=" + _coordsys.str());
+                                             + "!= coordsys=" + coordsys.str());
                 }
             }
         } else if ((data != nullptr) || (sigma_inv != nullptr)) {
@@ -1154,7 +1155,7 @@ public:
         std::string rval = (  // I really want this on a separate line; I'd also prefer single indent, but...
                 type_name_str<GaussianEvaluator>(false, name_sep) + "("  // make clang-format align nicely
                 + (is_kw ? "gaussians=" : "") + repr_ptr(_gaussians_ptr, is_kw, name_sep) + ", "  //
-                + (is_kw ? "coordsys=" : "") + _coordsys.repr(is_kw, name_sep) + ", "             //
+                + (is_kw ? "coordsys=" : "") + coordsys.repr(is_kw, name_sep) + ", "              //
                 + (is_kw ? "data=" : "") + repr_ptr(_data, is_kw, name_sep) + ", "                //
                 + (is_kw ? "sigma_inv=" : "") + repr_ptr(_sigma_inv, is_kw, name_sep) + ", "      //
                 + (is_kw ? "output=" : "") + repr_ptr(_output, is_kw, name_sep) + ", "            //
@@ -1173,7 +1174,7 @@ public:
         std::string rval = (                                                                 //
                 type_name_str<GaussianEvaluator>(true) + "("                                 //
                 + "gaussians=" + str_ptr(_gaussians_ptr) + c                                 //
-                + "coordsys=" + _coordsys.str() + c                                          //
+                + "coordsys=" + coordsys.str() + c                                           //
                 + "do_extra=" + std::to_string(_do_extra) + c                                //
                 + "do_output=" + std::to_string(_do_output) + c                              //
                 + "do_residual=" + std::to_string(_do_residual) + c                          //
