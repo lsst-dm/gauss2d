@@ -28,8 +28,8 @@ if use_eups
         include_directories: 'lib/build-release/include',
     )
 else
-    gauss2d_dep = dependency('gauss2d')
-    gauss2d_python_dep = dependency('gauss2d_python')
+    gauss2d_dep = dependency('lsst_gauss2d')
+    gauss2d_python_dep = dependency('lsst_gauss2d_python')
 endif
 
 pybind11_dep = dependency('pybind11')

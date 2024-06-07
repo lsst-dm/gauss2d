@@ -27,7 +27,7 @@ if not use_eups
             libraries : gauss2dlib,
             version : meson.project_version(),
             name : 'libgauss2d',
-            filebase : 'gauss2d',
+            filebase : 'lsst_gauss2d',
             description : 'Create, manipulate and evaluate 2D Gaussian mixtures and images thereof.'
         )
     endif

@@ -23,7 +23,7 @@ if use_eups
         include_directories: eupsdir / 'include',
     )
 else
-    gauss2d_dep = dependency('gauss2d')
+    gauss2d_dep = dependency('lsst_gauss2d')
 endif
 
 py = import('python').find_installation('python3', modules : ['numpy'])
@@ -38,6 +38,6 @@ if not use_eups
     pkg_mod = import('pkgconfig')
     pkg_mod.generate(version : meson.project_version(),
                      name : 'libgauss2d_python',
-                     filebase : 'gauss2d_python',
+                     filebase : 'lsst_gauss2d_python',
                      description : 'Python-specific headers for gauss2d.')
 endif
