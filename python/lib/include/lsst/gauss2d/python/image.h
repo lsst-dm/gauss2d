@@ -40,8 +40,6 @@
 namespace py = pybind11;
 using namespace pybind11::literals;
 
-namespace gauss2d = lsst::gauss2d;
-
 namespace lsst::gauss2d::python {
 
 /*
@@ -75,23 +73,27 @@ std::string_view STR_NONE = "";
 template <typename T>
 class Image : public lsst::gauss2d::Image<T, Image<T>> {
 private:
+    // Data initialized in C++
     std::unique_ptr<py::array_t<T>> _ptr_own = nullptr;
-    py::array_t<T> _data;
+    // Data passed from Python (which cannot be stored as a C++ reference
+    // for some reason)
+    py::array_t<T> _data_in;
+    // A ref to whichever of the two is initialized by the constructor
+    py::array_t<T> &_data;
+    // A more convenient ref for matrix operations
     py::detail::unchecked_mutable_reference<T, 2> _data_ref;
 
-    void _validate() const {
-        if ((_ptr_own == nullptr ? _data : *_ptr_own).ndim() != 2) {
+    py::array_t<T> &_validate() const {
+        if (_data.ndim() != 2) {
             throw std::runtime_error("Input data must have 2 dimensions");
         }
+        return _data;
     }
 
 public:
     inline T &_get_value_unchecked(size_t row, size_t col) { return this->_data_ref(row, col); };
 
-    py::array_t<T> &get_data() {
-        py::array_t<T> &rv = _ptr_own == nullptr ? _data : *_ptr_own;
-        return rv;
-    }
+    py::array_t<T> &get_data() { return this->_data; }
 
     size_t get_n_cols() const { return _data.shape(1); };
     size_t get_n_rows() const { return _data.shape(0); };
@@ -104,13 +106,12 @@ public:
     void set_value_unchecked(size_t row, size_t col, T value) { this->_data_ref(row, col) = value; }
     // void set_value_unchecked(size_t row, size_t col, t value) { _get_value_unchecked(row, col) = value;};
 
-    Image(size_t n_rows, size_t n_cols,
-          const std::shared_ptr<const gauss2d::CoordinateSystem> coordsys = nullptr)
+    explicit Image(size_t n_rows, size_t n_cols,
+                   const std::shared_ptr<const lsst::gauss2d::CoordinateSystem> coordsys = nullptr)
             : gauss2d::Image<T, Image<T>>(coordsys),
               _ptr_own(std::make_unique<py::array_t<T>>(py::array::ShapeContainer({n_rows, n_cols}))),
-              _data_ref(this->get_data().template mutable_unchecked<2>()) {
-        _validate();
-    }
+              _data(*_ptr_own),
+              _data_ref(_validate().template mutable_unchecked<2>()) {}
     /**
      * Construct an image from a numpy array.
      *
@@ -120,12 +121,12 @@ public:
      * @note Using this constructor will allow leave memory management on the
      * Python side.
      */
-    Image(py::array_t<T> data, const std::shared_ptr<const gauss2d::CoordinateSystem> coordsys = nullptr)
+    explicit Image(py::array_t<T> data,
+                   const std::shared_ptr<const lsst::gauss2d::CoordinateSystem> coordsys = nullptr)
             : gauss2d::Image<T, Image<T>>(coordsys),
-              _data(data),
-              _data_ref(this->get_data().template mutable_unchecked<2>()) {
-        _validate();
-    }
+              _data_in(data),
+              _data(_data_in),
+              _data_ref(_validate().template mutable_unchecked<2>()) {}
 
     ~Image(){};
 };
@@ -136,10 +137,10 @@ void declare_image(py::module &m, std::string str_type) {
     using Class = Image<T>;
     std::string pyclass_name = std::string("Image") + str_type;
     py::class_<Class, std::shared_ptr<Class>>(m, pyclass_name.c_str())
-            .def(py::init<size_t, size_t, const std::shared_ptr<const gauss2d::CoordinateSystem>>(),
+            .def(py::init<size_t, size_t, const std::shared_ptr<const lsst::gauss2d::CoordinateSystem>>(),
                  "n_rows"_a, "n_cols"_a, "coordsys"_a = gauss2d::COORDS_DEFAULT)
-            .def(py::init<py::array_t<T>, const std::shared_ptr<const gauss2d::CoordinateSystem>>(), "data"_a,
-                 "coordsys"_a = gauss2d::COORDS_DEFAULT)
+            .def(py::init<py::array_t<T>, const std::shared_ptr<const lsst::gauss2d::CoordinateSystem>>(),
+                 "data"_a, "coordsys"_a = gauss2d::COORDS_DEFAULT)
             .def_property_readonly("coordsys", &Class::get_coordsys_ptr_const)
             .def_property_readonly("data", &Class::get_data)
             .def_property_readonly("n_rows", &Class::get_n_rows)
@@ -166,6 +167,15 @@ void declare_image(py::module &m, std::string str_type) {
             });
 }
 
+/**
+ * Replace a template Image type name with Pythonic names.
+ *
+ * @tparam T The data type of the Image class string to replace.
+ * @param target The string to replace type names in.
+ * @param str_type The replacement string for T.
+ * @param separator The namespace separator to replace.
+ * @return A replacement string without templated types.
+ */
 template <typename T>
 std::string replace_image_types(std::string target, std::string str_type, std::string_view separator) {
     std::string token1 = std::string("<") + type_name_str<T>() + ", ";
@@ -179,7 +189,7 @@ std::string replace_image_types(std::string target, std::string str_type, std::s
 
 template <typename T>
 void declare_image_array(py::module &m, std::string str_type) {
-    using Class = gauss2d::ImageArray<T, Image<T>>;
+    using Class = lsst::gauss2d::ImageArray<T, Image<T>>;
     std::string pyclass_name = std::string("ImageArray") + str_type;
     py::class_<Class, std::shared_ptr<Class>>(m, pyclass_name.c_str())
             .def(py::init<const typename Class::Data *>(), "data"_a)
@@ -200,9 +210,32 @@ void declare_image_array(py::module &m, std::string str_type) {
             });
 }
 
+/**
+ * Replace templated Image and index Image type name with Pythonic names.
+ *
+ * @tparam Value The data type of the Image (data) class string to replace.
+ * @tparam Index The data type of the Image (index) class string to replace.
+ * @param target The string to replace type names in.
+ * @param str_type The replacement string for T.
+ * @param separator The namespace separator to replace.
+ * @return A replacement string without templated types.
+ */
+template <typename Value, typename Index>
+std::string replace_images_types(std::string target, std::string str_type, std::string_view separator) {
+    std::string token1 = std::string("<") + type_name_str<Value>() + ", ";
+    target = replace_all(target, token1, STR_NONE);
+    std::string token2 = type_name_str<Image<Value>>(false, separator) + std::string(", ");
+    target = replace_all(target, token2, STR_NONE);
+    std::string token3 = type_name_str<Image<Index>>(false, separator) + std::string(" >");
+    target = replace_all(target, token3, str_type);
+    // str appears to return e.g. Image<double> for some reason
+    target = replace_type<Value>(target, str_type);
+    return target;
+}
+
 template <typename T>
 void declare_evaluator(py::module &m, std::string str_type) {
-    using Class = gauss2d::GaussianEvaluator<T, Image<T>, Image<gauss2d::idx_type>>;
+    using Class = lsst::gauss2d::GaussianEvaluator<T, Image<T>, Image<lsst::gauss2d::idx_type>>;
     std::string pyclass_name = std::string("GaussianEvaluator") + str_type;
     py::class_<Class, std::shared_ptr<Class>>(m, pyclass_name.c_str())
             .def(py::init<const std::shared_ptr<const gauss2d::ConvolvedGaussians>,
@@ -225,17 +258,21 @@ void declare_evaluator(py::module &m, std::string str_type) {
             .def("__repr__",
                  [str_type](const Class &self) {
                      std::string repr = self.repr(true, self.PY_NAMESPACE_SEPARATOR);
+                     repr = replace_images_types<T, lsst::gauss2d::idx_type>(repr, str_type,
+                                                                             self.PY_NAMESPACE_SEPARATOR);
                      return repr;
                  })
             .def("__str__", [str_type](const Class &self) {
                 std::string str = self.str();
+                str = replace_images_types<T, lsst::gauss2d::idx_type>(str, str_type,
+                                                                       self.CC_NAMESPACE_SEPARATOR);
                 return str;
             });
 }
 
 template <typename T, class Data, class Indices>
 void declare_maker(py::module &m, std::string str_type) {
-    m.def(("make_gaussians_pixel_" + str_type).c_str(), gauss2d::make_gaussians_pixel<T, Data, Indices>,
+    m.def(("make_gaussians_pixel_" + str_type).c_str(), lsst::gauss2d::make_gaussians_pixel<T, Data, Indices>,
           "Evaluate a 2D Gaussian at the centers of pixels on a rectangular grid using the standard bivariate"
           "Gaussian PDF.",
           "gaussians"_a, "output"_a = nullptr, "n_rows"_a = 0, "n_cols"_a = 0, "coordsys"_a = nullptr,

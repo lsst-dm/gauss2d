@@ -1193,7 +1193,7 @@ public:
                 + "grad_extra=" + str_ptr(_grad_extra ? _grad_extra.get() : nullptr) + c     //
                 + "grad_param_idx=" + to_string_iter(_grad_param_idx) + c                    //
                 + "n_cols=" + std::to_string(_n_cols) + c                                    //
-                + "n_rows=" + std::to_string(_n_rows) + c                                    //
+                + "n_rows=" + std::to_string(_n_rows)                                        //
                 + ")"                                                                        //
         );
         return rval;
