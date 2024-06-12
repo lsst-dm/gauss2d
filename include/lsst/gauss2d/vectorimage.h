@@ -41,14 +41,22 @@ namespace lsst::gauss2d {
 */
 template <typename T>
 class VectorImage : public gauss2d::Image<T, VectorImage<T>> {
-private:
-    const size_t _n_rows;
-    const size_t _n_cols;
-
-    // This is a workaround for the C++98 specialization of vector<bool>
-    std::vector<std::deque<T>> _data;
-
 public:
+    explicit VectorImage(size_t n_rows, size_t n_cols,
+                         const T* value_init = Image<T, VectorImage<T>>::_value_default_ptr(),
+                         std::shared_ptr<const CoordinateSystem> coordsys = nullptr)
+            : Image<T, VectorImage<T>>(coordsys), _n_rows(n_rows), _n_cols(n_cols) {
+        _data.resize(n_rows);
+        // No real option but to resize with vectors
+        // Just reserving would cause _unchecked calls to break
+        T value_init_override
+                = value_init != nullptr ? *value_init : (Image<T, VectorImage<T>>::_value_default);
+        for (size_t row = 0; row < _n_rows; row++) {
+            _data[row].resize(n_cols, value_init_override);
+        }
+    }
+    ~VectorImage() = default;
+
     T& _get_value_impl(size_t row, size_t col) {
         // This doesn't work on vector<bool> because it's bit-packed
         // One could specialize: if constexpr (std::is_same_v<bool, T>)
@@ -76,20 +84,12 @@ public:
     size_t get_n_cols_impl() const { return _n_cols; };
     size_t get_n_rows_impl() const { return _n_rows; };
 
-    explicit VectorImage(size_t n_rows, size_t n_cols,
-                         const T* value_init = Image<T, VectorImage<T>>::_value_default_ptr(),
-                         std::shared_ptr<const CoordinateSystem> coordsys = nullptr)
-            : Image<T, VectorImage<T>>(coordsys), _n_rows(n_rows), _n_cols(n_cols) {
-        _data.resize(n_rows);
-        // No real option but to resize with vectors
-        // Just reserving would cause _unchecked calls to break
-        T value_init_override
-                = value_init != nullptr ? *value_init : (Image<T, VectorImage<T>>::_value_default);
-        for (size_t row = 0; row < _n_rows; row++) {
-            _data[row].resize(n_cols, value_init_override);
-        }
-    }
-    ~VectorImage() = default;
+private:
+    const size_t _n_rows;
+    const size_t _n_cols;
+
+    // This is a workaround for the C++98 specialization of vector<bool>
+    std::vector<std::deque<T>> _data;
 };
 
 }  // namespace lsst::gauss2d

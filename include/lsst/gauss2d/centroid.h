@@ -72,10 +72,6 @@ public:
  *
  **/
 class CentroidValues : public virtual CentroidData {
-private:
-    std::shared_ptr<double> _x;
-    std::shared_ptr<double> _y;
-
 public:
     double get_x() const override;
     std::array<double, 2> get_xy() const override;
@@ -101,6 +97,10 @@ public:
     CentroidValues(double x = 0, double y = 0);
 
     virtual ~CentroidValues(){};
+
+private:
+    std::shared_ptr<double> _x;
+    std::shared_ptr<double> _y;
 };
 
 /**
@@ -112,10 +112,9 @@ public:
  * @param data The centroid data
  **/
 class Centroid : public Object {
-private:
-    std::shared_ptr<CentroidData> _data;
-
 public:
+    explicit Centroid(std::shared_ptr<CentroidData> data);
+    explicit Centroid(double x = 0, double y = 0);
     /**
      * @brief Convolve this with another centroid.
      *
@@ -158,8 +157,8 @@ public:
     bool operator==(const Centroid& other) const;
     bool operator!=(const Centroid& other) const;
 
-    Centroid(std::shared_ptr<CentroidData> data);
-    Centroid(double x = 0, double y = 0);
+private:
+    std::shared_ptr<CentroidData> _data;
 };
 
 }  // namespace lsst::gauss2d

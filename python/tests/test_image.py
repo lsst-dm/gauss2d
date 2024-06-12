@@ -108,16 +108,15 @@ def test_GaussianEvaluator(convolved_gaussians):
 
     assert str(evaluator_ll) == (
         f"GaussianEvaluatorD(gaussians={str(convolved_gaussians)}, "
-        f"coordsys={str(output.coordsys)}, do_extra=0, do_output=0, do_residual=0, has_background=0, "
+        f"do_extra=0, do_output=0, do_residual=0, has_background=0, "
         f"is_sigma_image=1, backgroundtype=0, get_likelihood=1, "
         f"data={str(output)}, sigma_inv={str(sigma_inv)}, output=None, residual=None, "
         f"grads=None, grad_param_map=None, grad_param_factor=None, "
         f"extra_param_map=None, extra_param_factor=None, grad_extra=None, grad_param_idx=[], "
-        f"n_cols={output.n_cols}, n_rows={output.n_rows})"
+        f"n_cols={output.n_cols}, n_rows={output.n_rows}, coordsys={str(output.coordsys)})"
     )
     assert repr(evaluator_ll) == (
         f"{prefix_namespace}GaussianEvaluatorD(gaussians={repr(convolved_gaussians)}, "
-        f"coordsys={repr(output.coordsys)}, "
         f"data={repr(output)}, sigma_inv={repr(sigma_inv)}, output=None, residual=None, "
         f"grads=None, grad_param_map=None, grad_param_factor=None, "
         f"extra_param_map=None, extra_param_factor=None, background=None)"

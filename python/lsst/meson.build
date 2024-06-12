@@ -58,6 +58,3 @@ else
         preserve_path: true,
     )
 endif
-
-# Run tests - not sure why workdir is required, but it is
-test('pytest', python, args : ['-m', 'pytest', 'tests'], workdir : meson.source_root())

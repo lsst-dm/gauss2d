@@ -105,15 +105,18 @@ bool images_compatible(const Image<T1, C1>& img1, const Image<T2, C2>& img2, boo
  **/
 template <typename T, class C>
 class Image : public Object {
-private:
-    friend GaussianEvaluator<T, class Data, class Indices>;
-    const std::shared_ptr<const CoordinateSystem> _coordsys_ptr;
-    const gauss2d::CoordinateSystem& _coordsys;
-
-    inline C& self() { return static_cast<C&>(*this); };
-    inline const C& self_const() const { return static_cast<const C&>(*this); };
-
 public:
+    // TODO: Figure out if there's any point to this in CRTP (or otherwise)
+    explicit Image(size_t n_rows, size_t n_cols, const T* value_init = _value_default_ptr(),
+                   std::shared_ptr<const CoordinateSystem> coordsys = nullptr)
+            = delete;
+
+    // Convenience initializer for a coordsys (could be private method?)
+    explicit Image(std::shared_ptr<const CoordinateSystem> coordsys = nullptr)
+            : _coordsys_ptr(coordsys == nullptr ? nullptr : std::move(coordsys)),
+              _coordsys(_coordsys_ptr == nullptr ? COORDS_DEFAULT : *_coordsys_ptr) {}
+    ~Image() = default;
+
     static constexpr T _value_default = 0;
     static const T* _value_default_ptr() { return &_value_default; };
 
@@ -244,16 +247,13 @@ public:
 
     const bool operator!=(const Image& other) const { return !(*this == other); }
 
-    // TODO: Figure out if there's any point to this in CRTP (or otherwise)
-    explicit Image(size_t n_rows, size_t n_cols, const T* value_init = _value_default_ptr(),
-                   std::shared_ptr<const CoordinateSystem> coordsys = nullptr)
-            = delete;
+private:
+    friend GaussianEvaluator<T, class Data, class Indices>;
+    const std::shared_ptr<const CoordinateSystem> _coordsys_ptr;
+    const gauss2d::CoordinateSystem& _coordsys;
 
-    // Convenience initializer for a coordsys (could be private method?)
-    explicit Image(std::shared_ptr<const CoordinateSystem> coordsys = nullptr)
-            : _coordsys_ptr(coordsys == nullptr ? nullptr : std::move(coordsys)),
-              _coordsys(_coordsys_ptr == nullptr ? COORDS_DEFAULT : *_coordsys_ptr) {}
-    ~Image() = default;
+    inline C& self() { return static_cast<C&>(*this); };
+    inline const C& self_const() const { return static_cast<const C&>(*this); };
 };
 
 /**
@@ -270,10 +270,6 @@ public:
     typedef Image<T, C> ImageT;
     typedef std::vector<std::shared_ptr<C>> Data;
 
-private:
-    Data _images{};
-
-public:
     ImageT& operator[](size_t i) { return *(_images[i]); }
     const ImageT& operator[](size_t i) const { return *(_images[i]); }
 
@@ -322,6 +318,9 @@ public:
             }
         }
     };
+
+private:
+    Data _images{};
 };
 
 }  // namespace lsst::gauss2d

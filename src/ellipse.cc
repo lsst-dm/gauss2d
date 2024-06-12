@@ -229,6 +229,19 @@ std::string EllipseValues::str() const {
            + ")";
 }
 
+Ellipse::Ellipse(std::shared_ptr<EllipseData> data)
+        : _data(data == nullptr ? std::make_shared<EllipseValues>() : std::move(data)){};
+
+Ellipse::Ellipse(double sigma_x, double sigma_y, double rho) : _data(std::make_shared<EllipseValues>()) {
+    _data->set(sigma_x, sigma_y, rho);
+}
+
+Ellipse::Ellipse(const Covariance& covar) : _data(std::make_shared<EllipseValues>()) { this->set(covar); }
+
+Ellipse::Ellipse(const EllipseMajor& ellipse) : _data(std::make_shared<EllipseValues>()) {
+    this->set(ellipse);
+}
+
 std::shared_ptr<Ellipse> Ellipse::make_convolution(const Ellipse& ell) const {
     return this->make_convolution_uniq(ell);
 }
@@ -301,19 +314,6 @@ std::string Ellipse::str() const { return type_name_str<Ellipse>(true) + "(data=
 
 bool Ellipse::operator==(const Ellipse& other) const { return get_data() == other.get_data(); };
 bool Ellipse::operator!=(const Ellipse& other) const { return !(*this == other); }
-
-Ellipse::Ellipse(std::shared_ptr<EllipseData> data)
-        : _data(data == nullptr ? std::make_shared<EllipseValues>() : std::move(data)){};
-
-Ellipse::Ellipse(double sigma_x, double sigma_y, double rho) : _data(std::make_shared<EllipseValues>()) {
-    _data->set(sigma_x, sigma_y, rho);
-}
-
-Ellipse::Ellipse(const Covariance& covar) : _data(std::make_shared<EllipseValues>()) { this->set(covar); }
-
-Ellipse::Ellipse(const EllipseMajor& ellipse) : _data(std::make_shared<EllipseValues>()) {
-    this->set(ellipse);
-}
 
 const EllipseData& Ellipse::get_data() const { return *this->_data; }
 double Ellipse::get_rho() const { return this->_data->get_rho(); }

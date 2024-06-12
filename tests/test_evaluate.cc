@@ -80,7 +80,7 @@ TEST_CASE("Evaluator") {
     auto image2 = std::make_shared<Image>(n_rows, n_cols, Image::_value_default_ptr(), coordsys2);
     CHECK_EQ(*coordsys2, image2->get_coordsys());
     auto eval_offset = std::make_shared<Evaluator>(gaussians, nullptr, nullptr, image2);
-    CHECK_EQ(eval_offset->coordsys, *coordsys2);
+    CHECK_EQ(eval_offset->get_coordsys(), *coordsys2);
 
     eval_offset->loglike_pixel();
     CHECK_EQ(image2->get_value(0, 0), image->get_value(y_min, x_min));

@@ -31,6 +31,11 @@
 #include "lsst/gauss2d/type_name.h"
 
 namespace lsst::gauss2d {
+
+GaussianIntegralValue::GaussianIntegralValue(double value) : _value(std::make_shared<double>(value)){};
+GaussianIntegralValue::GaussianIntegralValue(std::shared_ptr<double> value)
+        : _value(value == nullptr ? std::make_shared<double>(1) : std::move(value)){};
+
 std::string GaussianIntegralValue::repr(bool name_keywords, std::string_view namespace_separator) const {
     return type_name_str<GaussianIntegralValue>(false, namespace_separator) + "("
            + (name_keywords ? "value=" : "") + to_string_float(*_value) + ")";
@@ -39,9 +44,12 @@ std::string GaussianIntegralValue::str() const {
     return type_name_str<GaussianIntegralValue>(true) + "(value=" + to_string_float(*_value) + ")";
 }
 
-GaussianIntegralValue::GaussianIntegralValue(double value) : _value(std::make_shared<double>(value)){};
-GaussianIntegralValue::GaussianIntegralValue(std::shared_ptr<double> value)
-        : _value(value == nullptr ? std::make_shared<double>(1) : std::move(value)){};
+Gaussian::Gaussian(std::shared_ptr<Centroid> centroid, std::shared_ptr<Ellipse> ellipse,
+                   std::shared_ptr<GaussianIntegral> integral)
+        : _centroid(centroid != nullptr ? std::move(centroid) : std::make_shared<Centroid>()),
+          _ellipse(ellipse != nullptr ? std::move(ellipse) : std::make_shared<Ellipse>()),
+          _integral(integral != nullptr ? std::move(integral) : std::make_shared<GaussianIntegralValue>()) {}
+Gaussian::~Gaussian(){};
 
 double Gaussian::get_const_normal() const { return _integral->get_value() / (2 * _ellipse->get_area()); }
 double Gaussian::get_integral_value() const { return _integral->get_value(); };
@@ -97,12 +105,26 @@ std::ostream& operator<<(std::ostream& out, const Gaussian& g) {
     return out;
 }
 
-Gaussian::Gaussian(std::shared_ptr<Centroid> centroid, std::shared_ptr<Ellipse> ellipse,
-                   std::shared_ptr<GaussianIntegral> integral)
-        : _centroid(centroid != nullptr ? std::move(centroid) : std::make_shared<Centroid>()),
-          _ellipse(ellipse != nullptr ? std::move(ellipse) : std::make_shared<Ellipse>()),
-          _integral(integral != nullptr ? std::move(integral) : std::make_shared<GaussianIntegralValue>()) {}
-Gaussian::~Gaussian(){};
+Gaussians::Gaussians(std::optional<const Data> data) {
+    if (data) {
+        size_t n_data = data->size();
+        if (n_data > 0) {
+            _data.resize(n_data, nullptr);
+            this->assign(*data);
+        }
+    }
+}
+Gaussians::Gaussians(std::vector<std::optional<const Data>> data) {
+    size_t n_data = 0;
+    for (const auto& datum : data) {
+        if (datum) n_data += datum->size();
+    }
+    if (n_data > 0) {
+        size_t i = 0;
+        _data.resize(n_data);
+        for (const auto& datum : data) i = this->assign(*datum, i);
+    }
+}
 
 Gaussian& Gaussians::operator[](size_t i) { return *(_data[i]); }
 const Gaussian& Gaussians::operator[](size_t i) const { return *(_data[i]); }
@@ -151,16 +173,23 @@ std::string Gaussians::str() const {
     return str + ")";
 }
 
-Gaussians::Gaussians(std::optional<const Data> data) {
+static const std::shared_ptr<const Gaussian> GAUSS_ZERO = std::make_shared<const Gaussian>();
+
+ConvolvedGaussian::ConvolvedGaussian(std::shared_ptr<const Gaussian> source,
+                                     std::shared_ptr<const Gaussian> kernel)
+        : _source(source != nullptr ? source : GAUSS_ZERO),
+          _kernel(kernel != nullptr ? kernel : GAUSS_ZERO) {}
+
+ConvolvedGaussians::ConvolvedGaussians(std::optional<const Data> data) {
     if (data) {
         size_t n_data = data->size();
         if (n_data > 0) {
-            _data.resize(n_data, nullptr);
+            _data.resize(n_data);
             this->assign(*data);
         }
     }
 }
-Gaussians::Gaussians(std::vector<std::optional<const Data>> data) {
+ConvolvedGaussians::ConvolvedGaussians(std::vector<std::optional<const Data>> data) {
     size_t n_data = 0;
     for (const auto& datum : data) {
         if (datum) n_data += datum->size();
@@ -170,6 +199,23 @@ Gaussians::Gaussians(std::vector<std::optional<const Data>> data) {
         _data.resize(n_data);
         for (const auto& datum : data) i = this->assign(*datum, i);
     }
+}
+
+size_t ConvolvedGaussians::assign(const Data& data, size_t i) {
+    const size_t n_data = this->_data.size();
+    const size_t i_max = i + data.size();
+    if (!(i_max <= n_data)) {
+        throw std::out_of_range("data i_max=" + std::to_string(i_max) + ">= this._data.size()="
+                                + std::to_string(n_data) + " for this=" + this->str());
+    }
+    size_t i_begin = i;
+    for (const auto& gauss : data) {
+        if (gauss == nullptr)
+            throw std::runtime_error("ConvolvedGaussian data[" + std::to_string(i - i_begin)
+                                     + "] can't be null");
+        _data[i++] = std::move(gauss);
+    }
+    return i;
 }
 
 const Gaussian& ConvolvedGaussian::get_source() const { return *_source; }
@@ -199,30 +245,6 @@ bool ConvolvedGaussian::operator==(const ConvolvedGaussian& other) const {
 }
 
 bool ConvolvedGaussian::operator!=(const ConvolvedGaussian& other) const { return !(*this == other); }
-
-static const std::shared_ptr<const Gaussian> GAUSS_ZERO = std::make_shared<const Gaussian>();
-
-ConvolvedGaussian::ConvolvedGaussian(std::shared_ptr<const Gaussian> source,
-                                     std::shared_ptr<const Gaussian> kernel)
-        : _source(source != nullptr ? source : GAUSS_ZERO),
-          _kernel(kernel != nullptr ? kernel : GAUSS_ZERO) {}
-
-size_t ConvolvedGaussians::assign(const Data& data, size_t i) {
-    const size_t n_data = this->_data.size();
-    const size_t i_max = i + data.size();
-    if (!(i_max <= n_data)) {
-        throw std::out_of_range("data i_max=" + std::to_string(i_max) + ">= this._data.size()="
-                                + std::to_string(n_data) + " for this=" + this->str());
-    }
-    size_t i_begin = i;
-    for (const auto& gauss : data) {
-        if (gauss == nullptr)
-            throw std::runtime_error("ConvolvedGaussian data[" + std::to_string(i - i_begin)
-                                     + "] can't be null");
-        _data[i++] = std::move(gauss);
-    }
-    return i;
-}
 
 ConvolvedGaussian& ConvolvedGaussians::at(size_t i) const { return *(_data.at(i)); }
 const ConvolvedGaussian& ConvolvedGaussians::at_const(size_t i) const { return *(_data.at(i)); }
@@ -264,26 +286,6 @@ std::string ConvolvedGaussians::str() const {
 ConvolvedGaussian& ConvolvedGaussians::operator[](size_t i) { return *(_data[i]); }
 const ConvolvedGaussian& ConvolvedGaussians::operator[](size_t i) const { return *(_data[i]); }
 
-ConvolvedGaussians::ConvolvedGaussians(std::optional<const Data> data) {
-    if (data) {
-        size_t n_data = data->size();
-        if (n_data > 0) {
-            _data.resize(n_data);
-            this->assign(*data);
-        }
-    }
-}
-ConvolvedGaussians::ConvolvedGaussians(std::vector<std::optional<const Data>> data) {
-    size_t n_data = 0;
-    for (const auto& datum : data) {
-        if (datum) n_data += datum->size();
-    }
-    if (n_data > 0) {
-        size_t i = 0;
-        _data.resize(n_data);
-        for (const auto& datum : data) i = this->assign(*datum, i);
-    }
-}
 }  // namespace lsst::gauss2d
 
 #endif

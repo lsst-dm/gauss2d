@@ -20,3 +20,9 @@ TEST_CASE("replace_all_mixed") {
     CHECK_EQ(g2d::replace_all("ABC123x3xyz", token, std::string("")), "ABC12yz");
     CHECK_EQ(g2d::replace_all("ABC123x3xyz", std::string("x3"), token), "ABC1233xxyz");
 }
+
+TEST_CASE("replace_all_none") {
+    std::string_view token = "3x";
+    CHECK_EQ(g2d::replace_all_none("ABC123x3xyz", token), "ABC12yz");
+    CHECK_EQ(g2d::replace_all_none("ABC123x3xyz", std::string("3")), "ABC12xxyz");
+}

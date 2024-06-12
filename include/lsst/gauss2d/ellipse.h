@@ -55,12 +55,18 @@ class EllipseMajor;
  * this range are invalid.
  */
 class Covariance : public Object {
-private:
-    double _sigma_x_sq = 0;
-    double _sigma_y_sq = 0;
-    double _cov_xy = 0;
-
 public:
+    /**
+     * @brief Construct a new Covariance object
+     *
+     * @param sigma_x_sq The value of sigma_x^2
+     * @param sigma_y_sq The value of sigma_y^2
+     * @param cov_xy The value of the covariance
+     */
+    explicit Covariance(double sigma_x_sq = 0, double sigma_y_sq = 0, double cov_xy = 0);
+    /// Construct a covariance using values from an ellipse instance.
+    explicit Covariance(const Ellipse& ell);
+
     /// Check whether the supplied values are valid, throwing if not.
     static void check(double sigma_x_sq, double sigma_y_sq, double cov_xy);
     /// Convolve with another covariance, adding the values of each parameter to this.
@@ -109,16 +115,10 @@ public:
 
     friend std::ostream& operator<<(std::ostream& out, const Covariance& obj);
 
-    /**
-     * @brief Construct a new Covariance object
-     *
-     * @param sigma_x_sq The value of sigma_x^2
-     * @param sigma_y_sq The value of sigma_y^2
-     * @param cov_xy The value of the covariance
-     */
-    explicit Covariance(double sigma_x_sq = 0, double sigma_y_sq = 0, double cov_xy = 0);
-    /// Construct a covariance using values from an ellipse instance.
-    explicit Covariance(const Ellipse& ell);
+private:
+    double _sigma_x_sq = 0;
+    double _sigma_y_sq = 0;
+    double _cov_xy = 0;
 };
 
 /**
@@ -131,6 +131,8 @@ public:
  **/
 class EllipseData : public Object {
 public:
+    virtual ~EllipseData() = default;
+
     /// Check whether Ellipse parameter values are valid, throwing if not.
     static void check(double size_x, double size_y, double rho, std::string_view error_suffix = "") {
         if (!(size_x >= 0) || !(size_y >= 0) || !(rho >= -1 && rho <= 1)) {
@@ -218,8 +220,6 @@ public:
         out << obj.str();
         return out;
     }
-
-    virtual ~EllipseData() = default;
 };
 
 /**
@@ -230,27 +230,7 @@ public:
  *
  **/
 class EllipseValues : public EllipseData {
-private:
-    std::shared_ptr<double> _sigma_x;
-    std::shared_ptr<double> _sigma_y;
-    std::shared_ptr<double> _rho;
-
 public:
-    double get_sigma_x() const override;
-    double get_sigma_y() const override;
-    double get_rho() const override;
-    std::array<double, 3> get_xyr() const override;
-
-    void set(double sigma_x, double sigma_y, double rho) override;
-    void set_h(double hwhm_x, double hwhm_y, double rho);
-    void set_sigma_x(double sigma_x) override;
-    void set_sigma_y(double sigma_y) override;
-    void set_rho(double rho) override;
-
-    std::string repr(bool name_keywords = false,
-                     std::string_view namespace_separator = Object::CC_NAMESPACE_SEPARATOR) const override;
-    std::string str() const override;
-
     /**
      * @brief Construct a new EllipseValues object
      *
@@ -268,6 +248,26 @@ public:
             : _sigma_x(std::make_shared<double>(sigma_x)),
               _sigma_y(std::make_shared<double>(sigma_y)),
               _rho(std::make_shared<double>(rho)){};
+
+    double get_sigma_x() const override;
+    double get_sigma_y() const override;
+    double get_rho() const override;
+    std::array<double, 3> get_xyr() const override;
+
+    void set(double sigma_x, double sigma_y, double rho) override;
+    void set_h(double hwhm_x, double hwhm_y, double rho);
+    void set_sigma_x(double sigma_x) override;
+    void set_sigma_y(double sigma_y) override;
+    void set_rho(double rho) override;
+
+    std::string repr(bool name_keywords = false,
+                     std::string_view namespace_separator = Object::CC_NAMESPACE_SEPARATOR) const override;
+    std::string str() const override;
+
+private:
+    std::shared_ptr<double> _sigma_x;
+    std::shared_ptr<double> _sigma_y;
+    std::shared_ptr<double> _rho;
 };
 
 /**
@@ -281,10 +281,19 @@ public:
  * set to rho.
  */
 class Ellipse : public EllipseData {
-private:
-    std::shared_ptr<EllipseData> _data;
-
 public:
+    explicit Ellipse(std::shared_ptr<EllipseData> data);
+    /**
+     * @brief Construct a new Ellipse object with default float values.
+     *
+     * @param sigma_x The initial sigma_x value (default 0)
+     * @param sigma_y The initial sigma_y value (default 0)
+     * @param rho The intial rho value (default 0)
+     */
+    explicit Ellipse(double sigma_x = 0, double sigma_y = 0, double rho = 0);
+    explicit Ellipse(const Covariance& covar);
+    explicit Ellipse(const EllipseMajor& ellipse);
+
     /// Return a const ref to this ellipse's data
     const EllipseData& get_data() const;
     double get_rho() const override;
@@ -314,18 +323,8 @@ public:
     bool operator==(const Ellipse& other) const;
     bool operator!=(const Ellipse& other) const;
 
-    explicit Ellipse(std::shared_ptr<EllipseData> data);
-    /**
-     * @brief Construct a new Ellipse object with default float values.
-     *
-     * @param sigma_x The initial sigma_x value (default 0)
-     * @param sigma_y The initial sigma_y value (default 0)
-     * @param rho The intial rho value (default 0)
-     */
-    explicit Ellipse(double sigma_x = 0, double sigma_y = 0, double rho = 0);
-    explicit Ellipse(const Covariance& covar);
-    explicit Ellipse(const EllipseMajor& ellipse);
-    ~Ellipse(){};
+private:
+    std::shared_ptr<EllipseData> _data;
 };
 
 /**
@@ -336,13 +335,19 @@ public:
  * r_major must be >= 0, and 0 <= axrat <= 1.
  */
 class EllipseMajor : public Object {
-private:
-    double _r_major = 0.;
-    double _axrat = 1.;
-    double _angle = 0.;
-    bool _degrees = false;
-
 public:
+    /**
+     * @brief Construct a new EllipseMajor object with default float values.
+     *
+     * @param r_major The initial r_major value
+     * @param axrat The initial axrat value
+     * @param angle The intial angle value
+     * @param degrees Whether the angle unit is degrees (true) or radians (false)
+     */
+    explicit EllipseMajor(double r_major, double axrat, double angle, bool degrees = false);
+    explicit EllipseMajor(const Covariance& covar, bool degrees = false);
+    explicit EllipseMajor(const Ellipse& ellipse, bool degrees = false);
+
     /// Check whether the supplied values are valid, throwing if not.
     static void check(double r_major, double axrat, double angle) {
         if (!(r_major >= 0) || !(axrat >= 0 && axrat <= 1)) {
@@ -382,17 +387,11 @@ public:
     bool operator==(const EllipseMajor& other) const;
     bool operator!=(const EllipseMajor& other) const;
 
-    /**
-     * @brief Construct a new EllipseMajor object with default float values.
-     *
-     * @param r_major The initial r_major value
-     * @param axrat The initial axrat value
-     * @param angle The intial angle value
-     * @param degrees Whether the angle unit is degrees (true) or radians (false)
-     */
-    explicit EllipseMajor(double r_major, double axrat, double angle, bool degrees = false);
-    explicit EllipseMajor(const Covariance& covar, bool degrees = false);
-    explicit EllipseMajor(const Ellipse& ellipse, bool degrees = false);
+private:
+    double _r_major = 0.;
+    double _axrat = 1.;
+    double _angle = 0.;
+    bool _degrees = false;
 };
 
 }  // namespace lsst::gauss2d

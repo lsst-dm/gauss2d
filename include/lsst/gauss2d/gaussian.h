@@ -46,6 +46,8 @@ namespace lsst::gauss2d {
  */
 class GaussianIntegral : public Object {
 public:
+    virtual ~GaussianIntegral() = default;
+
     virtual double get_value() const = 0;
     virtual void set_value(double value) = 0;
 
@@ -58,8 +60,6 @@ public:
         return this->get_value() == other.get_value();
     }
     virtual bool operator!=(const GaussianIntegral& other) const { return !(*this == other); }
-
-    virtual ~GaussianIntegral() = default;
 };
 
 /**
@@ -70,13 +70,12 @@ public:
  *
  **/
 class GaussianIntegralValue : public GaussianIntegral {
-private:
-    // TODO: Add some value safety to this
-    // Probably must be a thin wrapper with a getter/setter enforcing >= 0
-    // either that or delete the shared_ptr constructor and add a copy constructor
-    std::shared_ptr<double> _value;
-
 public:
+    explicit GaussianIntegralValue(double value = 1.);
+    explicit GaussianIntegralValue(std::shared_ptr<double> value);
+
+    ~GaussianIntegralValue(){};
+
     double get_value() const override { return *_value; }
     void set_value(double value) override { *_value = value; }
 
@@ -84,10 +83,11 @@ public:
                      std::string_view namespace_separator = Object::CC_NAMESPACE_SEPARATOR) const override;
     std::string str() const override;
 
-    explicit GaussianIntegralValue(double value = 1.);
-    explicit GaussianIntegralValue(std::shared_ptr<double> value);
-
-    ~GaussianIntegralValue(){};
+private:
+    // TODO: Add some value safety to this
+    // Probably must be a thin wrapper with a getter/setter enforcing >= 0
+    // either that or delete the shared_ptr constructor and add a copy constructor
+    std::shared_ptr<double> _value;
 };
 
 /**
@@ -97,26 +97,19 @@ public:
  * for its three component subclasses.
  **/
 class Gaussian : public Object {
-private:
-    std::shared_ptr<Centroid> _centroid;
-    std::shared_ptr<Ellipse> _ellipse;
-    std::shared_ptr<GaussianIntegral> _integral;
-
-    /**
-     * @brief Check if a pointer is null and throw if so
-     *
-     * @tparam T The type of the object to check
-     * @param ptr The pointer to check
-     * @param name The name of the pointer to include in the error message (if null)
-     * @return std::shared_ptr<T> The pointer that passed the check
-     */
-    template <typename T>
-    std::shared_ptr<T> _check_not_nullptr(std::shared_ptr<T> ptr, std::string name) {
-        if (ptr == nullptr) throw std::invalid_argument(this->str() + "Can't set " + name + " to nullptr");
-        return ptr;
-    }
-
 public:
+    /**
+     * @brief Construct a new Gaussian object
+     *
+     * @param centroid The centroid. Defaults to a new, default Centroid.
+     * @param ellipse The ellipse. Defaults to a new, default Ellipse.
+     * @param integral The integral. Defaults to a new, default GaussianIntegralValue.
+     */
+    explicit Gaussian(std::shared_ptr<Centroid> centroid = nullptr,
+                      std::shared_ptr<Ellipse> ellipse = nullptr,
+                      std::shared_ptr<GaussianIntegral> integral = nullptr);
+    ~Gaussian();
+
     /// Get the multiplicative factor for Gaussian function evaluations: integral/(2*area)
     double get_const_normal() const;
     /// Get the integral value
@@ -151,17 +144,24 @@ public:
     bool operator==(const Gaussian& other) const;
     bool operator!=(const Gaussian& other) const;
 
+private:
+    std::shared_ptr<Centroid> _centroid;
+    std::shared_ptr<Ellipse> _ellipse;
+    std::shared_ptr<GaussianIntegral> _integral;
+
     /**
-     * @brief Construct a new Gaussian object
+     * @brief Check if a pointer is null and throw if so
      *
-     * @param centroid The centroid. Defaults to a new, default Centroid.
-     * @param ellipse The ellipse. Defaults to a new, default Ellipse.
-     * @param integral The integral. Defaults to a new, default GaussianIntegralValue.
+     * @tparam T The type of the object to check
+     * @param ptr The pointer to check
+     * @param name The name of the pointer to include in the error message (if null)
+     * @return std::shared_ptr<T> The pointer that passed the check
      */
-    explicit Gaussian(std::shared_ptr<Centroid> centroid = nullptr,
-                      std::shared_ptr<Ellipse> ellipse = nullptr,
-                      std::shared_ptr<GaussianIntegral> integral = nullptr);
-    ~Gaussian();
+    template <typename T>
+    std::shared_ptr<T> _check_not_nullptr(std::shared_ptr<T> ptr, std::string name) {
+        if (ptr == nullptr) throw std::invalid_argument(this->str() + "Can't set " + name + " to nullptr");
+        return ptr;
+    }
 };
 
 /**
@@ -176,12 +176,10 @@ class Gaussians : public Object {
 public:
     typedef std::vector<std::shared_ptr<Gaussian>> Data;
 
-private:
-    Data _data = {};
+    // These constructors explicitly copy inputs rather than moving
+    explicit Gaussians(std::optional<const Data> data);
+    explicit Gaussians(std::vector<std::optional<const Data>> data);
 
-    size_t assign(const Data& data, size_t i = 0);
-
-public:
     Gaussian& operator[](size_t i);
     const Gaussian& operator[](size_t i) const;
 
@@ -208,9 +206,10 @@ public:
                      std::string_view namespace_separator = Object::CC_NAMESPACE_SEPARATOR) const override;
     std::string str() const override;
 
-    // These constructors explicitly copy inputs rather than moving
-    explicit Gaussians(std::optional<const Data> data);
-    explicit Gaussians(std::vector<std::optional<const Data>> data);
+private:
+    Data _data = {};
+
+    size_t assign(const Data& data, size_t i = 0);
 };
 
 /**
@@ -218,11 +217,10 @@ public:
  *
  **/
 class ConvolvedGaussian : public Object {
-private:
-    std::shared_ptr<const Gaussian> _source;
-    std::shared_ptr<const Gaussian> _kernel;
-
 public:
+    explicit ConvolvedGaussian(std::shared_ptr<const Gaussian> source = nullptr,
+                               std::shared_ptr<const Gaussian> kernel = nullptr);
+
     const Gaussian& get_source() const;
     const Gaussian& get_kernel() const;
 
@@ -235,8 +233,9 @@ public:
     bool operator==(const ConvolvedGaussian& other) const;
     bool operator!=(const ConvolvedGaussian& other) const;
 
-    explicit ConvolvedGaussian(std::shared_ptr<const Gaussian> source = nullptr,
-                               std::shared_ptr<const Gaussian> kernel = nullptr);
+private:
+    std::shared_ptr<const Gaussian> _source;
+    std::shared_ptr<const Gaussian> _kernel;
 };
 
 /**
@@ -250,12 +249,10 @@ class ConvolvedGaussians : public Object {
 public:
     typedef std::vector<std::shared_ptr<ConvolvedGaussian>> Data;
 
-private:
-    Data _data = {};
+    // These constructors explicitly copy inputs rather than moving
+    explicit ConvolvedGaussians(std::optional<const Data> data);
+    explicit ConvolvedGaussians(std::vector<std::optional<const Data>> data);
 
-    size_t assign(const Data& data, size_t i = 0);
-
-public:
     ConvolvedGaussian& at(size_t i) const;
     const ConvolvedGaussian& at_const(size_t i) const;
 
@@ -282,9 +279,10 @@ public:
     ConvolvedGaussian& operator[](size_t i);
     const ConvolvedGaussian& operator[](size_t i) const;
 
-    // These constructors explicitly copy inputs rather than moving
-    explicit ConvolvedGaussians(std::optional<const Data> data);
-    explicit ConvolvedGaussians(std::vector<std::optional<const Data>> data);
+private:
+    Data _data = {};
+
+    size_t assign(const Data& data, size_t i = 0);
 };
 
 }  // namespace lsst::gauss2d

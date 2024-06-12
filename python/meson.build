@@ -39,6 +39,8 @@ python = pymod.find_installation(
     required : true,
 )
 subdir('lsst')
+# Run tests - not sure why workdir is required, but it is
+test('pytest', python, args : ['-m', 'pytest', 'tests'], workdir : meson.source_root())
 
 if not use_eups
 	pip_cmd = [

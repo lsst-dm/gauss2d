@@ -41,14 +41,10 @@ namespace lsst::gauss2d {
  *
  **/
 class CoordinateSystem : public Object {
-private:
-    double _dx1;
-    double _dy2;
-
-    double _x_min;
-    double _y_min;
-
 public:
+    explicit CoordinateSystem(double dx1 = 1., double dy2 = 1, double x_min = 0, double y_min = 0);
+    ~CoordinateSystem();
+
     // x,y coords of the bottom left corner of the image if not rotated
     // TBD how to implement this if there is rotation...
 
@@ -67,8 +63,12 @@ public:
                      std::string_view namespace_separator = Object::CC_NAMESPACE_SEPARATOR) const override;
     std::string str() const override;
 
-    explicit CoordinateSystem(double dx1 = 1., double dy2 = 1, double x_min = 0, double y_min = 0);
-    ~CoordinateSystem();
+private:
+    double _dx1;
+    double _dy2;
+
+    double _x_min;
+    double _y_min;
 };
 
 static const CoordinateSystem COORDS_DEFAULT{};

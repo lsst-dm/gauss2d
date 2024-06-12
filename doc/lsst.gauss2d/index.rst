@@ -21,7 +21,7 @@ Using lsst.gauss2d
 ==============================
 
 Example usage can be found in the unit tests and also in dependent packages,
-particularly `gauss2dfit <https://github.com/lsst-dm/gauss2dfit>`_.
+particularly `gauss2d_fit <https://github.com/lsst-dm/gauss2d_fit>`_.
 
 .. toctree::
    :maxdepth: 2

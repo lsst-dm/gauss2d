@@ -39,6 +39,8 @@ namespace lsst::gauss2d {
  */
 class Object {
 public:
+    virtual ~Object() = default;
+
     /// The C++ namespace separator
     static constexpr std::string_view CC_NAMESPACE_SEPARATOR = "::";
     static constexpr std::string_view NULL_STR_GENERAL = "None";
@@ -74,8 +76,6 @@ public:
         out << obj.str();
         return out;
     }
-
-    virtual ~Object() = default;
 };
 
 template <typename T>

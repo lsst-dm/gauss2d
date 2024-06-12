@@ -52,8 +52,6 @@ std::string replace_type(std::string target, std::string replacement) {
     return replace_all(target, token, replacement);
 }
 
-std::string_view STR_NONE = "";
-
 /*
  * This suppresses warnings of the form:
  *
@@ -72,41 +70,18 @@ std::string_view STR_NONE = "";
  */
 template <typename T>
 class Image : public lsst::gauss2d::Image<T, Image<T>> {
-private:
-    // Data initialized in C++
-    std::unique_ptr<py::array_t<T>> _ptr_own = nullptr;
-    // Data passed from Python (which cannot be stored as a C++ reference
-    // for some reason)
-    py::array_t<T> _data_in;
-    // A ref to whichever of the two is initialized by the constructor
-    py::array_t<T> &_data;
-    // A more convenient ref for matrix operations
-    py::detail::unchecked_mutable_reference<T, 2> _data_ref;
-
-    py::array_t<T> &_validate() const {
-        if (_data.ndim() != 2) {
-            throw std::runtime_error("Input data must have 2 dimensions");
-        }
-        return _data;
-    }
-
 public:
-    inline T &_get_value_unchecked_impl(size_t row, size_t col) { return this->_data_ref(row, col); };
-
-    py::array_t<T> &get_data() { return this->_data; }
-
-    size_t get_n_cols_impl() const { return _data.shape(1); };
-    size_t get_n_rows_impl() const { return _data.shape(0); };
-
-    inline T get_value_unchecked_impl(size_t row, size_t col) const { return this->_data_ref(row, col); };
-    void set_value_unchecked_impl(size_t row, size_t col, T value) { this->_data_ref(row, col) = value; }
-
     explicit Image(size_t n_rows, size_t n_cols,
+                   const T *value_init = lsst::gauss2d::Image<T, Image<T>>::_value_default_ptr(),
                    const std::shared_ptr<const lsst::gauss2d::CoordinateSystem> coordsys = nullptr)
             : gauss2d::Image<T, Image<T>>(coordsys),
               _ptr_own(std::make_unique<py::array_t<T>>(py::array::ShapeContainer({n_rows, n_cols}))),
               _data(*_ptr_own),
-              _data_ref(_validate().template mutable_unchecked<2>()) {}
+              _data_ref(_validate().template mutable_unchecked<2>()) {
+        if (value_init != nullptr) {
+            this->fill(*value_init);
+        }
+    }
     /**
      * Construct an image from a numpy array.
      *
@@ -124,16 +99,69 @@ public:
               _data_ref(_validate().template mutable_unchecked<2>()) {}
 
     ~Image(){};
+
+    inline T &_get_value_unchecked_impl(size_t row, size_t col) { return this->_data_ref(row, col); };
+
+    py::array_t<T> &get_data() { return this->_data; }
+
+    size_t get_n_cols_impl() const { return _data.shape(1); };
+    size_t get_n_rows_impl() const { return _data.shape(0); };
+
+    inline T get_value_unchecked_impl(size_t row, size_t col) const { return this->_data_ref(row, col); };
+    void set_value_unchecked_impl(size_t row, size_t col, T value) { this->_data_ref(row, col) = value; }
+
+private:
+    // Data initialized in C++
+    std::unique_ptr<py::array_t<T>> _ptr_own = nullptr;
+    // Data passed from Python (which cannot be stored as a C++ reference
+    // for some reason)
+    py::array_t<T> _data_in;
+    // A ref to whichever of the two is initialized by the constructor
+    py::array_t<T> &_data;
+    // A more convenient ref for matrix operations
+    py::detail::unchecked_mutable_reference<T, 2> _data_ref;
+
+    py::array_t<T> &_validate() const {
+        if (_data.ndim() != 2) {
+            throw std::runtime_error("Input data must have 2 dimensions");
+        }
+        return _data;
+    }
 };
 #pragma GCC visibility pop
+
+/**
+ * Replace templated Image and index Image type name with Pythonic names.
+ *
+ * @tparam Value The data type of the Image (data) class string to replace.
+ * @tparam Index The data type of the Image (index) class string to replace.
+ * @param target The string to replace type names in.
+ * @param str_type The replacement string for T.
+ * @param separator The namespace separator to replace.
+ * @return A replacement string without templated types.
+ */
+template <typename Value, typename Index>
+std::string replace_images_types(std::string target, std::string str_type, std::string_view separator) {
+    std::string token1 = std::string("<") + type_name_str<Value>() + ", ";
+    target = replace_all_none(target, token1);
+    std::string token2 = type_name_str<Image<Value>>(false, separator) + std::string(", ");
+    target = replace_all_none(target, token2);
+    std::string token3 = type_name_str<Image<Index>>(false, separator) + std::string(" >");
+    target = replace_all(target, token3, str_type);
+    // str appears to return e.g. Image<double> for some reason
+    target = replace_type<Value>(target, str_type);
+    return target;
+}
 
 template <typename T>
 void declare_image(py::module &m, std::string str_type) {
     using Class = Image<T>;
     std::string pyclass_name = std::string("Image") + str_type;
     py::class_<Class, std::shared_ptr<Class>>(m, pyclass_name.c_str())
-            .def(py::init<size_t, size_t, const std::shared_ptr<const lsst::gauss2d::CoordinateSystem>>(),
-                 "n_rows"_a, "n_cols"_a, "coordsys"_a = gauss2d::COORDS_DEFAULT)
+            .def(py::init<size_t, size_t, const T *,
+                          const std::shared_ptr<const lsst::gauss2d::CoordinateSystem>>(),
+                 "n_rows"_a, "n_cols"_a, "value_init"_a = Class::_value_default_ptr(),
+                 "coordsys"_a = gauss2d::COORDS_DEFAULT)
             .def(py::init<py::array_t<T>, const std::shared_ptr<const lsst::gauss2d::CoordinateSystem>>(),
                  "data"_a, "coordsys"_a = gauss2d::COORDS_DEFAULT)
             .def_property_readonly("coordsys", &Class::get_coordsys_ptr_const)
@@ -174,7 +202,7 @@ void declare_image(py::module &m, std::string str_type) {
 template <typename T>
 std::string replace_image_types(std::string target, std::string str_type, std::string_view separator) {
     std::string token1 = std::string("<") + type_name_str<T>() + ", ";
-    target = replace_all(target, token1, STR_NONE);
+    target = replace_all_none(target, token1);
     std::string token2 = type_name_str<Image<T>>(false, separator) + std::string(" >");
     target = replace_all(target, token2, str_type);
     // str appears to return e.g. Image<double> for some reason
@@ -203,29 +231,6 @@ void declare_image_array(py::module &m, std::string str_type) {
                 str = replace_image_types<T>(str, str_type, self.CC_NAMESPACE_SEPARATOR);
                 return str;
             });
-}
-
-/**
- * Replace templated Image and index Image type name with Pythonic names.
- *
- * @tparam Value The data type of the Image (data) class string to replace.
- * @tparam Index The data type of the Image (index) class string to replace.
- * @param target The string to replace type names in.
- * @param str_type The replacement string for T.
- * @param separator The namespace separator to replace.
- * @return A replacement string without templated types.
- */
-template <typename Value, typename Index>
-std::string replace_images_types(std::string target, std::string str_type, std::string_view separator) {
-    std::string token1 = std::string("<") + type_name_str<Value>() + ", ";
-    target = replace_all(target, token1, STR_NONE);
-    std::string token2 = type_name_str<Image<Value>>(false, separator) + std::string(", ");
-    target = replace_all(target, token2, STR_NONE);
-    std::string token3 = type_name_str<Image<Index>>(false, separator) + std::string(" >");
-    target = replace_all(target, token3, str_type);
-    // str appears to return e.g. Image<double> for some reason
-    target = replace_type<Value>(target, str_type);
-    return target;
 }
 
 template <typename T>

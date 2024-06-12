@@ -1,9 +1,9 @@
 project(
   'libgauss2d_python',
   'cpp',
-  version : run_command('cat', meson.source_root() + '/VERSION', check: true).stdout().strip(),
-  license : 'GPL-3.0-or-later',
   default_options : ['cpp_std=c++17',],
+  license : 'GPL-3.0-or-later',
+  version : run_command('cat', meson.source_root() + '/VERSION', check: true).stdout().strip(),
 )
 
 eups = find_program('eups', required: false)
