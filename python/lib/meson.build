@@ -19,7 +19,7 @@ if use_eups
     message('eupsdir=' + eupsdir)
     cpp = meson.get_compiler('cpp')
     gauss2d_dep = declare_dependency(
-        dependencies: [cpp.find_library('gauss2d', dirs: [eupsdir / 'lib64/lsst/gauss2d']),],
+        dependencies: [cpp.find_library('gauss2d', dirs: [eupsdir / 'lib64/lsst']),],
         include_directories: eupsdir / 'include',
     )
 else
