@@ -3,7 +3,7 @@ build
 builddir
 build-debug
 build-release
-python/lsst/lsst_gauss2d.egg-info/
+python/src/lsst_gauss2d.egg-info/
 
 # SCons
 config.log

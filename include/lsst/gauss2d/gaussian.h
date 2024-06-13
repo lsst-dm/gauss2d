@@ -185,6 +185,7 @@ public:
 
     Gaussian& at(size_t i) const;
     const Gaussian& at_const(size_t i) const;
+    std::shared_ptr<Gaussian> at_ptr(size_t i) const;
 
     using iterator = typename Data::iterator;
     using const_iterator = typename Data::const_iterator;
@@ -255,6 +256,7 @@ public:
 
     ConvolvedGaussian& at(size_t i) const;
     const ConvolvedGaussian& at_const(size_t i) const;
+    std::shared_ptr<ConvolvedGaussian> at_ptr(size_t i) const;
 
     using iterator = typename Data::iterator;
     using const_iterator = typename Data::const_iterator;

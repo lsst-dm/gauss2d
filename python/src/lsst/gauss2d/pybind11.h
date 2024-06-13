@@ -21,8 +21,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef GAUSS2D_PYBIND11
-#define GAUSS2D_PYBIND11
+#ifndef LSST_GAUSS2D_PYBIND11
+#define LSST_GAUSS2D_PYBIND11
 
 #include <pybind11/pybind11.h>
 

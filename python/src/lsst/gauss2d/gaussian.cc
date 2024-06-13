@@ -32,6 +32,8 @@
 
 #include "lsst/gauss2d/gaussian.h"
 
+#define PYBIND11_DETAILED_ERROR_MESSAGES
+
 namespace py = pybind11;
 using namespace pybind11::literals;
 
@@ -76,9 +78,9 @@ void bind_gaussian(py::module &m) {
             .def("__str__", &gauss2d::Gaussian::str);
     py::class_<gauss2d::Gaussians, std::shared_ptr<gauss2d::Gaussians>>(m, "Gaussians")
             .def(py::init<std::optional<const gauss2d::Gaussians::Data>>(), "gaussians"_a)
-            .def("at", &gauss2d::Gaussians::at, py::return_value_policy::reference)
+            .def("at", &gauss2d::Gaussians::at, py::return_value_policy::copy)
             .def_property_readonly("size", &gauss2d::Gaussians::size)
-            .def("__getitem__", &gauss2d::Gaussians::at, py::return_value_policy::reference)
+            .def("__getitem__", &gauss2d::Gaussians::at_ptr, py::return_value_policy::copy)
             .def("__len__", &gauss2d::Gaussians::size)
             .def("__repr__",
                  [](const gauss2d::Gaussians &self) { return self.repr(true, self.PY_NAMESPACE_SEPARATOR); })
@@ -99,9 +101,9 @@ void bind_gaussian(py::module &m) {
     py::class_<gauss2d::ConvolvedGaussians, std::shared_ptr<gauss2d::ConvolvedGaussians>>(
             m, "ConvolvedGaussians")
             .def(py::init<std::optional<const gauss2d::ConvolvedGaussians::Data>>(), "convolvedbgaussians"_a)
-            .def("at", &gauss2d::ConvolvedGaussians::at, py::return_value_policy::reference)
+            .def("at", &gauss2d::ConvolvedGaussians::at_ptr, py::return_value_policy::copy)
             .def_property_readonly("size", &gauss2d::ConvolvedGaussians::size)
-            .def("__getitem__", &gauss2d::ConvolvedGaussians::at, py::return_value_policy::reference)
+            .def("__getitem__", &gauss2d::ConvolvedGaussians::at_ptr, py::return_value_policy::copy)
             .def("__len__", &gauss2d::ConvolvedGaussians::size)
             .def("__repr__",
                  [](const gauss2d::ConvolvedGaussians &self) {

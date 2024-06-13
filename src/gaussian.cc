@@ -147,6 +147,7 @@ size_t Gaussians::assign(const Data& data, size_t i) {
 
 Gaussian& Gaussians::at(size_t i) const { return *(_data.at(i)); }
 const Gaussian& Gaussians::at_const(size_t i) const { return *(_data.at(i)); }
+std::shared_ptr<Gaussian> Gaussians::at_ptr(size_t i) const { return _data.at(i); }
 
 typename Gaussians::Data::iterator Gaussians::begin() noexcept { return _data.begin(); }
 typename Gaussians::Data::const_iterator Gaussians::begin() const noexcept { return _data.cbegin(); }
@@ -248,6 +249,7 @@ bool ConvolvedGaussian::operator!=(const ConvolvedGaussian& other) const { retur
 
 ConvolvedGaussian& ConvolvedGaussians::at(size_t i) const { return *(_data.at(i)); }
 const ConvolvedGaussian& ConvolvedGaussians::at_const(size_t i) const { return *(_data.at(i)); }
+std::shared_ptr<ConvolvedGaussian> ConvolvedGaussians::at_ptr(size_t i) const { return _data.at(i); }
 
 typename ConvolvedGaussians::Data::iterator ConvolvedGaussians::begin() noexcept { return _data.begin(); }
 typename ConvolvedGaussians::Data::iterator ConvolvedGaussians::end() noexcept { return _data.end(); }

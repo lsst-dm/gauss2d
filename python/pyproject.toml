@@ -33,14 +33,8 @@ test = [
     "pytest >= 3.2",
 ]
 
-[tool.setuptools]
-py-modules = []
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.setuptools.dynamic]
 version = {attr = "lsst.gauss2d.__version__"}
-
-# This appears to be necessary for extend_path to find lsst in sys.modules
-[tool.setuptools.packages.find]
-where = [
-    "lsst"
-]

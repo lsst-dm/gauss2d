@@ -1,4 +1,4 @@
-subdir_gauss2d = 'gauss2d'
+subdir_gauss2d = 'lsst' / 'gauss2d'
 sources = [
     subdir_gauss2d / 'centroid.cc',
     subdir_gauss2d / 'coordinatesystem.cc',
@@ -21,10 +21,10 @@ endif
 kwargs = {}
 if use_eups
     # meson.current_build_dir() would be ideal but it seems to delete the file?
-    kwargs = {'install_dir': meson.build_root() + '/lib/lsst'}
+    kwargs = {'install_dir': meson.build_root() / 'lib' / subdir_gauss2d}
 else
     # Folder relative to site-packages to install to
-    kwargs = {'subdir': 'lsst' / subdir_gauss2d}
+    kwargs = {'subdir': subdir_gauss2d}
 endif
 
 module = python.extension_module(
@@ -42,7 +42,7 @@ module = python.extension_module(
 
 # Pure Python sources
 py_sources = [
-    '__init__.py',
+    'lsst' / '__init__.py',
     subdir_gauss2d / '__init__.py',
     subdir_gauss2d / 'utils.py',
 ]
@@ -54,7 +54,6 @@ else
     python.install_sources(
         py_sources,
         pure: false, # Will be installed next to binaries
-        subdir: 'lsst',
         preserve_path: true,
     )
 endif

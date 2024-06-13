@@ -38,19 +38,32 @@ python = pymod.find_installation(
     'python3',
     required : true,
 )
-subdir('lsst')
-# Run tests - not sure why workdir is required, but it is
-test('pytest', python, args : ['-m', 'pytest', 'tests'], workdir : meson.source_root())
+subdir('src')
 
 if not use_eups
+    # A hacky way to pip install (to say the least) the Python module
+    # this is "necessary" to allow its use as a dependency in other packages
+    # (e.g. in requirements.txt, pyproject.toml)
+    # because meson doesn't generate a dist-info
+    # the downside is there are now two ways to manage/install the package
+    # pip doesn't seem to find the pybind extension module automagically either
+    # (perhaps some config is missing in pyproject.toml)
+    subdir_module = meson.source_root() / 'src/lsst/gauss2d'
 	pip_cmd = [
 	    'python', '-m', 'pip', 'install', meson.source_root(),
 	     '-t', python.get_install_dir(),
 	     '--no-dependencies',
 	     '--no-build-isolation',
-	     '--upgrade',
+	     '--force-reinstall',
      ]
 	message('Will run on install:')
 	message(pip_cmd)
+	add_link_cmd = ['ln', '-fs', module.full_path(), subdir_module]
+	meson.add_install_script(add_link_cmd)
 	meson.add_install_script(pip_cmd)
+	remove_link_cmd = ['rm', '-f', subdir_module / module.full_path().split('/')[-1]]
+	meson.add_install_script(remove_link_cmd)
 endif
+
+# Run tests - not sure why workdir is required, but it is
+test('pytest', python, args : ['-m', 'pytest', 'tests'], workdir : meson.project_source_root())
