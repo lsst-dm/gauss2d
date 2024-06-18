@@ -11,10 +11,13 @@
 namespace g2d = lsst::gauss2d;
 
 TEST_CASE("CoordinateSystem") {
-    CHECK_THROWS_AS(g2d::CoordinateSystem(std::numeric_limits<double>::infinity()), std::invalid_argument);
-    CHECK_THROWS_AS(g2d::CoordinateSystem(0.), std::invalid_argument);
-    CHECK_THROWS_AS(g2d::CoordinateSystem(5.0, std::numeric_limits<double>::quiet_NaN()),
-                    std::invalid_argument);
+    auto inf = std::numeric_limits<double>::infinity();
+    auto nan = std::numeric_limits<double>::quiet_NaN();
+    CHECK_THROWS_AS(g2d::CoordinateSystem{inf}, std::invalid_argument);
+    CHECK_THROWS_AS(g2d::CoordinateSystem{0.}, std::invalid_argument);
+    CHECK_THROWS_AS(g2d::CoordinateSystem(5.0, nan), std::invalid_argument);
+    CHECK_THROWS_AS(g2d::CoordinateSystem(1.0, 1.0, -0.1, -inf), std::invalid_argument);
+    CHECK_THROWS_AS(g2d::CoordinateSystem(1.0, 1.0, nan, 1.0), std::invalid_argument);
     double dx1 = 0.1, dy2 = 0.8, x_min = 18.0, y_min = -5.5;
     auto coord = g2d::CoordinateSystem(dx1, dy2, x_min, y_min);
     CHECK_EQ(dx1, coord.get_dx1());

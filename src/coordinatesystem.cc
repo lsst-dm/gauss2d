@@ -64,8 +64,8 @@ std::string CoordinateSystem::str() const {
 CoordinateSystem::CoordinateSystem(double dx1, double dy2, double x_min, double y_min)
         : _dx1(dx1), _dy2(dy2), _x_min(x_min), _y_min(y_min) {
     std::string errmsg = "";
-    if (!((dx1 > 0) && std::isfinite(dx1) && (dy2 > 0) && std::isfinite(dy2))) {
-        errmsg += "dx1, dy2 = " + to_string_float(_dx1) + ", " + to_string_float(_dy2) + " !>0 or !finite; ";
+    if (!((dx1 != 0) && std::isfinite(dx1) && (dy2 != 0) && std::isfinite(dy2))) {
+        errmsg += "dx1, dy2 = " + to_string_float(_dx1) + ", " + to_string_float(_dy2) + " ==0 or !finite; ";
     }
     if (!(std::isfinite(_x_min) && std::isfinite(_y_min))) {
         errmsg += "x_min, y_min = " + to_string_float(_x_min) + ", " + to_string_float(_y_min) + " !finite; ";
