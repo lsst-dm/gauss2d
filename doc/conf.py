@@ -6,7 +6,7 @@ https://developer.lsst.io/stack/building-single-package-docs.html
 
 from documenteer.conf.pipelinespkg import *
 
-project = "gauss2d"
+project = "lsst_gauss2d"
 html_theme_options["logotext"] = project
 html_title = project
 html_short_title = project
