@@ -43,6 +43,9 @@ void bind_coordinatesystem(py::module &m) {
             .def_property_readonly("y_min", &gauss2d::CoordinateSystem::get_y_min)
             .def(py::self == py::self)
             .def(py::self != py::self)
-            .def("__repr__", [](const gauss2d::CoordinateSystem &self) { return self.repr(true, self.PY_NAMESPACE_SEPARATOR); })
+            .def("__repr__",
+                 [](const gauss2d::CoordinateSystem &self) {
+                     return self.repr(true, self.PY_NAMESPACE_SEPARATOR);
+                 })
             .def("__str__", &gauss2d::CoordinateSystem::str);
 }
