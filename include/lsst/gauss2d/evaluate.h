@@ -591,7 +591,7 @@ inline T gaussian_pixel_add_all(size_t g, size_t j, size_t i, double weight, dou
                                 const Image<idx_type, Indices>& grad_param_map,
                                 const Image<T, Data>& grad_param_factor, std::vector<Weights>& gradweights,
                                 const TermsGradientVec& terms_grad_vec, ValuesGauss& gradients,
-                                GradientsExtra<T, Data, Indices>& grad_extra) {
+                                GradientsExtra<T, Data, Indices>* grad_extra) {
     const TermsPixel& terms_pixel = terms_pixel_vec[g];
     const double xy_norm = terms_pixel.xmc * (*terms_pixel.ymc_weighted)[j];
     const double value_unweight
@@ -617,7 +617,7 @@ inline T gaussian_pixel_add_all(size_t g, size_t j, size_t i, double weight, dou
                 grad_param_factor.get_value_unchecked(g, 1), grad_param_factor.get_value_unchecked(g, 2),
                 grad_param_factor.get_value_unchecked(g, 3), grad_param_factor.get_value_unchecked(g, 4),
                 grad_param_factor.get_value_unchecked(g, 5));
-        if constexpr (do_extra) grad_extra.add(g, j, i, gradients);
+        if constexpr (do_extra) grad_extra->add(g, j, i, gradients);
     }
     return value;
 }
@@ -1054,6 +1054,8 @@ private:
 
         std::vector<double> weights_conv(n_gaussians);
 
+        auto* grad_extra_ptr = do_extra ? _grad_extra.get() : nullptr;
+
         for (size_t g = 0; g < n_gaussians; ++g) {
             const auto& src = _gaussians[g].get_source();
             const auto& kernel = _gaussians[g].get_kernel();
@@ -1118,7 +1120,7 @@ private:
                     model += detail::gaussian_pixel_add_all<T, Data, Indices, gradient_type, do_extra>(
                             g, j, i, weights_conv[g], sigma_inv_pix, terms_pixel, output_jac_ref,
                             grad_param_map_ref, grad_param_factor_ref, weights_grad, terms_grad, gradients,
-                            *_grad_extra);
+                            grad_extra_ptr);
                 }
                 if constexpr (output_type == OutputType::overwrite) {
                     outputref.set_value_unchecked(j, i, model);
