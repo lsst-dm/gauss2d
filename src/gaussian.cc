@@ -32,9 +32,9 @@
 
 namespace lsst::gauss2d {
 
-GaussianIntegralValue::GaussianIntegralValue(double value) : _value(std::make_shared<double>(value)){};
+GaussianIntegralValue::GaussianIntegralValue(double value) : _value(std::make_shared<double>(value)) {};
 GaussianIntegralValue::GaussianIntegralValue(std::shared_ptr<double> value)
-        : _value(value == nullptr ? std::make_shared<double>(1) : std::move(value)){};
+        : _value(value == nullptr ? std::make_shared<double>(1) : std::move(value)) {};
 
 std::string GaussianIntegralValue::repr(bool name_keywords, std::string_view namespace_separator) const {
     return type_name_str<GaussianIntegralValue>(false, namespace_separator) + "("
@@ -49,7 +49,7 @@ Gaussian::Gaussian(std::shared_ptr<Centroid> centroid, std::shared_ptr<Ellipse> 
         : _centroid(centroid != nullptr ? std::move(centroid) : std::make_shared<Centroid>()),
           _ellipse(ellipse != nullptr ? std::move(ellipse) : std::make_shared<Ellipse>()),
           _integral(integral != nullptr ? std::move(integral) : std::make_shared<GaussianIntegralValue>()) {}
-Gaussian::~Gaussian(){};
+Gaussian::~Gaussian() {};
 
 double Gaussian::get_const_normal() const { return _integral->get_value() / (2 * _ellipse->get_area()); }
 double Gaussian::get_integral_value() const { return _integral->get_value(); };

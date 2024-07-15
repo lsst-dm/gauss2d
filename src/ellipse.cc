@@ -230,7 +230,7 @@ std::string EllipseValues::str() const {
 }
 
 Ellipse::Ellipse(std::shared_ptr<EllipseData> data)
-        : _data(data == nullptr ? std::make_shared<EllipseValues>() : std::move(data)){};
+        : _data(data == nullptr ? std::make_shared<EllipseValues>() : std::move(data)) {};
 
 Ellipse::Ellipse(double sigma_x, double sigma_y, double rho) : _data(std::make_shared<EllipseValues>()) {
     _data->set(sigma_x, sigma_y, rho);

@@ -74,7 +74,7 @@ public:
     explicit GaussianIntegralValue(double value = 1.);
     explicit GaussianIntegralValue(std::shared_ptr<double> value);
 
-    ~GaussianIntegralValue(){};
+    ~GaussianIntegralValue() {};
 
     double get_value() const override { return *_value; }
     void set_value(double value) override { *_value = value; }

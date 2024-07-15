@@ -96,7 +96,7 @@ public:
     CentroidValues(std::shared_ptr<double> x, std::shared_ptr<double> y);
     CentroidValues(double x = 0, double y = 0);
 
-    virtual ~CentroidValues(){};
+    virtual ~CentroidValues() {};
 
 private:
     std::shared_ptr<double> _x;

@@ -98,7 +98,7 @@ public:
               _data(_data_in),
               _data_ref(_validate().template mutable_unchecked<2>()) {}
 
-    ~Image(){};
+    ~Image() {};
 
     inline T &_get_value_unchecked_impl(size_t row, size_t col) { return this->_data_ref(row, col); };
 

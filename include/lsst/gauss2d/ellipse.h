@@ -242,12 +242,12 @@ public:
                            std::shared_ptr<double> rho = nullptr)
             : _sigma_x(sigma_x == nullptr ? std::make_shared<double>(0) : std::move(sigma_x)),
               _sigma_y(sigma_y == nullptr ? std::make_shared<double>(0) : std::move(sigma_y)),
-              _rho(rho == nullptr ? std::make_shared<double>(0) : std::move(rho)){};
+              _rho(rho == nullptr ? std::make_shared<double>(0) : std::move(rho)) {};
     /// Construct a new EllipseValues object, creating new pointers for every value
     explicit EllipseValues(double sigma_x = 0, double sigma_y = 0, double rho = 0)
             : _sigma_x(std::make_shared<double>(sigma_x)),
               _sigma_y(std::make_shared<double>(sigma_y)),
-              _rho(std::make_shared<double>(rho)){};
+              _rho(std::make_shared<double>(rho)) {};
 
     double get_sigma_x() const override;
     double get_sigma_y() const override;

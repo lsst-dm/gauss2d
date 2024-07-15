@@ -668,7 +668,7 @@ public:
     typedef ImageArray<T, Data> ImageArrayT;
     typedef Image<idx_type, Indices> IndicesT;
 
-    GaussianEvaluator(int x = 0, const std::shared_ptr<const ConvolvedGaussians> gaussians = nullptr){};
+    GaussianEvaluator(int x = 0, const std::shared_ptr<const ConvolvedGaussians> gaussians = nullptr) {};
 
     /**
      * @brief Construct a GaussianEvaluator, inferring outputs from inputs.
@@ -750,10 +750,10 @@ public:
                                           : ((extra_param_factor != nullptr)
                                                      ? extra_param_factor
                                                      : detail::_param_factor_default<Data>(
-                                                             _gaussians.size(), N_EXTRA_FACTOR, 0.))),
+                                                               _gaussians.size(), N_EXTRA_FACTOR, 0.))),
               _grad_extra(_do_extra ? std::make_unique<detail::GradientsExtra<T, Data, Indices>>(
-                                  *extra_param_map, *extra_param_factor,
-                                  grads != nullptr ? *grads : IMAGEARRAY_NULL(), _n_gaussians)
+                                              *extra_param_map, *extra_param_factor,
+                                              grads != nullptr ? *grads : IMAGEARRAY_NULL(), _n_gaussians)
                                     : nullptr),
               _grad_param_idx(_grad_param_map == nullptr ? std::vector<size_t>{} : _get_grad_param_idx()),
               _n_cols(_data == nullptr ? (_output == nullptr ? (_gradienttype == GradientType::jacobian
@@ -867,7 +867,7 @@ public:
             }
         }
     }
-    ~GaussianEvaluator(){};
+    ~GaussianEvaluator() {};
 
     const Data& IMAGE_NULL_CONST() const { return this->IMAGE_NULL(); };
     const Indices& INDICES_NULL_CONST() const { return this->INDICES_NULL(); };
@@ -1192,14 +1192,15 @@ private:
         /*
         return loglike_gaussians_pixel_extra<output_type, true, BackgroundType::constant>();
         */
-        return _get_likelihood ? (
-                       _has_background
-                               ? loglike_gaussians_pixel_extra<output_type, true, BackgroundType::constant>()
-                               : loglike_gaussians_pixel_extra<output_type, true, BackgroundType::none>())
-                               : (_has_background ? loglike_gaussians_pixel_extra<output_type, false,
-                                                                                  BackgroundType::constant>()
-                                                  : loglike_gaussians_pixel_extra<output_type, false,
-                                                                                  BackgroundType::none>());
+        return _get_likelihood
+                       ? (_has_background
+                                  ? loglike_gaussians_pixel_extra<output_type, true,
+                                                                  BackgroundType::constant>()
+                                  : loglike_gaussians_pixel_extra<output_type, true, BackgroundType::none>())
+                       : (_has_background ? loglike_gaussians_pixel_extra<output_type, false,
+                                                                          BackgroundType::constant>()
+                                          : loglike_gaussians_pixel_extra<output_type, false,
+                                                                          BackgroundType::none>());
     }
 };
 
