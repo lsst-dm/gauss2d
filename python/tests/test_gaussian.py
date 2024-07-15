@@ -91,7 +91,7 @@ def test_ConvolvedGaussians(convolved_gaussian, gaussians):
     conv_gaussians = g2d.ConvolvedGaussians(conv_list)
     assert len(conv_gaussians) == n_conv
     assert conv_gaussians.size == n_conv
-    assert conv_gaussians[0] is conv_list [0]
+    assert conv_gaussians[0] is conv_list[0]
     assert conv_gaussians.at(1) is conv_list[1]
     with pytest.raises(IndexError):
         conv_gaussians[n_conv]

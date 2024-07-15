@@ -32,14 +32,14 @@ def test_bindings():
         if callable(klass):
             try:
                 obj = klass()
-            except ValueError as e:
+            except ValueError:
                 # Likely non-trivial __init__
                 continue
             except TypeError as e:
                 msg = str(e)
                 if not (
                     msg.endswith("No constructor defined!")
-                    or msg.startswith(f"__init__(): incompatible constructor arguments.")
+                    or msg.startswith("__init__(): incompatible constructor arguments.")
                     or msg.startswith("extend_path() missing")
                     or (msg.startswith("make_gaussians_pixel") and (bad_args_msg in msg))
                 ):

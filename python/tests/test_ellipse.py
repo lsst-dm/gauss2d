@@ -67,7 +67,11 @@ def test_Ellipse():
     assert ell_0.xyr == [0, 0, 0]
     assert ell_0 != g2d.Ellipse(pos_min, 0, 0)
     assert ell_0 != g2d.Ellipse(0, pos_min, 0)
-    ell_1 = g2d.Ellipse(1, 1, 0)
+    ell_1 = g2d.Ellipse(sigma_x=1, sigma_y=1, rho=-0.1)
+    assert (ell_1.sigma_x, ell_1.sigma_y, ell_1.rho) == (1, 1, -0.1)
+    assert [ell_1.hwhm_x, ell_1.hwhm_y, ell_1.rho] == ell_1.hxyr
+    ell_1.set_h(hwhm_x=1, hwhm_y=1, rho=0.1)
+    assert (ell_1.hwhm_x, ell_1.hwhm_y, ell_1.rho) == (1, 1, 0.1)
     assert ell_1 != g2d.Ellipse(1, 1, pos_min)
 
     ell_conv = g2d.Ellipse(3., 3., 0).make_convolution(g2d.Ellipse(4., 4., 0))
@@ -85,16 +89,6 @@ def test_Ellipse():
     ell_conv.set(ell_1_maj)
     assert ell_conv == g2d.Ellipse(ell_1_maj)
 
-"""    
-    .def("set_h", &gauss2d::Ellipse::set_h)
-    .def_property("rho", &gauss2d::Ellipse::get_rho, &gauss2d::Ellipse::set_rho)
-    .def_property("hwhm_x", &gauss2d::Ellipse::get_hwhm_x, &gauss2d::Ellipse::set_hwhm_x)
-    .def_property("hwhm_y", &gauss2d::Ellipse::get_hwhm_y, &gauss2d::Ellipse::set_hwhm_y)
-    .def_property("sigma_x", &gauss2d::Ellipse::get_sigma_x, &gauss2d::Ellipse::set_sigma_x)
-    .def_property("sigma_y", &gauss2d::Ellipse::get_sigma_y, &gauss2d::Ellipse::set_sigma_y)
-    .def_property("hxyr", &gauss2d::Ellipse::get_hxyr, &gauss2d::Ellipse::set_hxyr)
-    .def_property("xyr", &gauss2d::Ellipse::get_xyr, &gauss2d::Ellipse::set_xyr)
-"""
 
 def test_EllipseMajor():
     covar = g2d.Covariance(0.08333332098858685, 0.08333332098858683, 1.337355953645e-13)
