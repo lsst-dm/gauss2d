@@ -1,4 +1,6 @@
-envPrepend(LD_LIBRARY_PATH, ${PRODUCT_DIR}/build-release/lib64)
-envPrepend(DYLD_LIBRARY_PATH, ${PRODUCT_DIR}/build-release/lib64)
+setupRequired(sconsUtils)
+
+envPrepend(LD_LIBRARY_PATH, ${PRODUCT_DIR}/build-release/lib64/lsst)
+envPrepend(DYLD_LIBRARY_PATH, ${PRODUCT_DIR}/build-release/lib64/lsst)
 
 envPrepend(PYTHONPATH, ${PRODUCT_DIR}/python/build-release/lib)

@@ -3,7 +3,12 @@ build
 builddir
 build-debug
 build-release
-python/gauss2d.egg-info/
+python/src/lsst_gauss2d.egg-info/
+
+# SCons
+config.log
+.sconf_temp
+.sconsign.dblite
 
 # IDE folders and files
 .cache/
@@ -20,6 +25,7 @@ compile_commands.json
 *.lo
 *.o
 *.obj
+*.pyc
 
 # Precompiled Headers
 *.gch
@@ -44,3 +50,6 @@ compile_commands.json
 *.exe
 *.out
 *.app
+
+# Tests
+python/tests/__pycache__/

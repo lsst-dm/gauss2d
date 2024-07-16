@@ -1,4 +1,27 @@
-#include "image.h"
+// -*- LSST-C++ -*-
+/*
+ * This file is part of gauss2d.
+ *
+ * Developed for the LSST Data Management System.
+ * This product includes software developed by the LSST Project
+ * (https://www.lsst.org).
+ * See the COPYRIGHT file at the top-level directory of this distribution
+ * for details of code ownership.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 
 #include "doctest.h"
@@ -7,18 +30,17 @@
 #include <memory>
 #include <sstream>
 
-#include "centroid.h"
-#include "ellipse.h"
-#include "evaluate.h"
-#include "gaussian.h"
-#include "vectorimage.h"
+#include "lsst/gauss2d/centroid.h"
+#include "lsst/gauss2d/ellipse.h"
+#include "lsst/gauss2d/evaluate.h"
+#include "lsst/gauss2d/vectorimage.h"
 
-namespace g2 = gauss2d;
+namespace g2d = lsst::gauss2d;
 
-typedef g2::VectorImage<double> Image;
-typedef g2::ImageArray<double, Image> ImageArray;
-typedef g2::VectorImage<size_t> Indices;
-typedef g2::GaussianEvaluator<double, Image, Indices> Evaluator;
+typedef g2d::VectorImage<double> Image;
+typedef g2d::ImageArray<double, Image> ImageArray;
+typedef g2d::VectorImage<size_t> Indices;
+typedef g2d::GaussianEvaluator<double, Image, Indices> Evaluator;
 
 typedef std::shared_ptr<double> Value;
 
@@ -26,10 +48,10 @@ TEST_CASE("Evaluator") {
     const size_t n_rows = 5, n_cols = 4, n_comp = 2;
     auto image = std::make_shared<Image>(n_rows, n_cols);
 
-    g2::ConvolvedGaussians::Data data{};
+    g2d::ConvolvedGaussians::Data data{};
 
     std::vector<Value> values;
-    values.reserve(n_comp * g2::N_PARAMS_GAUSS2D);
+    values.reserve(n_comp * g2d::N_PARAMS_GAUSS2D);
 
     for (size_t i = 0; i < n_comp; ++i) {
         auto x = std::make_shared<double>(n_cols / 2);
@@ -47,40 +69,42 @@ TEST_CASE("Evaluator") {
         values.push_back(sigma_y);
         values.push_back(rho);
 
-        data.emplace_back(std::make_shared<g2::ConvolvedGaussian>(
-                std::make_shared<const g2::Gaussian>(
-                        std::make_shared<g2::Centroid>(
-                                std::make_shared<g2::CentroidValues>(std::move(x), std::move(y))),
-                        std::make_shared<g2::Ellipse>(std::make_shared<g2::EllipseValues>(
+        data.emplace_back(std::make_shared<g2d::ConvolvedGaussian>(
+                std::make_shared<const g2d::Gaussian>(
+                        std::make_shared<g2d::Centroid>(
+                                std::make_shared<g2d::CentroidValues>(std::move(x), std::move(y))),
+                        std::make_shared<g2d::Ellipse>(std::make_shared<g2d::EllipseValues>(
                                 std::move(sigma_x), std::move(sigma_y), std::move(rho))),
-                        std::make_shared<g2::GaussianIntegralValue>(std::move(integral))),
-                std::make_shared<const g2::Gaussian>(std::make_shared<g2::Centroid>(0, 0),
-                                                     std::make_shared<g2::Ellipse>(0, 0, 0),
-                                                     std::make_shared<g2::GaussianIntegralValue>())));
+                        std::make_shared<g2d::GaussianIntegralValue>(std::move(integral))),
+                std::make_shared<const g2d::Gaussian>(std::make_shared<g2d::Centroid>(0, 0),
+                                                      std::make_shared<g2d::Ellipse>(0, 0, 0),
+                                                      std::make_shared<g2d::GaussianIntegralValue>())));
     }
     const size_t n_params = values.size();
-    CHECK_EQ(n_params, n_comp * g2::N_PARAMS_GAUSS2D);
+    CHECK_EQ(n_params, n_comp * g2d::N_PARAMS_GAUSS2D);
 
-    auto gaussians = std::make_shared<const g2::ConvolvedGaussians>(data);
+    auto gaussians = std::make_shared<const g2d::ConvolvedGaussians>(data);
     auto sigma_inv = std::make_shared<Image>(n_rows, n_cols);
     const double err = 1e-5;
     sigma_inv->fill(1 / err);
 
-    auto eval_img = std::make_shared<Evaluator>(gaussians, nullptr, nullptr, nullptr, image);
+    auto eval_img = std::make_shared<Evaluator>(gaussians, nullptr, nullptr, image);
 
     CHECK_NE(image, nullptr);
     CHECK_EQ(eval_img->get_n_cols(), n_cols);
     CHECK_EQ(eval_img->get_n_rows(), n_rows);
-    CHECK_EQ(eval_img->get_size(), n_cols*n_rows);
+    CHECK_EQ(eval_img->get_size(), n_cols * n_rows);
 
     double loglike_img = eval_img->loglike_pixel();
     CHECK_EQ(loglike_img, 0);
 
-    auto image2 = std::make_shared<Image>(n_rows, n_cols);
     double x_min = 2.0;
     double y_min = 1.0;
-    auto coordsys2 = std::make_shared<g2::CoordinateSystem>(1., 1., x_min, y_min);
-    auto eval_offset = std::make_shared<Evaluator>(gaussians, coordsys2, nullptr, nullptr, image2);
+    auto coordsys2 = std::make_shared<g2d::CoordinateSystem>(1., 1., x_min, y_min);
+    auto image2 = std::make_shared<Image>(n_rows, n_cols, Image::_value_default_ptr(), coordsys2);
+    CHECK_EQ(*coordsys2, image2->get_coordsys());
+    auto eval_offset = std::make_shared<Evaluator>(gaussians, nullptr, nullptr, image2);
+    CHECK_EQ(eval_offset->get_coordsys(), *coordsys2);
 
     eval_offset->loglike_pixel();
     CHECK_EQ(image2->get_value(0, 0), image->get_value(y_min, x_min));
@@ -88,7 +112,7 @@ TEST_CASE("Evaluator") {
     // Add a small offset so the chi is not zero everywhere
     *image += err;
 
-    auto eval_like = std::make_shared<Evaluator>(gaussians, nullptr, image, sigma_inv);
+    auto eval_like = std::make_shared<Evaluator>(gaussians, image, sigma_inv);
 
     CHECK_NE(sigma_inv, nullptr);
 
@@ -98,7 +122,7 @@ TEST_CASE("Evaluator") {
     auto img_loglike_grads = std::make_shared<Image>(1, n_params);
     ImageArray::Data data_loglike_grads = {img_loglike_grads};
 
-    Evaluator eval_loglike_grad(gaussians, nullptr, image, sigma_inv, nullptr,
+    Evaluator eval_loglike_grad(gaussians, image, sigma_inv, nullptr,
                                 nullptr,  // residual,
                                 std::make_shared<ImageArray>(&data_loglike_grads));
     eval_loglike_grad.loglike_pixel();
@@ -114,7 +138,7 @@ TEST_CASE("Evaluator") {
         dloglike_findif = (dloglike_findif - eval_like->loglike_pixel()) / (2 * dx);
         double dloglike_eval = img_loglike_grads->get_value(0, idx_param);
         double delta_dloglike_max = 1e-3 * std::abs((dloglike_eval + dloglike_findif) / 2.) + 1e-4;
-        CHECK(std::abs(dloglike_eval - dloglike_findif) < delta_dloglike_max);
+        CHECK_LT(std::abs(dloglike_eval - dloglike_findif), delta_dloglike_max);
         value = value_old;
     }
 
@@ -125,7 +149,7 @@ TEST_CASE("Evaluator") {
 
     auto jacs = std::make_shared<ImageArray>(&data_jacs);
 
-    Evaluator eval_jacob(gaussians, nullptr, image, sigma_inv, nullptr,
+    Evaluator eval_jacob(gaussians, image, sigma_inv, nullptr,
                          nullptr,  // residual,
                          jacs
                          /*      map_grad_in,
@@ -145,7 +169,7 @@ TEST_CASE("Evaluator") {
     *image += -err;
 
     auto image_param = std::make_shared<Image>(n_rows, n_cols);
-    auto eval_img_new = std::make_shared<Evaluator>(gaussians, nullptr, nullptr, nullptr, image_param);
+    auto eval_img_new = std::make_shared<Evaluator>(gaussians, nullptr, nullptr, image_param);
 
     const double eps = 1e-6;
     const double atol = 1e-4;
@@ -184,7 +208,7 @@ TEST_CASE("Evaluator") {
     }
 
     std::string errormsg = "";
-    if (errors.size() != 0) {
+    if (!errors.empty()) {
         std::stringstream ss;
         ss << "";
         std::copy(std::begin(errors), std::end(errors), std::experimental::make_ostream_joiner(ss, "\n"));

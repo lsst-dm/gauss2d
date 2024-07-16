@@ -1,4 +1,27 @@
-#include <initializer_list>
+// -*- LSST-C++ -*-
+/*
+ * This file is part of gauss2d.
+ *
+ * Developed for the LSST Data Management System.
+ * This product includes software developed by the LSST Project
+ * (https://www.lsst.org).
+ * See the COPYRIGHT file at the top-level directory of this distribution
+ * for details of code ownership.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 
 #include "doctest.h"
@@ -6,76 +29,76 @@
 #include <memory>
 #include <stdexcept>
 
-#include "centroid.h"
-#include "gaussian.h"
+#include "lsst/gauss2d/centroid.h"
+#include "lsst/gauss2d/gaussian.h"
 
-namespace g2 = gauss2d;
+namespace g2d = lsst::gauss2d;
 
 TEST_CASE("Gaussian") {
-    auto g1 = g2::Gaussian{};
-    auto g2 = std::make_shared<g2::Gaussian>(g1.get_centroid_ptr(), g1.get_ellipse_ptr(),
-                                             std::make_shared<g2::GaussianIntegralValue>(2));
-    CHECK(g1 != *g2);
+    auto g1 = g2d::Gaussian{};
+    auto g2 = std::make_shared<g2d::Gaussian>(g1.get_centroid_ptr(), g1.get_ellipse_ptr(),
+                                              std::make_shared<g2d::GaussianIntegralValue>(2));
+    CHECK_NE(g1, *g2);
     g2->set_integral_value(g1.get_integral_value());
-    CHECK(g1 == *g2);
-    auto cen = std::make_shared<g2::Centroid>(0.5, 0.5);
+    CHECK_EQ(g1, *g2);
+    auto cen = std::make_shared<g2d::Centroid>(0.5, 0.5);
     g2->set_centroid_ptr(cen);
-    CHECK(g2->get_centroid().get_x() == 0.5);
-    CHECK(g2->get_centroid().get_y() == 0.5);
-    CHECK(g1 != *g2);
+    CHECK_EQ(g2->get_centroid().get_x(), 0.5);
+    CHECK_EQ(g2->get_centroid().get_y(), 0.5);
+    CHECK_NE(g1, *g2);
 }
 
 TEST_CASE("Gaussians") {
-    auto g1 = std::make_shared<g2::Gaussian>();
-    g2::Gaussians::Data data{g1, g1};
-    auto gs = g2::Gaussians(data);
-    CHECK(&(gs[0]) == &(gs[1]));
+    auto g1 = std::make_shared<g2d::Gaussian>();
+    g2d::Gaussians::Data data{g1, g1};
+    auto gs = g2d::Gaussians(data);
+    CHECK_EQ(&(gs[0]), &(gs[1]));
     CHECK_THROWS_AS(gs.at(2), std::out_of_range);
-    for (g2::Gaussians::const_iterator it = gs.cbegin(); it != gs.cend(); ++it) {
-        CHECK(*it == g1);
+    for (g2d::Gaussians::const_iterator it = gs.cbegin(); it != gs.cend(); ++it) {
+        CHECK_EQ(*it, g1);
     }
     for (const auto& gauss : gs) {
-        CHECK(gauss == g1);
+        CHECK_EQ(gauss, g1);
     }
 
-    std::vector<std::optional<const g2::Gaussians::Data>> data_vec;
-    data_vec.emplace_back(g2::Gaussians::Data());
+    std::vector<std::optional<const g2d::Gaussians::Data>> data_vec;
+    data_vec.emplace_back(g2d::Gaussians::Data());
     data_vec.push_back(data);
 
-    auto gs2 = g2::Gaussians(data_vec);
-    auto gs23 = g2::Gaussians({data, data});
+    auto gs2 = g2d::Gaussians(data_vec);
+    auto gs23 = g2d::Gaussians({data, data});
 }
 
 TEST_CASE("ConvolvedGaussian") {
-    auto g1 = std::make_shared<g2::Gaussian>(nullptr, std::make_shared<g2::Ellipse>(3, 6, 0));
-    auto g2 = std::make_shared<g2::Gaussian>(nullptr, std::make_shared<g2::Ellipse>(4, 8, 0),
-                                             std::make_shared<g2::GaussianIntegralValue>(2));
-    auto gc = g2::ConvolvedGaussian(g1, g2);
-    CHECK(&(gc.get_source()) == &(*g1));
-    CHECK(&(gc.get_kernel()) == &(*g2));
+    auto g1 = std::make_shared<g2d::Gaussian>(nullptr, std::make_shared<g2d::Ellipse>(3, 6, 0));
+    auto g2 = std::make_shared<g2d::Gaussian>(nullptr, std::make_shared<g2d::Ellipse>(4, 8, 0),
+                                              std::make_shared<g2d::GaussianIntegralValue>(2));
+    auto gc = g2d::ConvolvedGaussian(g1, g2);
+    CHECK_EQ(&(gc.get_source()), &(*g1));
+    CHECK_EQ(&(gc.get_kernel()), &(*g2));
 }
 
 TEST_CASE("ConvolvedGaussians") {
-    auto g1 = std::make_shared<g2::Gaussian>(nullptr, std::make_shared<g2::Ellipse>(3, 6, 0));
-    auto g2 = std::make_shared<g2::Gaussian>(nullptr, std::make_shared<g2::Ellipse>(4, 8, 0),
-                                             std::make_shared<g2::GaussianIntegralValue>(2));
-    auto g3 = std::make_shared<g2::Gaussian>();
+    auto g1 = std::make_shared<g2d::Gaussian>(nullptr, std::make_shared<g2d::Ellipse>(3, 6, 0));
+    auto g2 = std::make_shared<g2d::Gaussian>(nullptr, std::make_shared<g2d::Ellipse>(4, 8, 0),
+                                              std::make_shared<g2d::GaussianIntegralValue>(2));
+    auto g3 = std::make_shared<g2d::Gaussian>();
 
-    auto gc1 = std::make_shared<g2::ConvolvedGaussian>(g1, g2);
-    auto gc2 = std::make_shared<g2::ConvolvedGaussian>(g1, g3);
-    g2::ConvolvedGaussians::Data data{gc1, gc2};
+    auto gc1 = std::make_shared<g2d::ConvolvedGaussian>(g1, g2);
+    auto gc2 = std::make_shared<g2d::ConvolvedGaussian>(g1, g3);
+    g2d::ConvolvedGaussians::Data data{gc1, gc2};
 
-    std::vector<std::optional<const g2::ConvolvedGaussians::Data>> data_vec;
-    data_vec.emplace_back(g2::ConvolvedGaussians::Data());
+    std::vector<std::optional<const g2d::ConvolvedGaussians::Data>> data_vec;
+    data_vec.emplace_back(g2d::ConvolvedGaussians::Data());
     data_vec.push_back(data);
 
-    auto gcs = g2::ConvolvedGaussians(data);
+    auto gcs = g2d::ConvolvedGaussians(data);
     size_t i = 0;
-    for (g2::ConvolvedGaussians::const_iterator it = gcs.cbegin(); it != gcs.cend(); ++it) {
-        CHECK(*it == data.at(i++));
+    for (g2d::ConvolvedGaussians::const_iterator it = gcs.cbegin(); it != gcs.cend(); ++it) {
+        CHECK_EQ(*it, data.at(i++));
     }
     i = 0;
     for (const auto& gauss : gcs) {
-        CHECK(gauss == data.at(i++));
+        CHECK_EQ(gauss, data.at(i++));
     }
 }

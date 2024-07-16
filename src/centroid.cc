@@ -21,13 +21,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef GAUSS2D_CENTROID_H
-#include "centroid.h"
+#ifndef LSST_GAUSS2D_CENTROID_H
 
 #include <memory>
 #include <string>
 
-namespace gauss2d {
+#include "lsst/gauss2d/centroid.h"
+#include "lsst/gauss2d/to_string.h"
+#include "lsst/gauss2d/type_name.h"
+
+namespace lsst::gauss2d {
 
 double CentroidValues::get_x() const { return *_x; }
 std::array<double, 2> CentroidValues::get_xy() const { return {*_x, *_y}; }
@@ -40,14 +43,21 @@ void CentroidValues::set_xy(const std::array<double, 2>& xy) {
 };
 void CentroidValues::set_y(double y) { *_y = y; }
 
-std::string CentroidValues::repr(bool name_keywords) const {
-    return std::string("CentroidValues(") + (name_keywords ? "x=" : "") + std::to_string(*_x) + ", "
-           + (name_keywords ? "y=" : "") + std::to_string(*_y) + ")";
+std::string CentroidValues::repr(bool name_keywords, std::string_view namespace_separator) const {
+    return type_name_str<CentroidValues>(false, namespace_separator) + "(" + (name_keywords ? "x=" : "")
+           + to_string_float(*_x) + ", " + (name_keywords ? "y=" : "") + to_string_float(*_y) + ")";
 }
 
 std::string CentroidValues::str() const {
-    return "CentroidValues(x=" + std::to_string(*_x) + ", y=" + std::to_string(*_y) + ")";
+    return type_name_str<CentroidValues>(true) + "(x=" + to_string_float(*_x) + ", y=" + to_string_float(*_y)
+           + ")";
 }
+
+bool CentroidValues::operator==(const CentroidValues& other) const {
+    return (this->get_x() == other.get_x()) && (this->get_y() == other.get_y());
+};
+
+bool CentroidValues::operator!=(const CentroidValues& other) const { return !(*this == other); }
 
 CentroidValues::CentroidValues(std::shared_ptr<double> x, std::shared_ptr<double> y)
         : _x(x == nullptr ? std::make_shared<double>(0) : std::move(x)),
@@ -83,13 +93,18 @@ void Centroid::set_x(double x) { _data->set_x(x); }
 void Centroid::set_xy(const std::array<double, 2>& xy) { _data->set_xy(xy); }
 void Centroid::set_y(double y) { _data->set_y(y); }
 
-std::string Centroid::repr(bool name_keywords) const {
-    return std::string("Centroid(") + (name_keywords ? "data=" : "") + _data->repr(name_keywords) + ")";
+std::string Centroid::repr(bool name_keywords, std::string_view namespace_separator) const {
+    return type_name_str<Centroid>(false, namespace_separator) + "(" + (name_keywords ? "data=" : "")
+           + _data->repr(name_keywords, namespace_separator) + ")";
 }
 
-std::string Centroid::str() const { return "Centroid(data=" + _data->str() + ")"; }
+std::string Centroid::str() const { return type_name_str<Centroid>(true) + "(data=" + _data->str() + ")"; }
 
-bool Centroid::operator==(const Centroid& other) const { return get_data() == other.get_data(); };
+bool Centroid::operator==(const Centroid& other) const {
+    return (this->get_x() == other.get_x()) && (this->get_y() == other.get_y());
+};
+
+bool Centroid::operator!=(const Centroid& other) const { return !(*this == other); }
 
 Centroid::Centroid(std::shared_ptr<CentroidData> data)
         : _data(data == nullptr ? std::make_shared<CentroidValues>() : std::move(data)) {}
@@ -99,6 +114,6 @@ Centroid::Centroid(double x, double y) : _data(std::make_shared<CentroidValues>(
     set_y(y);
 }
 
-}  // namespace gauss2d
+}  // namespace lsst::gauss2d
 
 #endif

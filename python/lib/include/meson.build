@@ -1,4 +1,5 @@
+prefix = 'lsst/gauss2d/python/'
 gauss2d_python_headers = [
-    'pyimage.h',
+    prefix + 'image.h',
 ]
-install_headers(gauss2d_python_headers, subdir : 'gauss2d/python')
+install_headers(gauss2d_python_headers, preserve_path : true)

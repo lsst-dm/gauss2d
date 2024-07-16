@@ -1,5 +1,5 @@
 test_names = [
-    'pyimage', # commented out until it can pass locally
+    'image', # commented out until it can pass locally
 ]
 pymod = import('python')
 python = pymod.find_installation(
