@@ -15,6 +15,11 @@ build()
     (build_cc && build_py)
 }
 
+clean()
+{
+    ./clean.sh
+}
+
 config_cc()
 {
     ([ -d "$GAUSS2D_DIR" ] && ./clean-cc.sh && meson setup --prefix="$GAUSS2D_DIR/build-release" \
