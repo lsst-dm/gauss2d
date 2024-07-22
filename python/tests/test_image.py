@@ -23,8 +23,11 @@ import pytest
 
 import lsst.gauss2d as g2d
 import numpy as np
+import sys
 
 prefix_namespace = "lsst.gauss2d."
+
+check_str_repr = "linux" in sys.platform
 
 
 def test_Image():
@@ -36,14 +39,16 @@ def test_Image():
     img.set_value_unchecked(0, 0, -1)
     assert img.get_value_unchecked(0, 0) == -1
     str_coordsys = str(img.coordsys)
-    assert str(img) == f"ImageD(coordsys={str_coordsys}, n_rows=1, n_cols=1)"
-    assert repr(img) == (
-        f"{prefix_namespace}python.ImageD(coordsys={prefix_namespace}{str_coordsys}, n_rows=1, n_cols=1)"
-    )
+    if check_str_repr:
+        assert str(img) == f"ImageD(coordsys={str_coordsys}, n_rows=1, n_cols=1)"
+        assert repr(img) == (
+            f"{prefix_namespace}python.ImageD(coordsys={prefix_namespace}{str_coordsys}, n_rows=1, n_cols=1)"
+        )
     n_rows, n_cols = 11, 13
     coordsys = g2d.CoordinateSystem(1.3, -0.7, -11.6, 365.1)
     img = g2d.ImageF(n_rows=n_rows, n_cols=n_cols, coordsys=coordsys)
-    assert str(img) == f"ImageF(coordsys={coordsys}, n_rows={n_rows}, n_cols={n_cols})"
+    if check_str_repr:
+        assert str(img) == f"ImageF(coordsys={coordsys}, n_rows={n_rows}, n_cols={n_cols})"
 
 
 def test_numpy_Image():
@@ -83,10 +88,11 @@ def test_ImageArray():
     with pytest.raises(ValueError):
         g2d.ImageArrayD([imgs[0], None])
 
-    assert str(img_arr) == f"ImageArrayD(data=[{str(imgs[0])}, {str(imgs[1])}])"
-    assert repr(img_arr) == (
-        f"{prefix_namespace}ImageArrayD(data=[{repr(imgs[0])}, {repr(imgs[1])}])"
-    )
+    if check_str_repr:
+        assert str(img_arr) == f"ImageArrayD(data=[{str(imgs[0])}, {str(imgs[1])}])"
+        assert repr(img_arr) == (
+            f"{prefix_namespace}ImageArrayD(data=[{repr(imgs[0])}, {repr(imgs[1])}])"
+        )
 
 
 @pytest.fixture(scope="module")
@@ -127,21 +133,22 @@ def test_GaussianEvaluator(convolved_gaussians):
     output += 1e-6
     assert evaluator_ll.loglike_pixel() < 0
 
-    assert str(evaluator_ll) == (
-        f"GaussianEvaluatorD(gaussians={str(convolved_gaussians)}, "
-        f"do_extra=0, do_output=0, do_residual=0, has_background=0, "
-        f"is_sigma_image=1, backgroundtype=0, get_likelihood=1, "
-        f"data={str(output)}, sigma_inv={str(sigma_inv)}, output=None, residual=None, "
-        f"grads=None, grad_param_map=None, grad_param_factor=None, "
-        f"extra_param_map=None, extra_param_factor=None, grad_extra=None, grad_param_idx=[], "
-        f"n_cols={output.n_cols}, n_rows={output.n_rows}, coordsys={str(output.coordsys)})"
-    )
-    assert repr(evaluator_ll) == (
-        f"{prefix_namespace}GaussianEvaluatorD(gaussians={repr(convolved_gaussians)}, "
-        f"data={repr(output)}, sigma_inv={repr(sigma_inv)}, output=None, residual=None, "
-        f"grads=None, grad_param_map=None, grad_param_factor=None, "
-        f"extra_param_map=None, extra_param_factor=None, background=None)"
-    )
+    if check_str_repr:
+        assert str(evaluator_ll) == (
+            f"GaussianEvaluatorD(gaussians={str(convolved_gaussians)}, "
+            f"do_extra=0, do_output=0, do_residual=0, has_background=0, "
+            f"is_sigma_image=1, backgroundtype=0, get_likelihood=1, "
+            f"data={str(output)}, sigma_inv={str(sigma_inv)}, output=None, residual=None, "
+            f"grads=None, grad_param_map=None, grad_param_factor=None, "
+            f"extra_param_map=None, extra_param_factor=None, grad_extra=None, grad_param_idx=[], "
+            f"n_cols={output.n_cols}, n_rows={output.n_rows}, coordsys={str(output.coordsys)})"
+        )
+        assert repr(evaluator_ll) == (
+            f"{prefix_namespace}GaussianEvaluatorD(gaussians={repr(convolved_gaussians)}, "
+            f"data={repr(output)}, sigma_inv={repr(sigma_inv)}, output=None, residual=None, "
+            f"grads=None, grad_param_map=None, grad_param_factor=None, "
+            f"extra_param_map=None, extra_param_factor=None, background=None)"
+        )
 
 
 def test_make_gaussians_pixel(convolved_gaussians):

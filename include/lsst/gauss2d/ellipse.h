@@ -255,7 +255,7 @@ public:
     std::array<double, 3> get_xyr() const override;
 
     void set(double sigma_x, double sigma_y, double rho) override;
-    void set_h(double hwhm_x, double hwhm_y, double rho);
+    void set_h(double hwhm_x, double hwhm_y, double rho) override;
     void set_sigma_x(double sigma_x) override;
     void set_sigma_y(double sigma_y) override;
     void set_rho(double rho) override;
