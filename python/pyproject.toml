@@ -33,6 +33,8 @@ test = [
     "pytest >= 3.2",
 ]
 
+[tool.pytest.ini_options]
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
