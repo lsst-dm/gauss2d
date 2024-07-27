@@ -56,7 +56,7 @@ Science Pipelines (the next section).
 Standalone builds
 #################
 
-A full example setup script is provided in ``setup_conda.sh``.
+A full example setup script is provided in ``setup-conda-release.sh``.
 This defaults to  using ``$CONDA_PREFIX``, but can be configured to output
 elsewhere (e.g. ``~/.local``) like so:
 
@@ -65,7 +65,13 @@ elsewhere (e.g. ``~/.local``) like so:
 Once the build command is run once to create the build directories, subsequent
 rebuilds can use the provided ``build.sh`` script.
 
-Otherwise, to manually create a build directory, call:
+Note that the installation path for the Python bindings' module may not already
+be in Python's sys.path, leading to import errors. This can be solved by
+creating a .pth file. For example, in a conda environment with Python 3.12:
+
+``echo $CONDA_PREFIX/.local/lib/python3.12/site-packages > $CONDA_PREFIX/lib/python3.12/site-packages/conda.pth``
+
+To manually create a build directory, call:
 
 ``meson builddir/``
 
