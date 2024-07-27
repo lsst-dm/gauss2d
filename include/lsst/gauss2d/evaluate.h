@@ -668,7 +668,7 @@ public:
     typedef ImageArray<T, Data> ImageArrayT;
     typedef Image<idx_type, Indices> IndicesT;
 
-    GaussianEvaluator(int x = 0, const std::shared_ptr<const ConvolvedGaussians> gaussians = nullptr) {};
+    GaussianEvaluator(int x = 0, const std::shared_ptr<const ConvolvedGaussians> gaussians = nullptr) {}
 
     /**
      * @brief Construct a GaussianEvaluator, inferring outputs from inputs.
@@ -869,9 +869,10 @@ public:
     }
     ~GaussianEvaluator() override {};
 
-    const Data& IMAGE_NULL_CONST() const { return this->IMAGE_NULL(); };
-    const Indices& INDICES_NULL_CONST() const { return this->INDICES_NULL(); };
-    const ImageArray<T, Data>& IMAGEARRAY_NULL_CONST() const { return this->IMAGEARRAY_NULL(); };
+    // TODO: Return to this>IMAGE_NULL(), etc. when DM-45445 is fixed
+    const Data& IMAGE_NULL_CONST() const { return this->_data_null_const; }
+    const Indices& INDICES_NULL_CONST() const { return this->_indices_null_const; }
+    const ImageArray<T, Data>& IMAGEARRAY_NULL_CONST() const { return this->_data_array_null_const; }
 
     const CoordinateSystem& get_coordsys() const { return _coordsys; }
     size_t get_n_cols() const { return (_n_cols); }
@@ -957,6 +958,8 @@ public:
     }
 
 private:
+    // These are private because they originally return static objects that
+    // were (and are) not meant to be mutated, although they probably can be
     Data& IMAGE_NULL() const;
     ImageArrayT& IMAGEARRAY_NULL() const;
     Indices& INDICES_NULL() const;
@@ -991,6 +994,12 @@ private:
     const size_t _size;
     const CoordinateSystem& _coordsys;
 
+    // TODO: Temporary substitute for static members due to pybind11 bug
+    // see https://rubinobs.atlassian.net/browse/DM-45445
+    const Data _data_null_const{0, 0};
+    const ImageArray<T, Data> _data_array_null_const{nullptr};
+    const Indices _indices_null_const{0, 0};
+
     std::vector<size_t> _get_grad_param_idx() const {
         std::vector<size_t> grad_param_idx;
         std::set<size_t> grad_param_idx_uniq;
@@ -1020,13 +1029,16 @@ private:
             background_flat += _background->get_value_unchecked(0, 0);
         }
         const size_t n_gaussians = _gaussians.size();
+        auto data_null = Data{0, 0};
+        auto array_null = ImageArray<T, Data>{nullptr};
 
-        DataT& outputgradref = is_loglike ? _grads->at(0) : (DataT&)(IMAGE_NULL());
-        ImageArrayT& output_jac_ref = gradient_type == GradientType::jacobian ? (*_grads) : IMAGEARRAY_NULL();
+        // TODO: Return to this>IMAGE_NULL(), etc. when DM-45445 is fixed
+        DataT& outputgradref = is_loglike ? _grads->at(0) : data_null;
+        ImageArrayT& output_jac_ref = gradient_type == GradientType::jacobian ? (*_grads) : array_null;
         size_t grad_param_idx_size = _grad_param_idx.size();
 
-        DataT& outputref = writeoutput ? (*_output) : IMAGE_NULL();
-        DataT& residual_ref = do_residual ? (*_residual) : IMAGE_NULL();
+        DataT& outputref = writeoutput ? (*_output) : data_null;
+        DataT& residual_ref = do_residual ? (*_residual) : data_null;
         const IndicesT& grad_param_map_ref = do_gradient ? (*_grad_param_map) : INDICES_NULL_CONST();
         const DataT& grad_param_factor_ref = do_gradient ? (*_grad_param_factor) : IMAGE_NULL_CONST();
 
