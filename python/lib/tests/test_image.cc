@@ -66,10 +66,19 @@ TEST_CASE("Mask") {
     auto image = Image(2, 2);
     auto mask = Mask(2, 2);
     mask.fill(false);
-    /*
     CHECK_EQ(mask.get_value_unchecked(0, 0), false);
     mask._get_value_unchecked(1, 1) = true;
-    CHECK(mask.get_value_unchecked(1, 1) == true);
-    CHECK(g2d::images_compatible<double, Image, bool, Mask>(image, mask));
-     */
+    CHECK_EQ(mask.get_value_unchecked(1, 1), true);
+    CHECK_EQ(g2d::images_compatible<double, Image, bool, Mask>(image, mask), true);
+}
+
+TEST_CASE("Evaluate") {
+    auto gauss1 = std::make_shared<g2d::Gaussian>(nullptr, std::make_shared<g2d::Ellipse>(3, 6, 0));
+    auto gauss2 = std::make_shared<g2d::Gaussian>(nullptr, std::make_shared<g2d::Ellipse>(4, 8, 0));
+    auto gauss_conv = std::make_shared<g2d::ConvolvedGaussian>(gauss1, gauss2);
+    g2d::ConvolvedGaussians::Data data{gauss_conv, std::make_shared<g2d::ConvolvedGaussian>(gauss2, gauss1)};
+    auto gaussians_conv = std::make_shared<g2d::ConvolvedGaussians>(data);
+    auto output = g2d::make_gaussians_pixel<double, Image, g2d::python::Image<size_t>>(gaussians_conv,
+                                                                                       nullptr, 5, 7);
+    CHECK_EQ(output->get_n_rows(), 5);
 }
