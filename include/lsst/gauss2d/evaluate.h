@@ -867,7 +867,7 @@ public:
             }
         }
     }
-    ~GaussianEvaluator() {};
+    ~GaussianEvaluator() override = default;
 
     const Data& IMAGE_NULL_CONST() const { return this->IMAGE_NULL(); };
     const Indices& INDICES_NULL_CONST() const { return this->INDICES_NULL(); };
