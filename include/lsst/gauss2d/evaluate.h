@@ -1249,7 +1249,7 @@ std::shared_ptr<Data> make_gaussians_pixel(const std::shared_ptr<const Convolved
         output = std::make_shared<Data>(n_rows, n_cols, nullptr, coordsys);
     }
     auto evaluator
-            = std::make_shared<GaussianEvaluator<T, Data, Indices>>(gaussians, nullptr, nullptr, output);
+            = std::make_unique<GaussianEvaluator<T, Data, Indices>>(gaussians, nullptr, nullptr, output);
     evaluator->loglike_pixel(to_add);
     return output;
 }
