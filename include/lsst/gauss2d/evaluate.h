@@ -330,8 +330,11 @@ template <typename t, class Data, class Indices>
 class GradientsExtra : public Object {
 public:
     GradientsExtra(const Image<idx_type, Indices>& param_map_in, const Image<t, Data>& param_factor_in,
-                   ImageArray<t, Data>& output, size_t n_gauss)
+                   std::shared_ptr<ImageArray<t, Data>> output, size_t n_gauss)
             : _param_map(param_map_in), _param_factor(param_factor_in), _output(output) {
+        if(output == nullptr) {
+            throw std::invalid_argument("GradientsExtra output must not be a nullptr");
+        }
         const auto n_extra_map_rows = param_map_in.get_n_rows();
         const auto n_extra_fac_rows = param_factor_in.get_n_rows();
         const auto n_extra_map_cols = param_map_in.get_n_cols();
@@ -366,7 +369,7 @@ public:
         double value = gradients.L * _param_factor.get_value(g, 0)
                        + gradients.sigma_x * _param_factor.get_value(g, 1)
                        + gradients.sigma_y * _param_factor.get_value(g, 2);
-        _output[idx].add_value_unchecked(dim1, dim2, value);
+        (*_output)[idx].add_value_unchecked(dim1, dim2, value);
         _g_check += to_add;
     }
 
@@ -377,7 +380,7 @@ public:
                 type_name_str<GradientsExtra<t, Data, Indices>>(false, namespace_separator) + "("
                 + (is_kw ? "param_map=" : "") + _param_map.repr(is_kw, namespace_separator) + ", "
                 + (is_kw ? "param_factor=" : "") + _param_factor.repr(is_kw, namespace_separator) + ", "
-                + (is_kw ? "output=" : "") + _output.repr(is_kw, namespace_separator) + ", "
+                + (is_kw ? "output=" : "") + _output->repr(is_kw, namespace_separator) + ", "
                 + (is_kw ? "n_gauss=" : "") + std::to_string(_param_map.get_n_rows()) + ")"  //
         );
         return rval;
@@ -387,7 +390,7 @@ public:
                 type_name_str<GradientsExtra<t, Data, Indices>>(true) + "("   //
                 + "param_map=" + _param_map.str() + ", "                      //
                 + "param_factor=" + _param_factor.str() + ", "                //
-                + "output=" + _output.str() + ", "                            //
+                + "output=" + _output->str() + ", "                            //
                 + "n_gauss=" + std::to_string(_param_map.get_n_rows()) + ")"  //
         );
         return rval;
@@ -396,7 +399,7 @@ public:
 private:
     const Image<idx_type, Indices>& _param_map;
     const Image<t, Data>& _param_factor;
-    ImageArray<t, Data>& _output;
+    std::shared_ptr<ImageArray<t, Data>> _output;
     size_t _g_check = 0;
 };
 
@@ -543,7 +546,7 @@ inline void gaussian_pixel_add_values(t& cen_x, t& cen_y, t& L, t& sig_x, t& sig
 // Computes and stores LL along with dll/dx for all components
 template <typename t, class Data, class Indices, bool do_extra>
 inline void gaussians_pixel_add_like_grad(
-        Image<t, Data>& output, const Image<idx_type, Indices>& grad_param_map,
+        Image<t, Data> * output, const Image<idx_type, Indices>& grad_param_map,
         const Image<t, Data>& grad_param_factor, const size_t N_GAUSS,
         const std::vector<Weights>& gaussweights, double& chi_pix, double& loglike, const double model,
         double data, double sigma_inv, unsigned int dim1, unsigned int dim2, const TermsPixelVec& terms_pixel,
@@ -567,12 +570,12 @@ inline void gaussians_pixel_add_like_grad(
         gaussian_pixel_get_jacobian_from_terms(gradients, dim1, terms_pixel[g], terms_grad[g],
                                                weights[0] * diffvar, weights[1] * diffvar, weights[2]);
         gaussian_pixel_add_values<t>(
-                output._get_value_unchecked(0, grad_param_map.get_value_unchecked(g, 0)),
-                output._get_value_unchecked(0, grad_param_map.get_value_unchecked(g, 1)),
-                output._get_value_unchecked(0, grad_param_map.get_value_unchecked(g, 2)),
-                output._get_value_unchecked(0, grad_param_map.get_value_unchecked(g, 3)),
-                output._get_value_unchecked(0, grad_param_map.get_value_unchecked(g, 4)),
-                output._get_value_unchecked(0, grad_param_map.get_value_unchecked(g, 5)), gradients,
+                output->_get_value_unchecked(0, grad_param_map.get_value_unchecked(g, 0)),
+                output->_get_value_unchecked(0, grad_param_map.get_value_unchecked(g, 1)),
+                output->_get_value_unchecked(0, grad_param_map.get_value_unchecked(g, 2)),
+                output->_get_value_unchecked(0, grad_param_map.get_value_unchecked(g, 3)),
+                output->_get_value_unchecked(0, grad_param_map.get_value_unchecked(g, 4)),
+                output->_get_value_unchecked(0, grad_param_map.get_value_unchecked(g, 5)), gradients,
                 grad_param_factor.get_value_unchecked(g, 0), grad_param_factor.get_value_unchecked(g, 1),
                 grad_param_factor.get_value_unchecked(g, 2), grad_param_factor.get_value_unchecked(g, 3),
                 grad_param_factor.get_value_unchecked(g, 4), grad_param_factor.get_value_unchecked(g, 5));
@@ -580,7 +583,7 @@ inline void gaussians_pixel_add_like_grad(
             double value = gradients.L * extra_param_factor->get_value_unchecked(g, 0)
                            + gradients.sigma_x * extra_param_factor->get_value_unchecked(g, 1)
                            + gradients.sigma_y * extra_param_factor->get_value_unchecked(g, 2);
-            output._get_value_unchecked(0, extra_param_map->get_value_unchecked(g, 1)) += value;
+            output->_get_value_unchecked(0, extra_param_map->get_value_unchecked(g, 1)) += value;
         }
     }
 }
@@ -668,7 +671,7 @@ public:
     typedef ImageArray<T, Data> ImageArrayT;
     typedef Image<idx_type, Indices> IndicesT;
 
-    GaussianEvaluator(int x = 0, const std::shared_ptr<const ConvolvedGaussians> gaussians = nullptr) {};
+    GaussianEvaluator(int x = 0, const std::shared_ptr<const ConvolvedGaussians> gaussians = nullptr) {}
 
     /**
      * @brief Construct a GaussianEvaluator, inferring outputs from inputs.
@@ -752,23 +755,22 @@ public:
                                                      : detail::_param_factor_default<Data>(
                                                                _gaussians.size(), N_EXTRA_FACTOR, 0.))),
               _grad_extra(_do_extra ? std::make_unique<detail::GradientsExtra<T, Data, Indices>>(
-                                              *extra_param_map, *extra_param_factor,
-                                              grads != nullptr ? *grads : IMAGEARRAY_NULL(), _n_gaussians)
+                                              *extra_param_map, *extra_param_factor, _grads, _n_gaussians)
                                     : nullptr),
               _grad_param_idx(_grad_param_map == nullptr ? std::vector<size_t>{} : _get_grad_param_idx()),
               _n_cols(_data == nullptr ? (_output == nullptr ? (_gradienttype == GradientType::jacobian
-                                                                        ? (*grads)[0].get_n_cols()
+                                                                        ? (*_grads)[0].get_n_cols()
                                                                         : 0)
                                                              : _output->get_n_cols())
                                        : _data->get_n_cols()),
               _n_rows(_data == nullptr ? (_output == nullptr ? (_gradienttype == GradientType::jacobian
-                                                                        ? (*grads)[0].get_n_rows()
+                                                                        ? (*_grads)[0].get_n_rows()
                                                                         : 0)
                                                              : _output->get_n_rows())
                                        : _data->get_n_rows()),
               _size(_n_cols * _n_rows),
               _coordsys(_data == nullptr ? (_output == nullptr ? (_gradienttype == GradientType::jacobian
-                                                                          ? (*grads)[0].get_coordsys()
+                                                                          ? (*_grads)[0].get_coordsys()
                                                                           : COORDS_DEFAULT)
                                                                : _output->get_coordsys())
                                          : _data->get_coordsys()) {
@@ -867,11 +869,11 @@ public:
             }
         }
     }
-    ~GaussianEvaluator() {};
+    ~GaussianEvaluator() override = default;
 
-    const Data& IMAGE_NULL_CONST() const { return this->IMAGE_NULL(); };
-    const Indices& INDICES_NULL_CONST() const { return this->INDICES_NULL(); };
-    const ImageArray<T, Data>& IMAGEARRAY_NULL_CONST() const { return this->IMAGEARRAY_NULL(); };
+    Data const& IMAGE_NULL_CONST() const { return this->_data_null_const; }
+    Indices const& INDICES_NULL_CONST() const { return this->_indices_null_const; }
+    ImageArray<T, Data> const& IMAGEARRAY_NULL_CONST() const { return this->_data_array_null_const; }
 
     const CoordinateSystem& get_coordsys() const { return _coordsys; }
     size_t get_n_cols() const { return (_n_cols); }
@@ -957,9 +959,9 @@ public:
     }
 
 private:
-    Data& IMAGE_NULL() const;
+    // These are private because they originally return static objects that
+    // were (and are) not meant to be mutated, although they probably can be
     ImageArrayT& IMAGEARRAY_NULL() const;
-    Indices& INDICES_NULL() const;
 
     const ConvolvedGaussians& _gaussians;
     const std::shared_ptr<const ConvolvedGaussians> _gaussians_ptr;
@@ -991,6 +993,12 @@ private:
     const size_t _size;
     const CoordinateSystem& _coordsys;
 
+    // TODO: Make static if possible - static PyImage does not work on
+    // Python 3.12; see https://rubinobs.atlassian.net/browse/DM-45445
+    const Data _data_null_const{0, 0};
+    const ImageArray<T, Data> _data_array_null_const{nullptr};
+    const Indices _indices_null_const{0, 0};
+
     std::vector<size_t> _get_grad_param_idx() const {
         std::vector<size_t> grad_param_idx;
         std::set<size_t> grad_param_idx_uniq;
@@ -1020,13 +1028,16 @@ private:
             background_flat += _background->get_value_unchecked(0, 0);
         }
         const size_t n_gaussians = _gaussians.size();
+        auto data_null = Data{0, 0};
+        auto array_null = ImageArray<T, Data>{nullptr};
 
-        DataT& outputgradref = is_loglike ? _grads->at(0) : (DataT&)(IMAGE_NULL());
-        ImageArrayT& output_jac_ref = gradient_type == GradientType::jacobian ? (*_grads) : IMAGEARRAY_NULL();
+        // TODO: Return to this>IMAGE_NULL(), etc. when DM-45445 is fixed
+        DataT * output_grad = is_loglike ? &(_grads->at(0)) : nullptr;
+        ImageArrayT& output_jac_ref = gradient_type == GradientType::jacobian ? (*_grads) : array_null;
         size_t grad_param_idx_size = _grad_param_idx.size();
 
-        DataT& outputref = writeoutput ? (*_output) : IMAGE_NULL();
-        DataT& residual_ref = do_residual ? (*_residual) : IMAGE_NULL();
+        DataT& outputref = writeoutput ? (*_output) : data_null;
+        DataT& residual_ref = do_residual ? (*_residual) : data_null;
         const IndicesT& grad_param_map_ref = do_gradient ? (*_grad_param_map) : INDICES_NULL_CONST();
         const DataT& grad_param_factor_ref = do_gradient ? (*_grad_param_factor) : IMAGE_NULL_CONST();
 
@@ -1137,7 +1148,7 @@ private:
                     // gaussians_pixel_add_like_grad adds to the loglike to avoid redundant calculations
                     else if constexpr (gradient_type == GradientType::loglike) {
                         detail::gaussians_pixel_add_like_grad<T, Data, Indices, do_extra>(
-                                outputgradref, grad_param_map_ref, grad_param_factor_ref, n_gaussians,
+                                output_grad, grad_param_map_ref, grad_param_factor_ref, n_gaussians,
                                 weights_grad, chi_pix, loglike, model, data_pix, sigma_inv_pix, j, i,
                                 terms_pixel, terms_grad, gradients, _extra_param_map, _extra_param_factor);
                     }
@@ -1204,24 +1215,6 @@ private:
     }
 };
 
-template <typename t, class Data, class Indices>
-Data& GaussianEvaluator<t, Data, Indices>::IMAGE_NULL() const {
-    static Data null{0, 0};
-    return null;
-}
-
-template <typename t, class Data, class Indices>
-ImageArray<t, Data>& GaussianEvaluator<t, Data, Indices>::IMAGEARRAY_NULL() const {
-    static ImageArray<t, Data> null{nullptr};
-    return null;
-}
-
-template <typename t, class Data, class Indices>
-Indices& GaussianEvaluator<t, Data, Indices>::INDICES_NULL() const {
-    static Indices null{0, 0};
-    return null;
-}
-
 /**
  * @brief Add gaussians to an image, creating one if needed
  *
@@ -1249,7 +1242,7 @@ std::shared_ptr<Data> make_gaussians_pixel(const std::shared_ptr<const Convolved
         output = std::make_shared<Data>(n_rows, n_cols, nullptr, coordsys);
     }
     auto evaluator
-            = std::make_shared<GaussianEvaluator<T, Data, Indices>>(gaussians, nullptr, nullptr, output);
+            = std::make_unique<GaussianEvaluator<T, Data, Indices>>(gaussians, nullptr, nullptr, output);
     evaluator->loglike_pixel(to_add);
     return output;
 }

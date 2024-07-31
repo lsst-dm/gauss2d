@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+### [0.1.3] 2024-07-30
+
+* Changed: Updated Python module README build instructions
+* Added: Instructions on adding .pth file for standalone install in README
+* Added: PyImage GaussianEvaluator test case
+* Fixed: segfault in pybind11 module on Pybind 3.12
+* Fixed: Made evaluator in make_gaussians_pixel a unique_ptr, not shared
+* Fixed: Added missing override
+* See [DM-45473](https://rubinobs.atlassian.net/browse/DM-45473) for details.
+
 ### [0.1.2] 2024-07-23
 
 * Fixed: Added pytest.ini_options to python/pyproject.toml
@@ -24,6 +34,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 * Changed: Initial release, forked to https://github.com/lsst/gauss2d.
 * See [DM-43906](https://rubinobs.atlassian.net/browse/DM-43906) for details. 
 
+[0.1.3]: https://github.com/lsst-dm/gauss2d/compare/0.1.2...0.1.3
 [0.1.2]: https://github.com/lsst-dm/gauss2d/compare/0.1.1...0.1.2
 [0.1.1]: https://github.com/lsst-dm/gauss2d/compare/0.1.0...0.1.1
 [0.1.0]: https://github.com/lsst-dm/gauss2d/compare/53bc2990d...0.1.0
