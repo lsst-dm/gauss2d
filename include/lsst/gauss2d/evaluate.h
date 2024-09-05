@@ -332,7 +332,7 @@ public:
     GradientsExtra(const Image<idx_type, Indices>& param_map_in, const Image<t, Data>& param_factor_in,
                    std::shared_ptr<ImageArray<t, Data>> output, size_t n_gauss)
             : _param_map(param_map_in), _param_factor(param_factor_in), _output(output) {
-        if(output == nullptr) {
+        if (output == nullptr) {
             throw std::invalid_argument("GradientsExtra output must not be a nullptr");
         }
         const auto n_extra_map_rows = param_map_in.get_n_rows();
@@ -390,7 +390,7 @@ public:
                 type_name_str<GradientsExtra<t, Data, Indices>>(true) + "("   //
                 + "param_map=" + _param_map.str() + ", "                      //
                 + "param_factor=" + _param_factor.str() + ", "                //
-                + "output=" + _output->str() + ", "                            //
+                + "output=" + _output->str() + ", "                           //
                 + "n_gauss=" + std::to_string(_param_map.get_n_rows()) + ")"  //
         );
         return rval;
@@ -546,7 +546,7 @@ inline void gaussian_pixel_add_values(t& cen_x, t& cen_y, t& L, t& sig_x, t& sig
 // Computes and stores LL along with dll/dx for all components
 template <typename t, class Data, class Indices, bool do_extra>
 inline void gaussians_pixel_add_like_grad(
-        Image<t, Data> * output, const Image<idx_type, Indices>& grad_param_map,
+        Image<t, Data>* output, const Image<idx_type, Indices>& grad_param_map,
         const Image<t, Data>& grad_param_factor, const size_t N_GAUSS,
         const std::vector<Weights>& gaussweights, double& chi_pix, double& loglike, const double model,
         double data, double sigma_inv, unsigned int dim1, unsigned int dim2, const TermsPixelVec& terms_pixel,
@@ -1032,7 +1032,7 @@ private:
         auto array_null = ImageArray<T, Data>{nullptr};
 
         // TODO: Return to this>IMAGE_NULL(), etc. when DM-45445 is fixed
-        DataT * output_grad = is_loglike ? &(_grads->at(0)) : nullptr;
+        DataT* output_grad = is_loglike ? &(_grads->at(0)) : nullptr;
         ImageArrayT& output_jac_ref = gradient_type == GradientType::jacobian ? (*_grads) : array_null;
         size_t grad_param_idx_size = _grad_param_idx.size();
 
