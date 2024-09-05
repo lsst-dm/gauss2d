@@ -1085,7 +1085,7 @@ private:
                 const auto ell_conv = Ellipse(*cov_conv);
 
                 // Deliberately omit weights for now
-                const detail::Terms terms = detail::terms_from_covar(bin_x * bin_y, ell_conv);
+                const detail::Terms terms = detail::terms_from_covar(std::abs(bin_x * bin_y), ell_conv);
                 auto yvals = detail::gaussian_pixel_x_xx(cen_y, y_min, bin_y, _n_rows, terms.yy, terms.xy);
 
                 terms_pixel[g].set(terms.weight, weight_kernel, x_min - cen_x + bin_x_half, terms.xx,
