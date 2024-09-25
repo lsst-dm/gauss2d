@@ -44,13 +44,11 @@ typedef g2d::GaussianEvaluator<double, Image, Indices> Evaluator;
 
 typedef std::shared_ptr<double> Value;
 
-TEST_CASE("Evaluator") {
-    const size_t n_rows = 5, n_cols = 4, n_comp = 2;
-    auto image = std::make_shared<Image>(n_rows, n_cols);
-
+g2d::ConvolvedGaussians::Data make_gaussians_data(
+    std::vector<Value> & values, size_t n_rows = 5, size_t n_cols = 4, size_t n_comp = 2
+) {
     g2d::ConvolvedGaussians::Data data{};
 
-    std::vector<Value> values;
     values.reserve(n_comp * g2d::N_PARAMS_GAUSS2D);
 
     for (size_t i = 0; i < n_comp; ++i) {
@@ -80,8 +78,17 @@ TEST_CASE("Evaluator") {
                                                       std::make_shared<g2d::Ellipse>(0, 0, 0),
                                                       std::make_shared<g2d::GaussianIntegralValue>())));
     }
-    const size_t n_params = values.size();
-    CHECK_EQ(n_params, n_comp * g2d::N_PARAMS_GAUSS2D);
+    CHECK_EQ(values.size(), n_comp * g2d::N_PARAMS_GAUSS2D);
+    return data;
+}
+
+
+TEST_CASE("Evaluator") {
+    const size_t n_rows = 5, n_cols = 4, n_comp = 2;
+    auto image = std::make_shared<Image>(n_rows, n_cols);
+    std::vector<Value> values;
+    auto data = make_gaussians_data(values, n_rows, n_cols, n_comp);
+    const size_t n_params = data.size() * g2d::N_PARAMS_GAUSS2D;
 
     auto gaussians = std::make_shared<const g2d::ConvolvedGaussians>(data);
     auto sigma_inv = std::make_shared<Image>(n_rows, n_cols);
