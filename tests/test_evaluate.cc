@@ -115,6 +115,8 @@ TEST_CASE("Evaluator") {
 
     eval_offset->loglike_pixel();
     CHECK_EQ(image2->get_value(0, 0), image->get_value(y_min, x_min));
+    auto sum = image2->sum();
+    CHECK_GT(sum, 0);
 
     // Add a small offset so the chi is not zero everywhere
     *image += err;
