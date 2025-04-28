@@ -3,7 +3,7 @@ project(
   'cpp',
   version : files('VERSION'),
   license : 'GPL-3.0-or-later',
-  default_options : ['cpp_std=c++17',],
+  default_options : ['cpp_std=c++20',],
 )
 
 eups = find_program('eups', required: false)
