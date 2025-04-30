@@ -1,7 +1,7 @@
 project(
   'libgauss2d_python',
   'cpp',
-  default_options : ['cpp_std=c++17',],
+  default_options : ['cpp_std=c++20',],
   license : 'GPL-3.0-or-later',
   version : run_command('cat', meson.source_root() + '/VERSION', check: true).stdout().strip(),
 )

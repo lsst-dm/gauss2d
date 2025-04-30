@@ -1,7 +1,7 @@
 project(
     'gauss2d_py',
     'cpp',
-    default_options : ['cpp_std=c++17',],
+    default_options : ['cpp_std=c++20',],
     version : files('VERSION'),
 )
 

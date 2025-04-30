@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+### [0.2.0] 2025-04-29
+
+* Changed: Updated default C++ standard to C++20 from C++17
+* See [DM-50434](https://rubinobs.atlassian.net/browse/DM-50434) for details.
+
 ### [0.1.3] 2024-07-30
 
 * Changed: Updated Python module README build instructions
