@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+### [0.2.1] 2025-06-10
+
+* Fixed: Removed a redundant build-cc call in EUPS config
+* See [DM-45703](https://rubinobs.atlassian.net/browse/DM-45703) for details.
+
 ### [0.2.0] 2025-04-29
 
 * Changed: Updated default C++ standard to C++20 from C++17
@@ -39,6 +44,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 * Changed: Initial release, forked to https://github.com/lsst/gauss2d.
 * See [DM-43906](https://rubinobs.atlassian.net/browse/DM-43906) for details. 
 
+[0.2.1]: https://github.com/lsst-dm/gauss2d/compare/0.2.0...0.2.1
+[0.2.0]: https://github.com/lsst-dm/gauss2d/compare/0.1.3...0.2.0
 [0.1.3]: https://github.com/lsst-dm/gauss2d/compare/0.1.2...0.1.3
 [0.1.2]: https://github.com/lsst-dm/gauss2d/compare/0.1.1...0.1.2
 [0.1.1]: https://github.com/lsst-dm/gauss2d/compare/0.1.0...0.1.1
