@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+### [0.3.0] 2025-08-12
+
+* Fixed: Made standalone conda setup work correctly
+* Changed: Require pybind11 v3
+* Changed: Use pybind11 v3 classh for all bound classes
+* See [DM-52171](https://rubinobs.atlassian.net/browse/DM-52171) for details.
+
 ### [0.2.1] 2025-06-10
 
 * Fixed: Removed a redundant build-cc call in EUPS config
@@ -44,6 +51,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 * Changed: Initial release, forked to https://github.com/lsst/gauss2d.
 * See [DM-43906](https://rubinobs.atlassian.net/browse/DM-43906) for details. 
 
+[0.3.0]: https://github.com/lsst-dm/gauss2d/compare/0.2.1...0.3.0
 [0.2.1]: https://github.com/lsst-dm/gauss2d/compare/0.2.0...0.2.1
 [0.2.0]: https://github.com/lsst-dm/gauss2d/compare/0.1.3...0.2.0
 [0.1.3]: https://github.com/lsst-dm/gauss2d/compare/0.1.2...0.1.3
