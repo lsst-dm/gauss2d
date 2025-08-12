@@ -38,7 +38,7 @@ using namespace pybind11::literals;
 namespace gauss2d = lsst::gauss2d;
 
 void bind_ellipse(py::module &m) {
-    py::class_<gauss2d::Covariance, std::shared_ptr<gauss2d::Covariance>>(m, "Covariance")
+    py::classh<gauss2d::Covariance>(m, "Covariance")
             .def(py::init<double, double, double>(), "sigma_x_sq"_a = 0, "sigma_y_sq"_a = 0, "cov_xy"_a = 0)
             .def(py::init<gauss2d::Ellipse &>())
             .def("convolve", &gauss2d::Covariance::convolve)
@@ -60,9 +60,8 @@ void bind_ellipse(py::module &m) {
             .def("__repr__",
                  [](const gauss2d::Covariance &self) { return self.repr(true, self.PY_NAMESPACE_SEPARATOR); })
             .def("__str__", &gauss2d::Covariance::str);
-    auto _e = py::class_<gauss2d::EllipseData, std::shared_ptr<gauss2d::EllipseData>>(m, "EllipseData");
-    py::class_<gauss2d::EllipseValues, std::shared_ptr<gauss2d::EllipseValues>, gauss2d::EllipseData>(
-            m, "EllipseValues")
+    auto _e = py::classh<gauss2d::EllipseData>(m, "EllipseData");
+    py::classh<gauss2d::EllipseValues, gauss2d::EllipseData>(m, "EllipseValues")
             .def(py::init<double, double, double>(), "sigma_x"_a = 0, "sigma_y"_a = 0, "rho"_a = 0)
             .def("set", &gauss2d::EllipseValues::set, "sigma_x"_a, "sigma_y"_a, "rho"_a)
             .def("set_h", &gauss2d::EllipseValues::set_h, "hwhm_x"_a, "hwhm_y"_a, "rho"_a)
@@ -82,7 +81,7 @@ void bind_ellipse(py::module &m) {
                      return self.repr(true, self.PY_NAMESPACE_SEPARATOR);
                  })
             .def("__str__", &gauss2d::EllipseValues::str);
-    py::class_<gauss2d::Ellipse, std::shared_ptr<gauss2d::Ellipse>>(m, "Ellipse")
+    py::classh<gauss2d::Ellipse>(m, "Ellipse")
             .def(py::init<std::shared_ptr<gauss2d::EllipseData>>(), "data"_a)
             .def(py::init<gauss2d::Covariance &>())
             .def(py::init<gauss2d::EllipseMajor &>())
@@ -115,7 +114,7 @@ void bind_ellipse(py::module &m) {
             .def("__repr__",
                  [](const gauss2d::Ellipse &self) { return self.repr(true, self.PY_NAMESPACE_SEPARATOR); })
             .def("__str__", &gauss2d::Ellipse::str);
-    py::class_<gauss2d::EllipseMajor, std::shared_ptr<gauss2d::EllipseMajor>>(m, "EllipseMajor")
+    py::classh<gauss2d::EllipseMajor>(m, "EllipseMajor")
             .def(py::init<gauss2d::Covariance &, bool>(), "covariance"_a, "degrees"_a = false)
             .def(py::init<gauss2d::Ellipse &, bool>(), "ellipse"_a, "degrees"_a = false)
             .def(py::init<double, double, double, bool>(), "r_major"_a = 0, "axrat"_a = 1, "angle"_a = 0,

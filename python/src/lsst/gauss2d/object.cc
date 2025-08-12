@@ -36,5 +36,5 @@ namespace py = pybind11;
 namespace gauss2d = lsst::gauss2d;
 
 void bind_object(py::module &m) {
-    py::class_<gauss2d::Object, std::shared_ptr<gauss2d::Object>>(m, "Object");
+    py::classh<gauss2d::Object>(m, "Object");
 }

@@ -38,8 +38,8 @@ using namespace pybind11::literals;
 namespace gauss2d = lsst::gauss2d;
 
 void bind_centroid(py::module &m) {
-    auto _c = py::class_<gauss2d::CentroidData, std::shared_ptr<gauss2d::CentroidData>>(m, "CentroidData");
-    py::class_<gauss2d::CentroidValues, std::shared_ptr<gauss2d::CentroidValues>, gauss2d::CentroidData>(
+    auto _c = py::classh<gauss2d::CentroidData>(m, "CentroidData");
+    py::classh<gauss2d::CentroidValues, gauss2d::CentroidData>(
             m, "CentroidValues")
             // Note: These can't be shared_ptrs
             .def(py::init<double, double>(), "x"_a = 0, "y"_a = 0)
@@ -53,7 +53,7 @@ void bind_centroid(py::module &m) {
                      return self.repr(true, self.PY_NAMESPACE_SEPARATOR);
                  })
             .def("__str__", &gauss2d::CentroidValues::str);
-    py::class_<gauss2d::Centroid, std::shared_ptr<gauss2d::Centroid>>(m, "Centroid")
+    py::classh<gauss2d::Centroid>(m, "Centroid")
             .def(py::init<std::shared_ptr<gauss2d::CentroidData>>(), "data"_a)
             .def(py::init<double, double>(), "x"_a = 0, "y"_a = 0)
             .def_property("x", &gauss2d::Centroid::get_x, &gauss2d::Centroid::set_x)
