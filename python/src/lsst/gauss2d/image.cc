@@ -25,14 +25,11 @@
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 
-#include <memory>
-#include <stdexcept>
-
-#include "pybind11.h"
-
 #include "lsst/gauss2d/evaluate.h"
 #include "lsst/gauss2d/image.h"
 #include "lsst/gauss2d/python/image.h"
+
+#include "pybind11.h"
 
 namespace py = pybind11;
 using namespace pybind11::literals;

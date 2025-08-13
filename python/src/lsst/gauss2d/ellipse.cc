@@ -21,16 +21,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <memory>
+
 #include <pybind11/pybind11.h>
 #include <pybind11/operators.h>
 #include <pybind11/stl.h>
 
-#include <memory>
-#include <stdexcept>
+#include "lsst/gauss2d/ellipse.h"
 
 #include "pybind11.h"
-
-#include "lsst/gauss2d/ellipse.h"
 
 namespace py = pybind11;
 using namespace pybind11::literals;

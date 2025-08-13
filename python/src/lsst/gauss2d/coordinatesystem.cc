@@ -23,10 +23,11 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/operators.h>
-
-#include "pybind11.h"
+#include <pybind11/stl.h>
 
 #include "lsst/gauss2d/coordinatesystem.h"
+
+#include "pybind11.h"
 
 namespace py = pybind11;
 using namespace pybind11::literals;
