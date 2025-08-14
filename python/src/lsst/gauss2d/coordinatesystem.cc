@@ -23,10 +23,11 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/operators.h>
-
-#include "pybind11.h"
+#include <pybind11/stl.h>
 
 #include "lsst/gauss2d/coordinatesystem.h"
+
+#include "pybind11.h"
 
 namespace py = pybind11;
 using namespace pybind11::literals;
@@ -34,7 +35,7 @@ using namespace pybind11::literals;
 namespace gauss2d = lsst::gauss2d;
 
 void bind_coordinatesystem(py::module &m) {
-    py::class_<gauss2d::CoordinateSystem, std::shared_ptr<gauss2d::CoordinateSystem>>(m, "CoordinateSystem")
+    py::classh<gauss2d::CoordinateSystem>(m, "CoordinateSystem")
             .def(py::init<double, double, double, double>(), "dx1"_a = 1., "dy2"_a = 1., "x_min"_a = 0.,
                  "y_min"_a = 0.)
             .def_property_readonly("dx1", &gauss2d::CoordinateSystem::get_dx1)

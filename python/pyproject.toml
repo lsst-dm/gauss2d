@@ -8,7 +8,7 @@ authors = [
     {name="Rubin Observatory Data Management", email="dm-admin@lists.lsst.org"},
 ]
 description = "Python (pybind11) bindings for gauss2d"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: BSD License",
@@ -21,7 +21,7 @@ classifiers = [
 ]
 dependencies = [
     "numpy",
-    "pybind11",
+    "pybind11 >= 3.0",
 ]
 dynamic = ["version"]
 

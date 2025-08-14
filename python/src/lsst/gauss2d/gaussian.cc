@@ -21,16 +21,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <memory>
+
 #include <pybind11/pybind11.h>
 #include <pybind11/operators.h>
 #include <pybind11/stl.h>
 
-#include <memory>
-#include <stdexcept>
+#include "lsst/gauss2d/gaussian.h"
 
 #include "pybind11.h"
-
-#include "lsst/gauss2d/gaussian.h"
 
 #define PYBIND11_DETAILED_ERROR_MESSAGES
 
@@ -45,10 +44,8 @@ void bind_gaussian(py::module &m) {
     m.attr("M_HWHM_SIGMA") = py::float_(gauss2d::M_HWHM_SIGMA);
     m.attr("M_SIGMA_HWHM") = py::float_(gauss2d::M_SIGMA_HWHM);
 
-    auto _g = py::class_<gauss2d::GaussianIntegral, std::shared_ptr<gauss2d::GaussianIntegral>>(
-            m, "GaussianIntegral");
-    py::class_<gauss2d::GaussianIntegralValue, gauss2d::GaussianIntegral,
-               std::shared_ptr<gauss2d::GaussianIntegralValue>>(m, "GaussianIntegralValue")
+    auto _g = py::classh<gauss2d::GaussianIntegral>(m, "GaussianIntegral");
+    py::classh<gauss2d::GaussianIntegralValue, gauss2d::GaussianIntegral>(m, "GaussianIntegralValue")
             .def(py::init<double>(), "value"_a = 1)
             .def_property("value", &gauss2d::GaussianIntegralValue::get_value,
                           &gauss2d::GaussianIntegralValue::set_value)
@@ -60,7 +57,7 @@ void bind_gaussian(py::module &m) {
                  })
             .def("__str__", &gauss2d::GaussianIntegralValue::str);
 
-    py::class_<gauss2d::Gaussian, std::shared_ptr<gauss2d::Gaussian>>(m, "Gaussian")
+    py::classh<gauss2d::Gaussian>(m, "Gaussian")
             .def(py::init<std::shared_ptr<gauss2d::Centroid>, std::shared_ptr<gauss2d::Ellipse>,
                           std::shared_ptr<gauss2d::GaussianIntegral>>(),
                  "centroid"_a = nullptr, "ellipse"_a = nullptr, "integral"_a = nullptr)
@@ -76,7 +73,7 @@ void bind_gaussian(py::module &m) {
             .def("__repr__",
                  [](const gauss2d::Gaussian &self) { return self.repr(true, self.PY_NAMESPACE_SEPARATOR); })
             .def("__str__", &gauss2d::Gaussian::str);
-    py::class_<gauss2d::Gaussians, std::shared_ptr<gauss2d::Gaussians>>(m, "Gaussians")
+    py::classh<gauss2d::Gaussians>(m, "Gaussians")
             .def(py::init<std::optional<const gauss2d::Gaussians::Data>>(), "gaussians"_a)
             .def("at", &gauss2d::Gaussians::at, py::return_value_policy::copy)
             .def_property_readonly("size", &gauss2d::Gaussians::size)
@@ -85,8 +82,7 @@ void bind_gaussian(py::module &m) {
             .def("__repr__",
                  [](const gauss2d::Gaussians &self) { return self.repr(true, self.PY_NAMESPACE_SEPARATOR); })
             .def("__str__", &gauss2d::Gaussians::str);
-    py::class_<gauss2d::ConvolvedGaussian, std::shared_ptr<gauss2d::ConvolvedGaussian>>(m,
-                                                                                        "ConvolvedGaussian")
+    py::classh<gauss2d::ConvolvedGaussian>(m, "ConvolvedGaussian")
             .def(py::init<std::shared_ptr<gauss2d::Gaussian>, std::shared_ptr<gauss2d::Gaussian>>(),
                  "source"_a = nullptr, "kernel"_a = nullptr)
             .def_property_readonly("kernel", &gauss2d::ConvolvedGaussian::get_kernel)
@@ -98,8 +94,7 @@ void bind_gaussian(py::module &m) {
                      return self.repr(true, self.PY_NAMESPACE_SEPARATOR);
                  })
             .def("__str__", &gauss2d::ConvolvedGaussian::str);
-    py::class_<gauss2d::ConvolvedGaussians, std::shared_ptr<gauss2d::ConvolvedGaussians>>(
-            m, "ConvolvedGaussians")
+    py::classh<gauss2d::ConvolvedGaussians>(m, "ConvolvedGaussians")
             .def(py::init<std::optional<const gauss2d::ConvolvedGaussians::Data>>(), "convolvedbgaussians"_a)
             .def("at", &gauss2d::ConvolvedGaussians::at_ptr, py::return_value_policy::copy)
             .def_property_readonly("size", &gauss2d::ConvolvedGaussians::size)

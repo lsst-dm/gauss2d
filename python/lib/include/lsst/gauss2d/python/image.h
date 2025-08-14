@@ -157,7 +157,7 @@ template <typename T>
 void declare_image(py::module &m, std::string str_type) {
     using Class = Image<T>;
     std::string pyclass_name = std::string("Image") + str_type;
-    py::class_<Class, std::shared_ptr<Class>>(m, pyclass_name.c_str())
+    py::classh<Class>(m, pyclass_name.c_str())
             .def(py::init<size_t, size_t, const T *,
                           const std::shared_ptr<const lsst::gauss2d::CoordinateSystem>>(),
                  "n_rows"_a, "n_cols"_a, "value_init"_a = Class::_value_default_ptr(),
@@ -214,7 +214,7 @@ template <typename T>
 void declare_image_array(py::module &m, std::string str_type) {
     using Class = lsst::gauss2d::ImageArray<T, Image<T>>;
     std::string pyclass_name = std::string("ImageArray") + str_type;
-    py::class_<Class, std::shared_ptr<Class>>(m, pyclass_name.c_str())
+    py::classh<Class>(m, pyclass_name.c_str())
             .def(py::init<const typename Class::Data *>(), "data"_a)
             .def("at", &Class::at, py::return_value_policy::reference)
             .def_property_readonly("size", &Class::size)
@@ -237,7 +237,7 @@ template <typename T>
 void declare_evaluator(py::module &m, std::string str_type) {
     using Class = lsst::gauss2d::GaussianEvaluator<T, Image<T>, Image<lsst::gauss2d::idx_type>>;
     std::string pyclass_name = std::string("GaussianEvaluator") + str_type;
-    py::class_<Class, std::shared_ptr<Class>>(m, pyclass_name.c_str())
+    py::classh<Class>(m, pyclass_name.c_str())
             .def(py::init<const std::shared_ptr<const gauss2d::ConvolvedGaussians>,
                           const std::shared_ptr<const Image<T>>, const std::shared_ptr<const Image<T>>,
                           const std::shared_ptr<Image<T>>, const std::shared_ptr<Image<T>>,
