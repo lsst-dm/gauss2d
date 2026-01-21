@@ -55,10 +55,11 @@ if not use_eups
 	     '--no-dependencies',
 	     '--no-build-isolation',
 	     '--force-reinstall',
-     ]
+        ]
+        add_link_cmd = ['ln', '-fs', module.full_path(), subdir_module]
 	message('Will run on install:')
+        message(add_link_cmd)
 	message(pip_cmd)
-	add_link_cmd = ['ln', '-fs', module.full_path(), subdir_module]
 	meson.add_install_script(add_link_cmd)
 	meson.add_install_script(pip_cmd)
 	remove_link_cmd = ['rm', '-f', subdir_module / module.full_path().split('/')[-1]]
