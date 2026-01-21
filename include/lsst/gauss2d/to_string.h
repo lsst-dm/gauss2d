@@ -43,6 +43,16 @@ std::string to_string_iter(const Container<Value>& container) {
     return str.substr(0, str.size() - 2 * (container.size() > 0)) + "]";
 }
 
+template <template <typename...> class Container>
+std::string to_string_iter(const Container<std::string>& container) {
+    std::string str = "[";
+    for (const std::string& value : container) {
+        str += value + ", ";
+    }
+    return str.substr(0, str.size() - 2 * (container.size() > 0)) + "]";
+}
+
+
 }  // namespace lsst::gauss2d
 
 #endif

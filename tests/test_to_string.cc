@@ -51,4 +51,8 @@ TEST_CASE("to_string_iter") {
     CHECK_EQ(g2d::to_string_iter(t1), "[1, -5, 24]");
     std::set<size_t> t2{0, 1, 2, 4};
     CHECK_EQ(g2d::to_string_iter(t2), "[0, 1, 2, 4]");
+    std::list<std::string> t3{"a", "b", "c"};
+    CHECK_EQ(g2d::to_string_iter(t3), "[a, b, c]");
+    std::set<std::string> t4{"m", "e", "o", "w"};
+    CHECK_EQ(g2d::to_string_iter(t4), "[e, m, o, w]");
 }
