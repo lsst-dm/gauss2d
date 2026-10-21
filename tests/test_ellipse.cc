@@ -44,6 +44,9 @@ TEST_CASE("Covariance") {
 }
 
 TEST_CASE("Ellipse") {
+    CHECK_EQ(g2d::M_HWHM_SIGMA, 1.1774100225154746910115693264599);
+    CHECK_EQ(g2d::M_SIGMA_HWHM, 0.84932180028801904272150283410295);
+
     CHECK_THROWS_AS(g2d::Ellipse(-1), std::invalid_argument);
     CHECK_THROWS_AS(g2d::Ellipse(0, -1), std::invalid_argument);
     CHECK_THROWS_AS(g2d::Ellipse(0, 0, RHO_MAX), std::invalid_argument);
@@ -56,9 +59,9 @@ TEST_CASE("Ellipse") {
 
     auto ell2 = g2d::Ellipse(1, 1, 0.3);
     CHECK_EQ(ell2.get_xyr(), std::array<double, 3>{1, 1, 0.3});
-    CHECK_EQ(ell2.get_hxyr(), std::array<double, 3>{g2d::M_SIGMA_HWHM, g2d::M_SIGMA_HWHM, 0.3});
+    CHECK_EQ(ell2.get_hxyr(), std::array<double, 3>{g2d::M_HWHM_SIGMA, g2d::M_HWHM_SIGMA, 0.3});
     ell2.set_hxyr({1, 1, -0.3});
-    CHECK_EQ(ell2.get_xyr(), std::array<double, 3>{g2d::M_HWHM_SIGMA, g2d::M_HWHM_SIGMA, -0.3});
+    CHECK_EQ(ell2.get_xyr(), std::array<double, 3>{g2d::M_SIGMA_HWHM, g2d::M_SIGMA_HWHM, -0.3});
 }
 
 TEST_CASE("Marginal Major Ellipse") {

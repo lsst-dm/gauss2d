@@ -159,9 +159,9 @@ void EllipseData::convolve(const Ellipse& ell) {
 
 double EllipseData::get_cov_xy() const { return this->get_sigma_x() * this->get_sigma_y() * this->get_rho(); }
 
-double EllipseData::get_hwhm_x() const { return M_SIGMA_HWHM * this->get_sigma_x(); };
+double EllipseData::get_hwhm_x() const { return M_HWHM_SIGMA * this->get_sigma_x(); };
 
-double EllipseData::get_hwhm_y() const { return M_SIGMA_HWHM * this->get_sigma_y(); };
+double EllipseData::get_hwhm_y() const { return M_HWHM_SIGMA * this->get_sigma_y(); };
 
 std::array<double, 3> EllipseData::get_hxyr() const {
     return {this->get_hwhm_x(), this->get_hwhm_y(), this->get_rho()};
@@ -211,8 +211,8 @@ void EllipseValues::set(double sigma_x, double sigma_y, double rho) {
 
 void EllipseValues::set_h(double hwhm_x, double hwhm_y, double rho) {
     Ellipse::check(hwhm_x, hwhm_y, rho);
-    *_sigma_x = M_HWHM_SIGMA * hwhm_x;
-    *_sigma_y = M_HWHM_SIGMA * hwhm_y;
+    *_sigma_x = M_SIGMA_HWHM * hwhm_x;
+    *_sigma_y = M_SIGMA_HWHM * hwhm_y;
     *_rho = rho;
 }
 
@@ -300,8 +300,8 @@ void EllipseData::set_h(double hwhm_x, double hwhm_y, double rho) {
     this->set_hwhm_y(hwhm_y);
     this->set_rho(rho);
 }
-void EllipseData::set_hwhm_x(double hwhm_x) { this->set_sigma_x(M_HWHM_SIGMA * hwhm_x); }
-void EllipseData::set_hwhm_y(double hwhm_y) { this->set_sigma_y(M_HWHM_SIGMA * hwhm_y); }
+void EllipseData::set_hwhm_x(double hwhm_x) { this->set_sigma_x(M_SIGMA_HWHM * hwhm_x); }
+void EllipseData::set_hwhm_y(double hwhm_y) { this->set_sigma_y(M_SIGMA_HWHM * hwhm_y); }
 void EllipseData::set_hxyr(const std::array<double, 3>& hxyr) { this->set_h(hxyr[0], hxyr[1], hxyr[2]); }
 void EllipseData::set_xyr(const std::array<double, 3>& xyr) { this->set(xyr[0], xyr[1], xyr[2]); }
 
